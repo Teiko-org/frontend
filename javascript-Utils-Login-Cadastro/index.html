@@ -9,7 +9,7 @@
 <body>
     <div class="container" id="register-container">
         <span class="close-btn" data-action="close">&times;</span>
-        <a href="#" class="switch-form" data-action="toggle-form">&#x1F511; Login</a>
+        <a href="#" class="switch-form" data-action="toggle-form">➡ Login</a>
         <div class="profile-icon"><img src="user" alt=""></div>
         <input type="text" id="register-name" placeholder="Nome">
         <input type="tel" id="register-phone" placeholder="+55 (__) ____-____">
@@ -27,7 +27,7 @@
 
     <div class="container hidden" id="login-container">
         <span class="close-btn" data-action="close">&times;</span>
-        <a href="#" class="switch-form" data-action="toggle-form">&#x1F511; Cadastre-se</a>
+        <a href="#" class="switch-form" data-action="toggle-form">➡ Cadastre-se</a>
         <div class="profile-icon"></div>
         <input type="text" id="login-name" placeholder="Número telefone">
         <div class="password-container">
@@ -35,15 +35,15 @@
             <span class="eye-icon" data-action="toggle-password">👁️</span>
         </div>
         <div class="options">
-            <label><input type="checkbox"> Lembrar de mim</label>
+            <label><input type="checkbox" id="remember-me"> Lembrar de mim</label>
             <a href="#">Esqueci minha senha</a>
         </div>
         <button class="register-btn" data-action="login">Log In</button>
         <p class="switch-text">Ainda não tem uma conta? <a href="#" data-action="toggle-form">Cadastre-se</a></p>
     </div>
 
-    <div class="sitefoda hidden" id="sitefoda">
-        <h1>SITE FODA</h1>
+    <div class="site hidden" id="site">
+        <h1>SITE</h1>
     </div>
 
     <script src="scripts.js"></script>
