@@ -1,64 +1,67 @@
 document.addEventListener("DOMContentLoaded", () => {
     const registerContainer = document.getElementById('register-container');
     const loginContainer = document.getElementById('login-container');
-    const siteFoda = document.getElementById('sitefoda');
+    const site = document.getElementById('site');
+    
+    document.body.addEventListener('click', handleButtonClick);
 
-    document.body.addEventListener('click', (e) => {
+    document.getElementById("register-phone").addEventListener("input", formatPhoneNumber);
+    document.getElementById("login-name").addEventListener("input", formatPhoneNumber);
+
+    loadRememberedUser();
+
+    function handleButtonClick(e) {
         const action = e.target.dataset.action;
-
-        if(!action) return;
+        if (!action) return;
 
         switch (action) {
             case 'close':
-                closeContainers(registerContainer, loginContainer, siteFoda);
+                closeContainers();
                 break;
             case 'toggle-form':
-                toggleForm(registerContainer, loginContainer);
+                toggleForm();
                 break;
             case 'toggle-password':
                 togglePassword(e.target);
                 break;
             case 'register':
-                register(registerContainer, loginContainer);
+                registerUser();
                 break;
             case 'login':
-                loginUser(siteFoda);
+                loginUser();
                 break;
         }
-    });
+    }
 
-    document.getElementById("register-phone").addEventListener("input", formatPhoneNumber);
-    document.getElementById("login-name").addEventListener("input", formatPhoneNumber);
+    function loadRememberedUser() {
+        const rememberedUser = localStorage.getItem("rememberedUser");
+        if (rememberedUser) {
+            document.getElementById("login-name").value = rememberedUser;
+            document.getElementById("remember-me").checked = true;
+        }
+    }
 });
 
 function formatPhoneNumber(e) {
     let value = e.target.value.replace(/\D/g, ""); 
-
     if (!value.startsWith("55")) {
         value = "55" + value;
     }
-
     value = value.slice(0, 13);
-
-    if (value.length >= 4) {
-        value = "+55 (" + value.slice(2, 4) + ") " + value.slice(4, 9) + "-" + value.slice(9);
-    } else {
-        value = "+55 (" + value.slice(2);
-    }
-
-    e.target.value = value;
+    e.target.value = value.length >= 4 
+        ? `+55 (${value.slice(2, 4)}) ${value.slice(4, 9)}-${value.slice(9)}`
+        : `+55 (${value.slice(2)}`;
 }
 
-function closeContainers(registerContainer, loginContainer, siteFoda) {
-    registerContainer.classList.add("hidden");
-    loginContainer.classList.add("hidden");
-
-    siteFoda.classList.remove("hidden");
+function closeContainers() {
+    document.getElementById('register-container').classList.add("hidden");
+    document.getElementById('login-container').classList.add("hidden");
+    document.getElementById('site').classList.remove("hidden");
 }
 
-function toggleForm(registerContainer, loginContainer) {
-    registerContainer.classList.toggle("hidden");
-    loginContainer.classList.toggle("hidden");
+function toggleForm() {
+    document.getElementById('register-container').classList.toggle("hidden");
+    document.getElementById('login-container').classList.toggle("hidden");
 }
 
 function togglePassword(eyeIcon) {
@@ -66,70 +69,74 @@ function togglePassword(eyeIcon) {
     passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
 }
 
-function register(registerContainer, loginContainer) {
+function registerUser() {
     const name = document.getElementById("register-name").value.trim();
     const phone = document.getElementById("register-phone").value.trim();
     const password = document.getElementById("register-password").value.trim();
     const confirmPassword = document.getElementById("register-confirm-password").value.trim();
-
-    const phoneRegex = /^\+55 \(\d{2}\) \d{4,5}-\d{4}$/;
-
-    if(!name || !phone || !password || !confirmPassword) {
-        alert("Preencha todos os campos");
-        return;
-    }
-
-    if(!phoneRegex.test(phone)) {
-        alert("Telefone inválido");
-        return;
-    }
-
-    if(password.length < 6) {
-        alert("A senha deve ter no mínimo 6 caracteres");
-        return;
-    }
-
-    if(password !== confirmPassword) {
-        alert("As senhas não conferem");
-        return;
-    }
-
+    
+    if (!validateRegistration(name, phone, password, confirmPassword)) return;
+    
     let users = JSON.parse(localStorage.getItem("users")) || [];
-
-    if(users.some(user => user.phone === phone)) {
+    if (users.some(user => user.phone === phone)) {
         alert("Telefone já cadastrado");
         return;
     }
-
+    
     users.push({ name, phone, password });
     localStorage.setItem("users", JSON.stringify(users));
-
-    console.log("Usuário registrado com sucesso", { name, phone, password });
+    
     alert("Usuário registrado com sucesso");
-
-    toggleForm(registerContainer, loginContainer);
+    toggleForm();
 }
 
-function loginUser(siteFoda) {
+function validateRegistration(name, phone, password, confirmPassword) {
+    const phoneRegex = /^\+55 \(\d{2}\) \d{4,5}-\d{4}$/;
+    const passwordRegex = /^(?=.*[A-Z])(?=.*[\W_]).{6,}$/;
+    
+    if (!name || !phone || !password || !confirmPassword) {
+        alert("Preencha todos os campos");
+        return false;
+    }
+    if (!phoneRegex.test(phone)) {
+        alert("Telefone inválido");
+        return false;
+    }
+    if (!passwordRegex.test(password)) {
+        alert("A senha deve ter no mínimo 6 caracteres, incluir pelo menos uma letra maiúscula e um caractere especial.");
+        return false;
+    }
+    if (password !== confirmPassword) {
+        alert("As senhas não conferem");
+        return false;
+    }
+    return true;
+}
+
+function loginUser() {
     const phone = document.getElementById("login-name").value.trim();
     const password = document.getElementById("login-password").value.trim();
-
-    if(!phone || !password) {
+    const rememberMe = document.getElementById("remember-me").checked;
+    
+    if (!phone || !password) {
         alert("Preencha todos os campos");
         return;
     }
-
+    
     let users = JSON.parse(localStorage.getItem("users")) || [];
-
     const user = users.find(user => user.phone === phone && user.password === password);
-
-    if(!user) {
+    
+    if (!user) {
         alert("Usuário ou senha inválidos");
         return;
     }
-
-    console.log("Usuário logado com sucesso", { phone, password });
+    
+    if (rememberMe) {
+        localStorage.setItem("rememberedUser", phone);
+    } else {
+        localStorage.removeItem("rememberedUser");
+    }
+    
     alert(`Bem-vindo, ${user.name}`);
-
-    closeContainers(document.getElementById('register-container'), document.getElementById('login-container'), siteFoda);
+    closeContainers();
 }
