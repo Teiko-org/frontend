@@ -16,9 +16,9 @@ function App() {
     {/* {<ModalMontagem />} */}
     {/* {<ModalDadosEntrega />} */}
     {/* {<ModalDecoracao />} */}
-    {<ModalRetirada />}
+    {/* {<ModalRetirada />} */}
     {/* {<ModalAdicionais />} */}
-    {/* {<ModalConfirmarEdicao />} */}
+    {<ModalConfirmarEdicao />}
     </>
   );
 }
