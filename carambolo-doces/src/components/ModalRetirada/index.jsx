@@ -23,7 +23,7 @@ export default function ModalRetirada({ isOpen, onClose }) {
       time,
     };
     console.log('Retirada data:', data);
-    onClose(); // ou outro comportamento
+    onClose(); 
   };
 
   return (
