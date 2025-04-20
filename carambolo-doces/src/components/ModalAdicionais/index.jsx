@@ -1,38 +1,36 @@
 import React, { useState } from 'react';
 import ModalBaseForm from '../ModalBaseForm';
+import Button from '../Button';
 
-export default function ModalAdicionais({ isOpen, onClose }) {
-  const [adicionais, setAdicionais] = useState({
-    cereja: true,
+export default function ModalAdicionais({ isOpen, onClose, onSave }) {
+  const [addons, setAddons] = useState({
+    cherry: true,
     glitter: true,
-    perolado: true,
-    lacinhos: false,
+    pearl: true,
+    bows: false,
   });
 
   const handleCheckboxChange = (e) => {
     const { name, checked } = e.target;
-    setAdicionais((prev) => ({
+    setAddons((prev) => ({
       ...prev,
       [name]: checked,
     }));
   };
 
-  return (
-    <ModalBaseForm isOpen={isOpen} onClose={onClose}>
-      <h2 className="text-lg font-bold text-[#103464] mb-2">ADICIONAIS</h2>
-      <div
-        className="-mx-6 h-[2px] mb-4"
-        style={{
-          background: 'linear-gradient(0deg, #A47032 0%, #D4B076 100%)',
-        }}
-      ></div>
+  const handleSave = () => {
+    onSave(addons);
+    onClose();
+  };
 
-      <div className="flex flex-wrap gap-6 mb-4">
+  return (
+    <ModalBaseForm isOpen={isOpen} onClose={onClose} title="ADICIONAIS">
+      <div className="flex flex-wrap gap-6 mb-4 mt-7">
         {[
-          { label: 'CEREJA', name: 'cereja' },
+          { label: 'CEREJA', name: 'cherry' },
           { label: 'GLITTER', name: 'glitter' },
-          { label: 'PEROLADO', name: 'perolado' },
-          { label: 'LACINHOS', name: 'lacinhos' },
+          { label: 'PEROLADO', name: 'pearl' },
+          { label: 'LACINHOS', name: 'bows' },
         ].map((item) => (
           <label
             key={item.name}
@@ -41,7 +39,7 @@ export default function ModalAdicionais({ isOpen, onClose }) {
             <input
               type="checkbox"
               name={item.name}
-              checked={adicionais[item.name]}
+              checked={addons[item.name]}
               onChange={handleCheckboxChange}
               className="sr-only"
             />
@@ -57,13 +55,13 @@ export default function ModalAdicionais({ isOpen, onClose }) {
               <span
                 className="w-full h-full rounded-[1px] flex items-center justify-center"
                 style={{
-                  background: adicionais[item.name]
+                  background: addons[item.name]
                     ? 'linear-gradient(180deg, #A47032 0%, #D4B076 100%)'
                     : '#fff',
                   transition: 'all 0.2s ease',
                 }}
               >
-                {adicionais[item.name] && (
+                {addons[item.name] && (
                   <svg
                     className="w-3 h-3 text-white"
                     fill="none"
@@ -81,11 +79,15 @@ export default function ModalAdicionais({ isOpen, onClose }) {
         ))}
       </div>
 
-      {/* BOTÃO SALVAR */}
-      <div className="flex justify-end">
-        <button className="botao-gradiente botao-azul selecionado text-sm font-semibold px-6 py-1.5">
-          Salvar
-        </button>
+      <div className="flex justify-end mt-6">
+        <Button
+          text="Salvar"
+          onClick={handleSave}
+          bgColor="bg-gradient-to-l from-gold to-darkGold"
+          fontSize="text-sm"
+          textColor="text-blue"
+          borderColor="border-gold"
+        />
       </div>
     </ModalBaseForm>
   );

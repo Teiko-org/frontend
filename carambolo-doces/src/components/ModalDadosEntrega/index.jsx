@@ -1,134 +1,252 @@
-import React from 'react';
-import ModalBaseForm from '../ModalBaseForm';
+import React, { useState } from 'react';
 import { FaCalendarAlt } from 'react-icons/fa';
+import CampoComGradiente from '../gradientField';
+import Button from '../Button';
+import ModalBaseForm from '../ModalBaseForm';
+import PhoneNumberInput from '../PhoneInput';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
-export default function ModalDadosEntrega({ isOpen, onClose }) {
+export default function ModalDeliveryData({
+  isOpen,
+  onClose,
+  onSave,
+  selectedData,
+  selectedTelefone,
+  selectedNome,
+  selectedCep,
+  selectedUf,
+  selectedCidade,
+  selectedBairro,
+  selectedRua,
+  selectedNumero,
+  selectedComplemento,
+  selectedTipoEntrega,
+}) {
+  const [telefone, setTelefone] = useState(selectedTelefone || '');
+  const [data, setData] = useState(selectedData || null);
+  const [nome, setNome] = useState(selectedNome || '');
+  const [cep, setCep] = useState(selectedCep || '');
+  const [uf, setUf] = useState(selectedUf || '');
+  const [cidade, setCidade] = useState(selectedCidade || '');
+  const [bairro, setBairro] = useState(selectedBairro || '');
+  const [rua, setRua] = useState(selectedRua || '');
+  const [numero, setNumero] = useState(selectedNumero || '');
+  const [complemento, setComplemento] = useState(selectedComplemento || '');
+  const [tipoEntrega, setTipoEntrega] = useState(selectedTipoEntrega || 'retirada');
+
+  const handleSave = () => {
+    onSave({
+      telefone,
+      data,
+      nome,
+      cep,
+      uf,
+      cidade,
+      bairro,
+      rua,
+      numero,
+      complemento,
+      tipoEntrega,
+    });
+    onClose(); 
+  };
+
   return (
-    <ModalBaseForm isOpen={isOpen} onClose={onClose}>
-      {/* TÍTULO */}
-      <h2 className="text-lg font-bold text-[#103464] mb-2">DADOS ENTREGA</h2>
-      <div
-        className="-mx-6 h-[2px] mb-4"
-        style={{
-          background: 'linear-gradient(0deg, #A47032 0%, #D4B076 100%)',
-        }}
-      ></div>
+    <ModalBaseForm isOpen={isOpen} onClose={onClose} title="DADOS ENTREGA">
+      {/* ENTREGA OU RETIRADA */}
+      <div className="mb-6 flex items-center text-[#103464]">
+        <p className="text-base font-semibold whitespace-nowrap">Seu pedido será?</p>
+        <div className="flex gap-6 ml-10">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="orderType"
+              value="entrega"
+              checked={tipoEntrega === 'entrega'}
+              onChange={() => setTipoEntrega('entrega')}
+              className="accent-[#caa77e]"
+            />
+            Entrega
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="orderType"
+              value="retirada"
+              checked={tipoEntrega === 'retirada'}
+              onChange={() => setTipoEntrega('retirada')}
+              className="accent-[#caa77e]"
+            />
+            Retirada
+          </label>
+        </div>
+      </div>
 
       {/* LINHA 1 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 text-[#103464]">
-        {['Nome', 'Telefone', 'Data'].map((label, i) => (
-          <div key={i} className="flex flex-col">
-            <label className="text-sm font-semibold mb-1">{label}</label>
-            {label === 'Data' ? (
-              <div className="p-[1px] rounded bg-gradient-to-b from-[#A47032] to-[#D4B076]">
-                <div className="flex items-center px-2 py-1 bg-white rounded">
-                  <FaCalendarAlt className="text-gray-500 mr-2" />
-                  <input
-                    type="text"
-                    placeholder="DD/MM"
-                    className="w-full outline-none text-[#103464] bg-transparent"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="p-[1px] rounded bg-gradient-to-b from-[#A47032] to-[#D4B076]">
-                <input
-                  type="text"
-                  placeholder={label === 'Telefone' ? '(XX) X XXXX-XXXX' : 'Inserir seu nome'}
-                  className="w-full bg-white rounded px-2 py-1 outline-none text-[#103464]"
-                />
-              </div>
-            )}
-          </div>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        {/* Nome */}
+        <div className="flex flex-col">
+          <label className="text-sm font-semibold mb-1">Nome</label>
+          <CampoComGradiente>
+            <input
+              type="text"
+              placeholder="Inserir seu nome"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              className="w-full bg-white rounded px-2 py-1 outline-none"
+            />
+          </CampoComGradiente>
+        </div>
+
+        {/* Telefone */}
+        <div className="flex flex-col">
+          <label className="text-sm font-semibold mb-1">Telefone</label>
+          <CampoComGradiente>
+            <PhoneNumberInput value={telefone} onChange={setTelefone} />
+          </CampoComGradiente>
+        </div>
+
+        {/* Data */}
+        <div className="flex flex-col">
+          <label className="text-sm font-semibold mb-1">Data</label>
+          <CampoComGradiente>
+            <div className="flex items-center px-2 py-1 bg-white rounded">
+              <FaCalendarAlt className="text-gray-500 mr-2" />
+              <DatePicker
+                selected={data}
+                onChange={(date) => setData(date)}
+                dateFormat="dd/MM"
+                placeholderText="DD/MM"
+                showMonthDropdown
+                showDayDropdown
+                dropdownMode="select"
+                className="w-full outline-none bg-transparent text-[#103464]"
+              />
+            </div>
+          </CampoComGradiente>
+        </div>
       </div>
 
       {/* LINHA 2 */}
-      {/* LINHA 2 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 text-[#103464]">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+        {/* CEP */}
         <div className="flex flex-col">
           <label className="text-sm font-semibold mb-1">CEP</label>
-          <div className="p-[1px] rounded bg-gradient-to-b from-[#A47032] to-[#D4B076]">
+          <CampoComGradiente>
             <input
               type="text"
               placeholder="00000-000"
-              className="w-full bg-white rounded px-2 py-1 outline-none text-[#103464]"
+              value={cep}
+              onChange={(e) => setCep(e.target.value)}
+              className="w-full bg-white rounded px-2 py-1 outline-none"
             />
-          </div>
+          </CampoComGradiente>
           <span className="text-xs text-blue-800 mt-1">
             Não sabe o CEP? <span className="underline cursor-pointer">Clique Aqui</span>
           </span>
         </div>
 
+        {/* Estado */}
         <div className="flex flex-col">
           <label className="text-sm font-semibold mb-1">Estado</label>
-          <div className="p-[1px] rounded bg-gradient-to-b from-[#A47032] to-[#D4B076]">
-            <select className="w-full bg-white rounded px-2 py-1 outline-none text-[#103464]">
-              <option>UF</option>
+          <CampoComGradiente>
+            <select
+              value={uf}
+              onChange={(e) => setUf(e.target.value)}
+              className="w-full bg-white rounded px-2 py-1 outline-none"
+            >
+              <option value="">UF</option>
+              <option value="SP">SP</option>
+              <option value="RJ">RJ</option>
+              <option value="MG">MG</option>
+              {/* Add as opções que quiser */}
             </select>
-          </div>
+          </CampoComGradiente>
         </div>
 
+        {/* Cidade */}
         <div className="flex flex-col">
           <label className="text-sm font-semibold mb-1">Cidade</label>
-          <div className="p-[1px] rounded bg-gradient-to-b from-[#A47032] to-[#D4B076]">
+          <CampoComGradiente>
             <input
               type="text"
-              className="w-full bg-white rounded px-2 py-1 outline-none text-[#103464]"
+              value={cidade}
+              onChange={(e) => setCidade(e.target.value)}
+              className="w-full bg-white rounded px-2 py-1 outline-none"
             />
-          </div>
+          </CampoComGradiente>
         </div>
 
+        {/* Bairro */}
         <div className="flex flex-col">
           <label className="text-sm font-semibold mb-1">Bairro</label>
-          <div className="p-[1px] rounded bg-gradient-to-b from-[#A47032] to-[#D4B076]">
+          <CampoComGradiente>
             <input
               type="text"
-              className="w-full bg-white rounded px-2 py-1 outline-none text-[#103464]"
+              value={bairro}
+              onChange={(e) => setBairro(e.target.value)}
+              className="w-full bg-white rounded px-2 py-1 outline-none"
             />
-          </div>
+          </CampoComGradiente>
         </div>
       </div>
 
       {/* LINHA 3 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 text-[#103464]">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+        {/* Rua */}
         <div className="md:col-span-3 flex flex-col">
           <label className="text-sm font-semibold mb-1">Rua</label>
-          <div className="p-[1px] rounded bg-gradient-to-b from-[#A47032] to-[#D4B076]">
+          <CampoComGradiente>
             <input
               type="text"
               placeholder="Inserir seu endereço"
-              className="w-full bg-white rounded px-2 py-1 outline-none text-[#103464]"
+              value={rua}
+              onChange={(e) => setRua(e.target.value)}
+              className="w-full bg-white rounded px-2 py-1 outline-none"
             />
-          </div>
+          </CampoComGradiente>
         </div>
+
+        {/* Número */}
         <div className="flex flex-col">
           <label className="text-sm font-semibold mb-1">Número</label>
-          <div className="p-[1px] rounded bg-gradient-to-b from-[#A47032] to-[#D4B076]">
+          <CampoComGradiente>
             <input
               type="text"
-              className="w-full bg-white rounded px-2 py-1 outline-none text-[#103464]"
+              value={numero}
+              onChange={(e) => setNumero(e.target.value)}
+              className="w-full bg-white rounded px-2 py-1 outline-none"
             />
-          </div>
+          </CampoComGradiente>
         </div>
       </div>
 
       {/* LINHA 4 */}
-      <div className="mb-6 text-[#103464]">
+      <div className="mb-6">
         <label className="text-sm font-semibold mb-1 block">Complemento</label>
-        <div className="p-[1px] rounded bg-gradient-to-b from-[#A47032] to-[#D4B076]">
-          <input
-            type="text"
-            className="w-full bg-white rounded px-2 py-1 outline-none text-[#103464]"
-          />
+        <div className="w-1/2">
+          <CampoComGradiente>
+            <input
+              type="text"
+              value={complemento}
+              onChange={(e) => setComplemento(e.target.value)}
+              className="w-full bg-white rounded px-2 py-1 outline-none"
+            />
+          </CampoComGradiente>
         </div>
       </div>
 
-      {/* BOTÃO SALVAR */}
-      <div className="flex justify-end">
-        <button className="botao-gradiente botao-azul selecionado text-sm font-semibold px-6 py-1.5">
-          Salvar
-        </button>
+      {/* BOTÃO */}
+      <div className="flex justify-end mt-6">
+        <Button
+          text="Salvar"
+          onClick={handleSave}
+          bgColor="bg-gradient-to-l from-gold to-darkGold"
+          fontSize="text-sm"
+          textColor="text-blue"
+          borderColor="border-gold"
+        />
       </div>
     </ModalBaseForm>
   );
