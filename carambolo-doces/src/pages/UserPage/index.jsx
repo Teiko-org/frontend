@@ -23,9 +23,10 @@ function UserPage() {
 
           <div className="w-full flex flex-col items-center">
             <h1 className="font-medium text-2xl">DADOS PESSOAIS</h1>
+            
             <div className="w-[510px] flex flex-col items-center gap-5">
               <div className="flex flex-col">
-                <span>Nome</span>
+                <span className="font-semibold text-blue">Nome</span>
                 <input
                   type="text"
                   className="w-[510px] border-2 border-gold rounded-xl px-4 py-2 w-full pr-10"
@@ -34,7 +35,7 @@ function UserPage() {
 
               <div className="flex flex-row gap-10">
                 <div className="flex flex-col">
-                  <span>Telefone</span>
+                  <span className="font-semibold text-blue">Telefone</span>
                   <input
                     type="text"
                     className="w-full border-2 border-gold rounded-xl px-4 py-2 w-full pr-10"
@@ -42,7 +43,7 @@ function UserPage() {
                 </div>
 
                 <div className="flex flex-col">
-                  <span>Data Nascimento</span>
+                  <span className="font-semibold text-blue">Data Nascimento</span>
                   <input
                     type="text"
                     className="w-full border-2 border-gold rounded-xl px-4 py-2 w-full pr-10"
@@ -52,7 +53,7 @@ function UserPage() {
 
               <div className="w-full flex flex-row justify-between items-center">
                 <div className="flex flex-col">
-                  <span>Gênero</span>
+                  <span className="font-semibold text-blue">Gênero</span>
                   <input
                     type="text"
                     className="w-[200px] border-2 border-gold rounded-xl px-4 py-2 w-full pr-10"
@@ -71,7 +72,7 @@ function UserPage() {
 
             <div className="flex flex-row gap-10">
               <div className="flex flex-col">
-                <span>Senha Atual</span>
+                <span className="font-semibold text-blue">Senha Atual</span>
                 <input
                   type="text"
                   className="w-full border-2 border-gold rounded-xl px-4 py-2 w-full pr-10"
@@ -79,7 +80,7 @@ function UserPage() {
               </div>
 
               <div className="flex flex-col">
-                <span>Nova Senha</span>
+                <span className="font-semibold text-blue">Nova Senha</span>
                 <input
                   type="text"
                   className="w-full border-2 border-gold rounded-xl px-4 py-2 w-full pr-10"
