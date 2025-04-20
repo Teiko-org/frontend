@@ -1,9 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { IoTrash } from "react-icons/io5";
 import Button from "../../components/Button";
 import { LuUpload } from "react-icons/lu";
+import ModalConfirmationLogOff from "../../components/ModalConfirmationLogOff";
 
 function UserSideMenu() {
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+    
+      const openModal = () => setIsModalOpen(true);
+      const closeModal = () => setIsModalOpen(false);
 
   return (
     <div className={`w-[450px] px-10 bg-bgHome border-r-2 border-r-gold`}>
@@ -29,7 +35,8 @@ function UserSideMenu() {
       </div>
 
       <footer className="flex justify-center pb-10">
-        <button className="bg-bgNativeHome border-2 border-red rounded-2xl text-red font-semibold p-2 px-8">Desconectar</button>
+        <button onClick={openModal} className="bg-bgNativeHome border-2 border-red rounded-2xl text-red font-semibold p-2 px-8">Desconectar</button>
+        {isModalOpen && <ModalConfirmationLogOff onClose={closeModal} />}
       </footer>
 
     </div>

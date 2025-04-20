@@ -1,10 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Button from "../../components/Button";
 import UserSideMenu from "../../components/UserSideMenu";
+import ModalConfirmationAccountDeletion from "../../components/ModalConfirmationAccountDeletion";
 
 function UserPage() {
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+    const openModal = () => setIsModalOpen(true);
+    const closeModal = () => setIsModalOpen(false);
+
   return (
     <div className="bg-bgNativeHome flex-col">
       <Header />
@@ -89,7 +96,8 @@ function UserPage() {
           <div className="h-[1px] w-full bg-[#FFC8B2] mx-[-100px] my-10" />
 
           <footer className="flex justify-center pb-10">
-        <button className="bg-bgNativeHome border-2 border-red rounded-2xl text-red font-semibold p-2 px-8">Excluir Conta</button>
+        <button onClick={openModal} className="bg-bgNativeHome border-2 border-red rounded-2xl text-red font-semibold p-2 px-8">Excluir Conta</button>
+        {isModalOpen && <ModalConfirmationAccountDeletion onClose={closeModal} />}
       </footer>
 
         </div>

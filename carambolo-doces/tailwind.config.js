@@ -24,6 +24,9 @@ export default {
         graySoldOut: '#656565',
         blueMedium: '#3A4868',
         red: '#D70000',
+        brightRed: '#FF522D',
+        green: '#00AF2F',
+        brightGreen: '#00D038',
       },
       fontFamily: {
         montserrat: ['Montserrat', 'sans-serif'],

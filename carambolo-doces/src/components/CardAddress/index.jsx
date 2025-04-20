@@ -1,9 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { IoTrash } from "react-icons/io5";
 import Button from "../../components/Button";
 import { TbEdit } from "react-icons/tb";
+import ModalConfirmationAddressDeletion from "../../components/ModalConfirmationAddressDeletion";
 
 function CardAddress() {
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+    
+      const openModal = () => setIsModalOpen(true);
+      const closeModal = () => setIsModalOpen(false);
 
   return (
     <div className={`relative w-[620px] h-[372px] border-2 border-gold rounded-2xl bg-bgNativeHome`}>
@@ -11,9 +17,11 @@ function CardAddress() {
       <header className="bg-bgHome relative h-[60px] px-[20px] flex justify-between items-center border-b-2 border-gold rounded-t-2xl">
         <span className="font-medium text-2xl">Endereço XPTO</span>
 
-        <button className="text-red text-3xl">
+        <button onClick={openModal} className="text-red text-3xl">
           <IoTrash />
         </button>
+
+        {isModalOpen && <ModalConfirmationAddressDeletion onClose={closeModal} />}
 
       </header>
 
