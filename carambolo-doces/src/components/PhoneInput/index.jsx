@@ -31,7 +31,7 @@ const PhoneNumberInput = ({ value, onChange }) => {
           autoFocus: true,
         }}
         masks={{ br: '(..) .....-....' }}
-        placeholder="(DDD) XXXXX-XXXX"
+        placeholder="(DDD) (XX) XXXXX-XXXX"
         {...phoneStyle}
       />
     </div>
