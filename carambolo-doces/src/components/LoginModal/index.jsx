@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import ModalBase from "../ModalBase";
+import ModalBaseLogin from "../ModalBaseLogin";
 import Button from "../Button";
 import RegisterModal from "../RegisterModal";
 import { useForm } from "react-hook-form";
@@ -26,7 +26,7 @@ function LoginModal({ onClose }) {
   return (
     <>
       {!isRegisterOpen ? (
-        <ModalBase title="Login" onClose={onClose}>
+        <ModalBaseLogin title="Login" onClose={onClose}>
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="flex flex-col items-center mb-6">
               <img src="src/assets/user_icon.png" alt="Ícone de Usuário" />
@@ -72,7 +72,7 @@ function LoginModal({ onClose }) {
           </p>
 
           <ToastContainer />
-        </ModalBase>
+        </ModalBaseLogin>
       ) : (
         <RegisterModal
           onClose={() => {

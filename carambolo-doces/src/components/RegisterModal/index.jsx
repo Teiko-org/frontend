@@ -1,6 +1,6 @@
 import React from "react";
 import { useForm } from "react-hook-form";
-import ModalBase from "../ModalBase";
+import ModalBaseLogin from "../ModalBaseLogin";
 import Button from "../Button";
 import PhoneNumberInput from "../PhoneInput";
 import { ToastContainer, toast } from "react-toastify";
@@ -30,7 +30,7 @@ function RegisterModal({ onClose, switchToLogin }) {
   const notify = (message) => toast.error(message);
 
   return (
-    <ModalBase title="Cadastro" onClose={onClose}>
+    <ModalBaseLogin title="Cadastro" onClose={onClose}>
       <form onSubmit={handleSubmit(onSubmit, handleErrors)}>
         <div className="flex flex-col items-center mb-6">
           <img src="src/assets/user_icon.png" alt="Ícone de Usuário" />
@@ -96,7 +96,7 @@ function RegisterModal({ onClose, switchToLogin }) {
         Já possui uma conta? <span onClick={switchToLogin} className="text-gradient font-bold cursor-pointer">Entrar</span>
       </p>
       <ToastContainer />
-    </ModalBase>
+    </ModalBaseLogin>
   );
 }
 
