@@ -3,21 +3,8 @@ import ModalBase from '../ModalBase';
 
 export default function ModalConfirmarEdicao({ isOpen, onClose, onConfirm }) {
   return (
-    <ModalBase isOpen={isOpen} onClose={onClose}>
+    <ModalBase isOpen={isOpen} onClose={onClose} titulo="CONFIRMAR EDIÇÃO">
       <div className="flex flex-col items-center justify-between h-full">
-        <h2
-          className="font-semibold text-[36px] leading-normal text-center"
-          style={{
-            fontFamily: 'Montserrat, sans-serif',
-            background: 'linear-gradient(180deg, #A47032 0%, #D4B076 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}
-        >
-          CONFIRMAR EDIÇÃO
-        </h2>
-
-        {/* Texto com Montserrat, 400, 24px */}
         <p
           className="text-center my-2"
           style={{
