@@ -5,6 +5,7 @@ import Button from "../Button";
 import PhoneNumberInput from "../PhoneInput";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
+import { axiosApi } from "../../provider/AxiosApi";
 
 function RegisterModal({ onClose, switchToLogin }) {
   const {
@@ -16,9 +17,23 @@ function RegisterModal({ onClose, switchToLogin }) {
     trigger
   } = useForm();
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     console.log(data);
-    toast.success("Cadastro criado com sucesso!");
+    await axiosApi.post("/usuarios", {
+      nome: data.name,
+      senha: data.password,
+      contato: data.phone
+    }).then((response) => {
+      toast.success("Cadastro criado com sucesso!");
+      switchToLogin();
+      alert("tela de coisas");
+    }).catch((error) => {
+      if(error.status == 409) {
+        alert(`Usuario com contato ${data.phone} ja existente`);
+      } else if(error.status == 500) {
+        alert(`Tivemos problemas para processar seu cadastro. Tente novamente mais tarde!`);
+      }
+    })
   };
 
   const handleErrors = () => {

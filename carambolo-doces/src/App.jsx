@@ -11,14 +11,14 @@ import ModalConfirmarEdicao from "./components/ModalConfirmarEdicao";
 function App() {
   return (
     <>
-    {/* <Home/> */}
+    <Home/>
     {/* {<ModalBaseForm/>} */}
     {/* {<ModalMontagem />} */}
     {/* {<ModalDadosEntrega />} */}
     {/* {<ModalDecoracao />} */}
     {/* {<ModalRetirada />} */}
     {/* {<ModalAdicionais />} */}
-    {<ModalConfirmarEdicao />}
+    {/* {<ModalConfirmarEdicao />} */}
     </>
   );
 }
