@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function ModalBase({ isOpen, onClose, children, titulo, width = '689px', height = '271px' }) {
+export default function ModalBase({ isOpen, onClose, children, title, width = '689px', height = '271px' }) {
   // if (!isOpen) return null;
 
   return (
@@ -36,7 +36,7 @@ export default function ModalBase({ isOpen, onClose, children, titulo, width = '
             ✕
           </button>
 
-          {titulo && (
+          {title && (
             <h2
               className="font-semibold text-[36px] leading-normal text-center mb-4"
               style={{
@@ -46,7 +46,7 @@ export default function ModalBase({ isOpen, onClose, children, titulo, width = '
                 WebkitTextFillColor: 'transparent',
               }}
             >
-              {titulo}
+              {title}
             </h2>
           )}
           <div className="flex-1 flex flex-col justify-center items-center">

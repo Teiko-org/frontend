@@ -29,7 +29,7 @@ function UserPage() {
                 <span className="font-semibold text-blue">Nome</span>
                 <input
                   type="text"
-                  className="w-[510px] border-2 border-gold rounded-xl px-4 py-2 w-full pr-10"
+                  className="w-[510px] border-2 border-gold rounded-xl px-4 py-2 pr-10"
                 />
               </div>
 
@@ -38,7 +38,7 @@ function UserPage() {
                   <span className="font-semibold text-blue">Telefone</span>
                   <input
                     type="text"
-                    className="w-full border-2 border-gold rounded-xl px-4 py-2 w-full pr-10"
+                    className="w-full border-2 border-gold rounded-xl px-4 py-2 pr-10"
                   />
                 </div>
 
@@ -46,7 +46,7 @@ function UserPage() {
                   <span className="font-semibold text-blue">Data Nascimento</span>
                   <input
                     type="text"
-                    className="w-full border-2 border-gold rounded-xl px-4 py-2 w-full pr-10"
+                    className="w-full border-2 border-gold rounded-xl px-4 py-2 pr-10"
                   />
                 </div>
               </div>
@@ -56,7 +56,7 @@ function UserPage() {
                   <span className="font-semibold text-blue">Gênero</span>
                   <input
                     type="text"
-                    className="w-[200px] border-2 border-gold rounded-xl px-4 py-2 w-full pr-10"
+                    className="w-[200px] border-2 border-gold rounded-xl px-4 py-2 pr-10"
                   />
                 </div>
 
@@ -75,7 +75,7 @@ function UserPage() {
                 <span className="font-semibold text-blue">Senha Atual</span>
                 <input
                   type="text"
-                  className="w-full border-2 border-gold rounded-xl px-4 py-2 w-full pr-10"
+                  className="w-full border-2 border-gold rounded-xl px-4 py-2 pr-10"
                 />
               </div>
 
@@ -83,7 +83,7 @@ function UserPage() {
                 <span className="font-semibold text-blue">Nova Senha</span>
                 <input
                   type="text"
-                  className="w-full border-2 border-gold rounded-xl px-4 py-2 w-full pr-10"
+                  className="w-full border-2 border-gold rounded-xl px-4 py-2 pr-10"
                 />
               </div>
             </div>

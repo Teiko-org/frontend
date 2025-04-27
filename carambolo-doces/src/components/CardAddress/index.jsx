@@ -3,8 +3,10 @@ import { IoTrash } from "react-icons/io5";
 import Button from "../../components/Button";
 import { TbEdit } from "react-icons/tb";
 import ModalConfirmationAddressDeletion from "../../components/ModalConfirmationAddressDeletion";
+import ModalAddressEdition from "../../components/ModalAddressEdition";
 
 function CardAddress({
+  nome = "Rua da Vózinha Ana",
   cep = "00000-000",
   estado = "SP",
   cidade = "São Paulo",
@@ -13,24 +15,40 @@ function CardAddress({
   numero = "99999",
   complemento = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
 }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [
+    isModalConfirmationAddressDeletionOpen,
+    setIsModalConfirmationAddressDeletionOpen,
+  ] = useState(false);
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  const openModalConfirmationAddressDeletion = () =>
+    setIsModalConfirmationAddressDeletionOpen(true);
+  const closeModalConfirmationAddressDeletion = () =>
+    setIsModalConfirmationAddressDeletionOpen(false);
+
+  const [isModalAddressEditionOpen, setIsModalAddressEditionOpen] =
+    useState(false);
+
+  const openModalAddressEdition = () => setIsModalAddressEditionOpen(true);
+  const closeModalAddressEdition = () => setIsModalAddressEditionOpen(false);
 
   return (
     <div
       className={`relative w-[620px] h-[372px] border-2 border-gold rounded-2xl bg-bgNativeHome`}
     >
       <header className="bg-bgHome relative h-[60px] px-[20px] flex justify-between items-center border-b-2 border-gold rounded-t-2xl">
-        <span className="font-medium text-2xl">Endereço XPTO</span>
+        <span className="font-medium text-2xl">{nome}</span>
 
-        <button onClick={openModal} className="text-red text-3xl">
+        <button
+          onClick={openModalConfirmationAddressDeletion}
+          className="text-red text-3xl"
+        >
           <IoTrash />
         </button>
 
-        {isModalOpen && (
-          <ModalConfirmationAddressDeletion onClose={closeModal} />
+        {isModalConfirmationAddressDeletionOpen && (
+          <ModalConfirmationAddressDeletion
+            onClose={closeModalConfirmationAddressDeletion}
+          />
         )}
       </header>
 
@@ -62,12 +80,14 @@ function CardAddress({
 
         <div className="w-full flex gap-[70px]">
           <span>
-            <span className="font-semibold text-blue">Complemento: </span> {complemento}
+            <span className="font-semibold text-blue">Complemento: </span>{" "}
+            {complemento}
           </span>
         </div>
 
         <div className="flex justify-end">
           <Button
+            onClick={openModalAddressEdition}
             text={
               <span className="flex items-center gap-2">
                 Editar <TbEdit className="text-[25px]" />
@@ -75,6 +95,20 @@ function CardAddress({
             }
             className="w-fit"
           />
+
+          {isModalAddressEditionOpen && (
+            <ModalAddressEdition
+              onClose={closeModalAddressEdition}
+              nome={nome}
+              cep={cep}
+              estado={estado}
+              cidade={cidade}
+              bairro={bairro}
+              rua={rua}
+              numero={numero}
+              complemento={complemento}
+            />
+          )}
         </div>
       </div>
     </div>
