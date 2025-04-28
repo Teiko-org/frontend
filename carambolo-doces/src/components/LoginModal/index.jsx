@@ -16,16 +16,16 @@ function LoginModal({ onClose }) {
       contato: data.phone,
       senha: data.password
     }).then((response) => {
-        alert("tela de coisas");
-        toast.success("Login realizado com sucesso!");
-      }).catch((error) => {
-        if (error.status == 401) {
-          toast.error("Telefone ou Senha incorretos.");
-        } else if(error.status == 404) {
-          toast.error(`Usuário com contato ${data.phone} não encontrado`);
-        }
-      })
-
+      alert("tela de coisas");
+      toast.success("Login realizado com sucesso!");
+      localStorage.setItem("TOKEN_JWT", response.data.token);
+    }).catch((error) => {
+      if (error.status == 401) {
+        toast.error("Telefone ou Senha incorretos.");
+      } else if (error.status == 404) {
+        toast.error(`Usuário com contato ${data.phone} não encontrado`);
+      }
+    })
   };
 
   const handleRegisterClick = () => {
