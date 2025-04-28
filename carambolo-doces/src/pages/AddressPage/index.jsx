@@ -66,15 +66,12 @@ function AddressPage() {
 
           <div className="w-full flex flex-row justify-center items-center py-5 gap-[50px]">
             {enderecos.map((endereco, index) => {
-              
-              // console.log(endereco);
+
               return (
                 <CardAddress endereco={endereco} key={index} />
               );
             })}
 
-            {/* <CardAddress />
-            <CardAddress /> */}
           </div>
         </div>
       </div>

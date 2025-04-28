@@ -1,17 +1,84 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ModalBaseForm from "../ModalBaseForm";
 import ModalConfirmationAddressEdit from "../ModalConfirmationAddressEdit";
 import Button from "../Button";
+import axios from "axios";
 
-// function ModalAddressEdition({onClose, address}) {
-function ModalAddressEdition({ onClose }, props) {
-
-  console.log(props.endereco);
-
+function ModalAddressEdition({ onClose, endereco }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
+
+  const [nome, setNome] = useState(endereco.nome);
+  const [cep, setCep] = useState(endereco.cep);
+  const [estado, setEstado] = useState(endereco.estado);
+  const [cidade, setCidade] = useState(endereco.cidade);
+  const [bairro, setBairro] = useState(endereco.bairro);
+  const [rua, setRua] = useState(endereco.rua);
+  const [numero, setNumero] = useState(endereco.numero);
+  const [complemento, setComplemento] = useState(endereco.complemento);
+
+  useEffect(() => {
+    if (cep.length === 8) {
+      searchAddresByCep(cep);
+    }
+  }, [cep]);
+
+  const formatCep = (value) => {
+    const cleanCep = value.replace(/\D/g, "");
+    if (cleanCep.length <= 5) {
+      return cleanCep;
+    }
+    return `${cleanCep.substring(0, 5)}-${cleanCep.substring(5, 8)}`;
+  };
+
+  const handleCepChange = (e) => {
+    const formattedValue = formatCep(e.target.value);
+    setCep(formattedValue);
+
+    const cepWithoutMask = formattedValue.replace(/\D/g, "");
+
+    if (cepWithoutMask.length === 8) {
+      searchAddresByCep(formattedValue);
+    } else {
+      cleanAddressFields();
+    }
+  };
+
+  const searchAddresByCep = async (typedCep) => {
+    try {
+      const cepOnlyNumbers = typedCep.replace(/\D/g, "");
+
+      if (cepOnlyNumbers.length !== 8) {
+        return;
+      }
+
+      const response = await axios.get(
+        `https://viacep.com.br/ws/${cepOnlyNumbers}/json/`
+      );
+
+      if (response.data && !response.data.erro) {
+        setEstado(response.data.uf || "");
+        setCidade(response.data.localidade || "");
+        setBairro(response.data.bairro || "");
+        setRua(response.data.logradouro || "");
+      } else {
+        console.error("CEP não encontrado.");
+        cleanAddressFields();
+      }
+    } catch (error) {
+      console.error("Erro ao buscar o CEP:", error);
+      cleanAddressFields();
+    }
+  };
+
+  const cleanAddressFields = () => {
+    setEstado("");
+    setCidade("");
+    setBairro("");
+    setRua("");
+  };
 
   return (
     <>
@@ -22,8 +89,8 @@ function ModalAddressEdition({ onClose }, props) {
             <input
               type="text"
               className="w-[565px] border-2 border-gold rounded-xl px-4 py-2"
-              // value={address.nome}
-              value={props.endereco.nome}
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
             />
           </div>
         </section>
@@ -34,7 +101,9 @@ function ModalAddressEdition({ onClose }, props) {
             <input
               type="text"
               className="w-32 border-2 border-gold rounded-xl px-4 py-2"
-              value={props.endereco.cep}
+              value={cep}
+              maxLength={9}
+              onChange={handleCepChange}
             />
             <span className="text-sm text-blue">
               Não sabe o CEP?{" "}
@@ -46,11 +115,13 @@ function ModalAddressEdition({ onClose }, props) {
 
           <div className="flex flex-col pr-10">
             <span className="font-semibold text-blue">Estado</span>
-            <input
+            <select
               type="text"
               className="w-24 border-2 border-gold rounded-xl px-4 py-2"
-              value={props.endereco.estado}
-            />
+              value={estado}
+              onChange={(e) => setEstado(e.target.value)}>
+              <option value="SP">SP</option>
+            </select>
           </div>
 
           <div className="flex flex-col pr-10">
@@ -58,7 +129,8 @@ function ModalAddressEdition({ onClose }, props) {
             <input
               type="text"
               className="w-48 border-2 border-gold rounded-xl px-4 py-2"
-              value={props.endereco.cidade}
+              value={cidade}
+              onChange={(e) => setCidade(e.target.value)}
             />
           </div>
 
@@ -67,7 +139,8 @@ function ModalAddressEdition({ onClose }, props) {
             <input
               type="text"
               className="w-48 border-2 border-gold rounded-xl px-4 py-2"
-              value={props.endereco.bairro}
+              value={bairro}
+              onChange={(e) => setBairro(e.target.value)}
             />
           </div>
         </section>
@@ -78,7 +151,8 @@ function ModalAddressEdition({ onClose }, props) {
             <input
               type="text"
               className="w-[565px] border-2 border-gold rounded-xl px-4 py-2"
-              value={props.endereco.rua}
+              value={rua}
+              onChange={(e) => setRua(e.target.value)}
             />
           </div>
 
@@ -87,7 +161,8 @@ function ModalAddressEdition({ onClose }, props) {
             <input
               type="text"
               className="w-24 border-2 border-gold rounded-xl px-4 py-2"
-              value={props.endereco.numero}
+              value={numero}
+              onChange={(e) => setNumero(e.target.value)}
             />
           </div>
         </section>
@@ -98,7 +173,8 @@ function ModalAddressEdition({ onClose }, props) {
             <input
               type="text"
               className="w-[565px] border-2 border-gold rounded-xl px-4 py-2"
-              value={props.endereco.complemento}
+              value={complemento}
+              onChange={(e) => setComplemento(e.target.value)}
             />
           </div>
         </section>

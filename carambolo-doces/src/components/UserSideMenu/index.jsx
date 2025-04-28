@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { IoTrash } from "react-icons/io5";
 import Button from "../../components/Button";
 import { LuUpload } from "react-icons/lu";
 import ModalConfirmationLogOff from "../../components/ModalConfirmationLogOff";

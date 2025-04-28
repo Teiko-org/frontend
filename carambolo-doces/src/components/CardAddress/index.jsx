@@ -5,17 +5,6 @@ import { TbEdit } from "react-icons/tb";
 import ModalConfirmationAddressDeletion from "../../components/ModalConfirmationAddressDeletion";
 import ModalAddressEdition from "../../components/ModalAddressEdition";
 
-// function CardAddress({
-//   nome = "Casa da Vózinha Ana",
-//   cep = "00000-000",
-//   estado = "SP",
-//   cidade = "São Paulo",
-//   bairro = "Jardim Guairaca",
-//   rua = "Rua Antônio Marques Julião",
-//   numero = "99999",
-//   complemento = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-// }) {
-
 function CardAddress(props) {
 
   const endereco = props.endereco;
@@ -106,14 +95,6 @@ function CardAddress(props) {
             <ModalAddressEdition
               onClose={closeModalAddressEdition}
               endereco={endereco}
-              // nome={props.endereco.nome}
-              // cep={props.endereco.cep}
-              // estado={props.endereco.estado}
-              // cidade={props.endereco.cidade}
-              // bairro={props.endereco.bairro}
-              // rua={props.endereco.rua}
-              // numero={props.endereco.numero}
-              // complemento={props.endereco.complemento}
             />
           )}
         </div>
