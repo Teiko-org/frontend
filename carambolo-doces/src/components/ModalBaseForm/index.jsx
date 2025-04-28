@@ -10,7 +10,7 @@ export default function ModalBaseForm({ isOpen, onClose, title, children }) {
         <div className="bg-bgHome text-blue px-6 py-3 rounded-t">
           <button
             onClick={onClose}
-            className="absolute top-3 right-4 text-red-500 text-xl font-bold hover:scale-105"
+            className="absolute top-3 right-4 text-red text-xl font-bold hover:scale-105"
           >
             ✕
           </button>
