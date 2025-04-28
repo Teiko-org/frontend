@@ -1,10 +1,11 @@
 import React from "react";
 import { useForm } from "react-hook-form";
-import ModalBase from "../ModalBase";
+import ModalBaseLogin from "../ModalBaseLogin";
 import Button from "../Button";
 import PhoneNumberInput from "../PhoneInput";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
+import { axiosApi } from "../../provider/AxiosApi";
 
 function RegisterModal({ onClose, switchToLogin }) {
   const {
@@ -16,9 +17,21 @@ function RegisterModal({ onClose, switchToLogin }) {
     trigger
   } = useForm();
 
-  const onSubmit = (data) => {
-    console.log(data);
-    toast.success("Cadastro criado com sucesso!");
+  const onSubmit = async (data) => {
+    await axiosApi.post("/usuarios", {
+      nome: data.name,
+      senha: data.password,
+      contato: data.phone
+    }).then((response) => {
+      toast.success("Cadastro criado com sucesso!");
+      switchToLogin();
+    }).catch((error) => {
+      if(error.status == 409) {
+        alert(`Usuario com contato ${data.phone} ja existente`);
+      } else if(error.status == 500) {
+        alert(`Tivemos problemas para processar seu cadastro. Tente novamente mais tarde!`);
+      }
+    })
   };
 
   const handleErrors = () => {
@@ -30,7 +43,7 @@ function RegisterModal({ onClose, switchToLogin }) {
   const notify = (message) => toast.error(message);
 
   return (
-    <ModalBase title="Cadastro" onClose={onClose}>
+    <ModalBaseLogin title="Cadastro" onClose={onClose}>
       <form onSubmit={handleSubmit(onSubmit, handleErrors)}>
         <div className="flex flex-col items-center mb-6">
           <img src="src/assets/user_icon.png" alt="Ícone de Usuário" />
@@ -96,7 +109,7 @@ function RegisterModal({ onClose, switchToLogin }) {
         Já possui uma conta? <span onClick={switchToLogin} className="text-gradient font-bold cursor-pointer">Entrar</span>
       </p>
       <ToastContainer />
-    </ModalBase>
+    </ModalBaseLogin>
   );
 }
 
