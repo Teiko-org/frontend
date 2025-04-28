@@ -18,7 +18,6 @@ function RegisterModal({ onClose, switchToLogin }) {
   } = useForm();
 
   const onSubmit = async (data) => {
-    console.log(data);
     await axiosApi.post("/usuarios", {
       nome: data.name,
       senha: data.password,
@@ -26,7 +25,6 @@ function RegisterModal({ onClose, switchToLogin }) {
     }).then((response) => {
       toast.success("Cadastro criado com sucesso!");
       switchToLogin();
-      alert("tela de coisas");
     }).catch((error) => {
       if(error.status == 409) {
         alert(`Usuario com contato ${data.phone} ja existente`);

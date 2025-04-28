@@ -16,7 +16,6 @@ function LoginModal({ onClose }) {
       contato: data.phone,
       senha: data.password
     }).then((response) => {
-      alert("tela de coisas");
       toast.success("Login realizado com sucesso!");
       localStorage.setItem("TOKEN_JWT", response.data.token);
     }).catch((error) => {
