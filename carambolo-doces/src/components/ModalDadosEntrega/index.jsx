@@ -35,7 +35,7 @@ export default function ModalDeliveryData({
   const [rua, setRua] = useState(selectedRua || '');
   const [numero, setNumero] = useState(selectedNumero || '');
   const [complemento, setComplemento] = useState(selectedComplemento || '');
-  const [tipoEntrega, setTipoEntrega] = useState(selectedTipoEntrega || 'retirada');
+  const [tipoEntrega, setTipoEntrega] = useState(selectedTipoEntrega || 'entrega');
 
   useEffect(() => {
     if (cep.length === 8) {
