@@ -8,11 +8,35 @@ import ModalAddressRegister from "../../components/ModalAddressRegister";
 import { IoAdd } from "react-icons/io5";
 
 function AddressPage() {
-
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
-    const openModal = () => setIsModalOpen(true);
-    const closeModal = () => setIsModalOpen(false);
+
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+
+  const enderecos = [
+    {
+      nome: "Casa",
+      cep: "03150-080",
+      estado: "SP",
+      cidade: "São Paulo",
+      bairro: "Quinta da Paineira",
+      rua: "Rua Pindamonhangaba",
+      numero: "1234",
+      complemento:
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elitttttttttttttt.",
+    },
+
+    {
+      nome: "Casa da Vózinha Ana",
+      cep: "03244-000",
+      estado: "SP",
+      cidade: "São Paulo",
+      bairro: "Jardim Guairaca",
+      rua: "Rua Antônio Marques Julião",
+      numero: "623",
+      complemento: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+    },
+  ];
 
   return (
     <div className="bg-bgNativeHome flex-col">
@@ -27,7 +51,7 @@ function AddressPage() {
               ENDEREÇOS
             </h1>
             <Button
-            onClick={openModal}
+              onClick={openModal}
               text={
                 <span className="flex items-center gap-3">
                   Adicionar um Endereço
@@ -37,14 +61,20 @@ function AddressPage() {
               className="h-fit ml-auto mr-[60px]"
             />
 
-            {isModalOpen && (
-              <ModalAddressRegister onClose={closeModal} />
-            )}
+            {isModalOpen && <ModalAddressRegister onClose={closeModal} />}
           </div>
 
           <div className="w-full flex flex-row justify-center items-center py-5 gap-[50px]">
-            <CardAddress />
-            <CardAddress />
+            {enderecos.map((endereco, index) => {
+              
+              // console.log(endereco);
+              return (
+                <CardAddress endereco={endereco} key={index} />
+              );
+            })}
+
+            {/* <CardAddress />
+            <CardAddress /> */}
           </div>
         </div>
       </div>

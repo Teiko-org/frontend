@@ -5,16 +5,21 @@ import { TbEdit } from "react-icons/tb";
 import ModalConfirmationAddressDeletion from "../../components/ModalConfirmationAddressDeletion";
 import ModalAddressEdition from "../../components/ModalAddressEdition";
 
-function CardAddress({
-  nome = "Rua da Vózinha Ana",
-  cep = "00000-000",
-  estado = "SP",
-  cidade = "São Paulo",
-  bairro = "Jardim Guairaca",
-  rua = "Rua Antônio Marques Julião",
-  numero = "99999",
-  complemento = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-}) {
+// function CardAddress({
+//   nome = "Casa da Vózinha Ana",
+//   cep = "00000-000",
+//   estado = "SP",
+//   cidade = "São Paulo",
+//   bairro = "Jardim Guairaca",
+//   rua = "Rua Antônio Marques Julião",
+//   numero = "99999",
+//   complemento = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+// }) {
+
+function CardAddress(props) {
+
+  const endereco = props.endereco;
+
   const [
     isModalConfirmationAddressDeletionOpen,
     setIsModalConfirmationAddressDeletionOpen,
@@ -36,7 +41,8 @@ function CardAddress({
       className={`relative w-[620px] h-[372px] border-2 border-gold rounded-2xl bg-bgNativeHome`}
     >
       <header className="bg-bgHome relative h-[60px] px-[20px] flex justify-between items-center border-b-2 border-gold rounded-t-2xl">
-        <span className="font-medium text-2xl">{nome}</span>
+
+        <span className="font-medium text-2xl">{endereco.nome}</span>
 
         <button
           onClick={openModalConfirmationAddressDeletion}
@@ -55,33 +61,33 @@ function CardAddress({
       <div className="h-[312px] flex flex-col gap-5 text-lg py-5 px-10">
         <div className="w-full flex gap-[70px]">
           <span>
-            <span className="font-semibold text-blue">CEP: </span> {cep}
+            <span className="font-semibold text-blue">CEP: </span> {endereco.cep}
           </span>
           <span>
-            <span className="font-semibold text-blue">Estado: </span> {estado}
+            <span className="font-semibold text-blue">Estado: </span> {endereco.estado}
           </span>
           <span>
-            <span className="font-semibold text-blue">Cidade: </span> {cidade}
+            <span className="font-semibold text-blue">Cidade: </span> {endereco.cidade}
           </span>
         </div>
 
         <div className="w-full flex gap-[50px]">
           <span>
-            <span className="font-semibold text-blue">Bairro: </span> {bairro}
+            <span className="font-semibold text-blue">Bairro: </span> {endereco.bairro}
           </span>
           <span>
-            <span className="font-semibold text-blue">Rua: </span> {rua}
+            <span className="font-semibold text-blue">Rua: </span> {endereco.rua}
           </span>
         </div>
 
         <span>
-          <span className="font-semibold text-blue">Número: </span> {numero}
+          <span className="font-semibold text-blue">Número: </span> {endereco.numero}
         </span>
 
         <div className="w-full flex gap-[70px]">
           <span>
             <span className="font-semibold text-blue">Complemento: </span>{" "}
-            {complemento}
+            {endereco.complemento}
           </span>
         </div>
 
@@ -99,14 +105,15 @@ function CardAddress({
           {isModalAddressEditionOpen && (
             <ModalAddressEdition
               onClose={closeModalAddressEdition}
-              nome={nome}
-              cep={cep}
-              estado={estado}
-              cidade={cidade}
-              bairro={bairro}
-              rua={rua}
-              numero={numero}
-              complemento={complemento}
+              endereco={endereco}
+              // nome={props.endereco.nome}
+              // cep={props.endereco.cep}
+              // estado={props.endereco.estado}
+              // cidade={props.endereco.cidade}
+              // bairro={props.endereco.bairro}
+              // rua={props.endereco.rua}
+              // numero={props.endereco.numero}
+              // complemento={props.endereco.complemento}
             />
           )}
         </div>

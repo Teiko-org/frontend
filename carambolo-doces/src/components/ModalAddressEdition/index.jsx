@@ -4,17 +4,10 @@ import ModalConfirmationAddressEdit from "../ModalConfirmationAddressEdit";
 import Button from "../Button";
 
 // function ModalAddressEdition({onClose, address}) {
-function ModalAddressEdition({
-  onClose,
-  nome,
-  cep,
-  estado,
-  cidade,
-  bairro,
-  rua,
-  numero,
-  complemento,
-}) {
+function ModalAddressEdition({ onClose }, props) {
+
+  console.log(props.endereco);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const openModal = () => setIsModalOpen(true);
@@ -30,7 +23,7 @@ function ModalAddressEdition({
               type="text"
               className="w-[565px] border-2 border-gold rounded-xl px-4 py-2"
               // value={address.nome}
-              value={nome}
+              value={props.endereco.nome}
             />
           </div>
         </section>
@@ -41,7 +34,7 @@ function ModalAddressEdition({
             <input
               type="text"
               className="w-32 border-2 border-gold rounded-xl px-4 py-2"
-              value={cep}
+              value={props.endereco.cep}
             />
             <span className="text-sm text-blue">
               Não sabe o CEP?{" "}
@@ -56,7 +49,7 @@ function ModalAddressEdition({
             <input
               type="text"
               className="w-24 border-2 border-gold rounded-xl px-4 py-2"
-              value={estado}
+              value={props.endereco.estado}
             />
           </div>
 
@@ -65,7 +58,7 @@ function ModalAddressEdition({
             <input
               type="text"
               className="w-48 border-2 border-gold rounded-xl px-4 py-2"
-              value={cidade}
+              value={props.endereco.cidade}
             />
           </div>
 
@@ -74,7 +67,7 @@ function ModalAddressEdition({
             <input
               type="text"
               className="w-48 border-2 border-gold rounded-xl px-4 py-2"
-              value={bairro}
+              value={props.endereco.bairro}
             />
           </div>
         </section>
@@ -85,7 +78,7 @@ function ModalAddressEdition({
             <input
               type="text"
               className="w-[565px] border-2 border-gold rounded-xl px-4 py-2"
-              value={rua}
+              value={props.endereco.rua}
             />
           </div>
 
@@ -94,7 +87,7 @@ function ModalAddressEdition({
             <input
               type="text"
               className="w-24 border-2 border-gold rounded-xl px-4 py-2"
-              value={numero}
+              value={props.endereco.numero}
             />
           </div>
         </section>
@@ -105,7 +98,7 @@ function ModalAddressEdition({
             <input
               type="text"
               className="w-[565px] border-2 border-gold rounded-xl px-4 py-2"
-              value={complemento}
+              value={props.endereco.complemento}
             />
           </div>
         </section>
@@ -114,7 +107,6 @@ function ModalAddressEdition({
           <Button text="Salvar" onClick={openModal} />
 
           {isModalOpen && <ModalConfirmationAddressEdit onClose={closeModal} />}
-
         </footer>
       </ModalBaseForm>
     </>
