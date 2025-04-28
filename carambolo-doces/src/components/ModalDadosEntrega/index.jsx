@@ -6,6 +6,8 @@ import ModalBaseForm from '../ModalBaseForm';
 import PhoneNumberInput from '../PhoneInput';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import axios from 'axios';
+import { useEffect } from 'react';
 
 export default function ModalDeliveryData({
   isOpen,
@@ -35,6 +37,12 @@ export default function ModalDeliveryData({
   const [complemento, setComplemento] = useState(selectedComplemento || '');
   const [tipoEntrega, setTipoEntrega] = useState(selectedTipoEntrega || 'retirada');
 
+  useEffect(() => {
+    if (cep.length === 8) {
+      buscarEnderecoPorCep(cep);
+    }
+  }, [cep]);
+
   const handleSave = () => {
     onSave({
       telefone,
@@ -49,7 +57,60 @@ export default function ModalDeliveryData({
       complemento,
       tipoEntrega,
     });
-    onClose(); 
+    onClose();
+  };
+
+  const formatarCep = (valor) => {
+    const cepLimpo = valor.replace(/\D/g, '');
+    if (cepLimpo.length <= 5) {
+      return cepLimpo;
+    }
+    return `${cepLimpo.substring(0, 5)}-${cepLimpo.substring(5, 8)}`;
+  };
+
+  const buscarEnderecoPorCep = async (cepDigitado) => {
+    try {
+      const cepSomenteNumeros = cepDigitado.replace(/\D/g, '');
+
+      if (cepSomenteNumeros.length !== 8) {
+        return;
+      }
+
+      const response = await axios.get(`https://viacep.com.br/ws/${cepSomenteNumeros}/json/`);
+
+      if (response.data && !response.data.erro) {
+        setUf(response.data.uf || '');
+        setCidade(response.data.localidade || '');
+        setBairro(response.data.bairro || '');
+        setRua(response.data.logradouro || '');
+      } else {
+        console.error('CEP não encontrado.');
+        limparCamposEndereco();
+      }
+    } catch (error) {
+      console.error('Erro ao buscar o CEP:', error);
+      limparCamposEndereco();
+    }
+  };
+
+  const limparCamposEndereco = () => {
+    setUf('');
+    setCidade('');
+    setBairro('');
+    setRua('');
+  };
+
+  const handleCepChange = (e) => {
+    const valorFormatado = formatarCep(e.target.value);
+    setCep(valorFormatado);
+
+    const cepSemMascara = valorFormatado.replace(/\D/g, '');
+
+    if (cepSemMascara.length === 8) {
+      buscarEnderecoPorCep(valorFormatado);
+    } else {
+      limparCamposEndereco();
+    }
   };
 
   return (
@@ -138,7 +199,8 @@ export default function ModalDeliveryData({
               type="text"
               placeholder="00000-000"
               value={cep}
-              onChange={(e) => setCep(e.target.value)}
+              onChange={handleCepChange}
+              maxLength={9} 
               className="w-full bg-white rounded px-2 py-1 outline-none"
             />
           </CampoComGradiente>
@@ -158,8 +220,6 @@ export default function ModalDeliveryData({
             >
               <option value="">UF</option>
               <option value="SP">SP</option>
-              <option value="RJ">RJ</option>
-              <option value="MG">MG</option>
               {/* Add as opções que quiser */}
             </select>
           </CampoComGradiente>

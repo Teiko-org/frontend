@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function ModalBase({ isOpen, onClose, children, width = '689px', height = '271px' }) {
+export default function ModalBase({ isOpen, onClose, children, title, width = '689px', height = '271px' }) {
   // if (!isOpen) return null;
 
   return (
@@ -15,7 +15,7 @@ export default function ModalBase({ isOpen, onClose, children, width = '689px', 
         }}
       >
         <div
-          className="rounded-xl text-white shadow-lg p-6 relative w-full h-full"
+          className="rounded-xl text-white shadow-lg p-6 relative w-full h-full flex flex-col"
           style={{
             background: 'linear-gradient(180deg, #103464 0%, #30344F 100%)',
           }}
@@ -35,7 +35,23 @@ export default function ModalBase({ isOpen, onClose, children, width = '689px', 
           >
             ✕
           </button>
-          {children}
+
+          {title && (
+            <h2
+              className="font-semibold text-[36px] leading-normal text-center mb-4"
+              style={{
+                fontFamily: 'Montserrat, sans-serif',
+                background: 'linear-gradient(180deg, #A47032 0%, #D4B076 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              {title}
+            </h2>
+          )}
+          <div className="flex-1 flex flex-col justify-center items-center">
+            {children}
+          </div>
         </div>
       </div>
     </div>
