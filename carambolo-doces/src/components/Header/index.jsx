@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Search, ShoppingCart, ChevronDown } from "lucide-react";
+import { Link } from "react-router-dom";
 import Button from "../Button";
 import LoginModal from "../LoginModal";
 
@@ -24,7 +25,9 @@ function Header() {
         </div>
 
         <div className="flex-1 flex justify-center">
-          <img src="src/assets/LogoCarambolo.png" alt="Logo" className="h-20" />
+          <Link to="/">
+            <img src="src/assets/LogoCarambolo.png" alt="Logo" className="h-20 cursor-pointer" />
+          </Link>
         </div>
 
         <div className="flex flex-1 justify-center items-center space-x-12">
@@ -43,9 +46,9 @@ function Header() {
       </div>
 
       <div className="border-t-2 border-b-2 border-gold bg-transparent text-white py-2 flex justify-around items-center">
-        <a href="#" className="hover:text-darkGold">
+        <Link to="/" className="hover:text-darkGold">
           HOME
-        </a>
+        </Link>
         <a href="#" className="hover:text-darkGold flex items-center">
           CARAMBOLOS <ChevronDown className="ml-1" size={16} />
         </a>
@@ -58,7 +61,6 @@ function Header() {
       </div>
 
       {isModalOpen && <LoginModal onClose={closeModal} />}
-      {/* {isModalOpen && <RegisterModal onClose={closeModal} />} */}
     </header>
   );
 }

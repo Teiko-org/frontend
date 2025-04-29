@@ -23,3 +23,12 @@
   position: relative;
   z-index: 1;
 }
+
+.perspective {
+  perspective: 1000px;
+}
+
+.carousel {
+  transform-style: preserve-3d;
+  transition: transform 1s;
+}

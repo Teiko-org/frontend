@@ -43,7 +43,7 @@ function RegisterModal({ onClose, switchToLogin }) {
           placeholder="Nome"
           className={`w-full py-2 px-4 rounded-lg ${errors.name ? 'mb-1' : 'mb-4'}`}
         />
-        {errors.name && <p className="text-red-600 text-sm mb-1">{errors.name.message}</p>}
+        {errors.name && <p className="text-pink text-sm mb-1">{errors.name.message}</p>}
 
         <div className={`flex flex-col ${errors.phone ? '' : 'mb-4'}`}>
           <label htmlFor="phone" className="text-white mb-1">Telefone Celular</label>
