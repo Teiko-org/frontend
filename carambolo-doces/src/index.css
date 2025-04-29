@@ -40,6 +40,15 @@
   -webkit-text-fill-color: transparent;
 }
 
+.perspective {
+  perspective: 1000px;
+}
+
+.carousel {
+  transform-style: preserve-3d;
+  transition: transform 1s;
+}
+
 /* :root {
     font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.5;
