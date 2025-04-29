@@ -1,22 +1,31 @@
 import React, { useState } from "react";
-import ModalBase from "../ModalBase";
+import ModalBaseLogin from "../ModalBaseLogin";
 import Button from "../Button";
 import RegisterModal from "../RegisterModal";
 import { useForm } from "react-hook-form";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
+import { axiosApi } from "../../provider/AxiosApi";
 
 function LoginModal({ onClose }) {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
-  const onSubmit = (data) => {
-    if (data.phone === "11912341234" && data.password === "Senha123@") {
-      console.log(data);
+  const onSubmit = async (data) => {
+    await axiosApi.post("/usuarios/login", {
+      contato: data.phone,
+      senha: data.password
+    }).then((response) => {
       toast.success("Login realizado com sucesso!");
-    } else {
-      toast.error("Telefone ou Senha incorretos.");
-    }
+      localStorage.setItem("TOKEN_JWT", response.data.token);
+      localStorage.setItem("IS_SIGNED", true);
+    }).catch((error) => {
+      if (error.status == 401) {
+        toast.error("Telefone ou Senha incorretos.");
+      } else if (error.status == 404) {
+        toast.error(`Usuário com contato ${data.phone} não encontrado`);
+      }
+    })
   };
 
   const handleRegisterClick = () => {
@@ -26,7 +35,7 @@ function LoginModal({ onClose }) {
   return (
     <>
       {!isRegisterOpen ? (
-        <ModalBase title="Login" onClose={onClose}>
+        <ModalBaseLogin title="Login" onClose={onClose}>
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="flex flex-col items-center mb-6">
               <img src="src/assets/user_icon.png" alt="Ícone de Usuário" />
@@ -72,7 +81,7 @@ function LoginModal({ onClose }) {
           </p>
 
           <ToastContainer />
-        </ModalBase>
+        </ModalBaseLogin>
       ) : (
         <RegisterModal
           onClose={() => {

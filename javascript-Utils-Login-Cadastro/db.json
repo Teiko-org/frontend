@@ -1,0 +1,16 @@
+{
+  "users": [
+    {
+      "id": "543d",
+      "name": "usuario1",
+      "phone": "12345",
+      "password": "123456"
+    },
+    {
+      "id": "b8b3",
+      "name": "asdasdasdas",
+      "phone": "+55 (12) 31231-2312",
+      "password": "Magreza2004."
+    }
+  ]
+}

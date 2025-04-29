@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Search, ShoppingCart, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import Button from "../Button";
@@ -7,8 +7,14 @@ import LoginModal from "../LoginModal";
 function Header() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const [userSigned, setUserSigned] = useState(false)
+
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
+
+  useEffect(() => {
+    setUserSigned(localStorage.getItem("IS_SIGNED"))
+  }, [localStorage.getItem("IS_SIGNED")])
 
   return (
     <header className="bg-gradient-to-b from-blue to-darkBlue h-30 max-w-full">
@@ -29,16 +35,28 @@ function Header() {
             <img src="src/assets/LogoCarambolo.png" alt="Logo" className="h-20 cursor-pointer" />
           </Link>
         </div>
-
         <div className="flex flex-1 justify-center items-center space-x-12">
-          <Button
-            text="Login"
-            bgColor="bg-gradient-to-l from-gold to-darkGold"
-            fontSize="text-lg"
-            textColor="text-blue"
-            borderColor="border-gold"
-            onClick={openModal}
-          />
+          <>
+            {
+              !userSigned ?
+                (<Button
+                  text="Login"
+                  bgColor="bg-gradient-to-l from-gold to-darkGold"
+                  fontSize="text-lg"
+                  textColor="text-blue"
+                  borderColor="border-gold"
+                  onClick={openModal}
+                />) : (
+                  <button>
+                    <img
+                      src="src/assets/user_icon.png"
+                      width={"50px"}
+                    />
+                  </button>)
+            }
+
+          </>
+
           <button className="p-2 bg-transparent rounded-full transform hover:scale-105 transition-transform">
             <ShoppingCart className="text-gold w-8 h-8" />
           </button>
