@@ -27,7 +27,7 @@ const Step2 = () => {
           placeholder="Descreva abaixo como você quer o seu Carambolo"
         ></textarea>
       </div>
-      <div className="flex justify-between items-center mt-16">
+      <div className="flex justify-between items-center mt-4">
         <div className="text-gradient font-bold text-lg">
           VALOR ESTIMADO: R$ 999,99
         </div>

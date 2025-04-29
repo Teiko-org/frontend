@@ -6,7 +6,11 @@ const InputImage = () => {
 
   const handleImageChange = (event) => {
     const newFiles = Array.from(event.target.files);
-    const newFilesWithPreview = newFiles.map((file) => ({
+    const uniqueFiles = newFiles.filter(
+      (file) => !files.some((f) => f.name === file.name)
+    );
+
+    const newFilesWithPreview = uniqueFiles.map((file) => ({
       name: file.name,
       preview: URL.createObjectURL(file),
     }));
