@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
-import ModalBaseForm from '../ModalBaseForm';
-import Button from '../Button';
+import React, { useState } from "react";
+import ModalBaseForm from "../ModalBaseForm";
+import ModalConfirmarEdicao from "../ModalConfirmarEdicao";
+import Button from "../Button";
 
 export default function ModalAdicionais({ isOpen, onClose, onSave }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const closeModal = () => setIsModalOpen(false);
+
   const [addons, setAddons] = useState({
     cherry: true,
     glitter: true,
@@ -19,18 +23,18 @@ export default function ModalAdicionais({ isOpen, onClose, onSave }) {
   };
 
   const handleSave = () => {
-    onSave(addons);
-    onClose();
+    // onSave(addons);
+    setIsModalOpen(true);
   };
 
   return (
     <ModalBaseForm isOpen={isOpen} onClose={onClose} title="ADICIONAIS">
       <div className="flex flex-wrap gap-6 mb-4 mt-7">
         {[
-          { label: 'CEREJA', name: 'cherry' },
-          { label: 'GLITTER', name: 'glitter' },
-          { label: 'PEROLADO', name: 'pearl' },
-          { label: 'LACINHOS', name: 'bows' },
+          { label: "CEREJA", name: "cherry" },
+          { label: "GLITTER", name: "glitter" },
+          { label: "PEROLADO", name: "pearl" },
+          { label: "LACINHOS", name: "bows" },
         ].map((item) => (
           <label
             key={item.name}
@@ -46,19 +50,19 @@ export default function ModalAdicionais({ isOpen, onClose, onSave }) {
             <span
               className="w-5 h-5 rounded-sm p-[1px]"
               style={{
-                background: 'linear-gradient(180deg, #A47032 0%, #D4B076 100%)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                background: "linear-gradient(180deg, #A47032 0%, #D4B076 100%)",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
               <span
                 className="w-full h-full rounded-[1px] flex items-center justify-center"
                 style={{
                   background: addons[item.name]
-                    ? 'linear-gradient(180deg, #A47032 0%, #D4B076 100%)'
-                    : '#fff',
-                  transition: 'all 0.2s ease',
+                    ? "linear-gradient(180deg, #A47032 0%, #D4B076 100%)"
+                    : "#fff",
+                  transition: "all 0.2s ease",
                 }}
               >
                 {addons[item.name] && (
@@ -88,6 +92,7 @@ export default function ModalAdicionais({ isOpen, onClose, onSave }) {
           textColor="text-blue"
           borderColor="border-gold"
         />
+        {isModalOpen && <ModalConfirmarEdicao onClose={closeModal} step={"Adicionais"} />}
       </div>
     </ModalBaseForm>
   );

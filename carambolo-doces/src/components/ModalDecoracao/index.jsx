@@ -1,17 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { FaFileAlt } from 'react-icons/fa';
-import Button from '../Button';
-import ModalBaseForm from '../ModalBaseForm';
-import './modalDecoracao.css';
+import React, { useState, useEffect } from "react";
+import { FaFileAlt } from "react-icons/fa";
+import Button from "../Button";
+import ModalBaseForm from "../ModalBaseForm";
+import ModalConfirmarEdicao from "../ModalConfirmarEdicao";
+import "./modalDecoracao.css";
 
 export default function ModalDecoration({
   isOpen,
   onClose,
   onSave,
-  initialObservations = '',
-  initialReferences = []
+  initialObservations = "",
+  initialReferences = [],
 }) {
-  const [observations, setObservations] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const closeModal = () => setIsModalOpen(false);
+
+  const [observations, setObservations] = useState("");
   const [references, setReferences] = useState([]);
 
   useEffect(() => {
@@ -27,8 +31,8 @@ export default function ModalDecoration({
   };
 
   const handleSave = () => {
-    onSave({ observations, references });
-    onClose();
+    // onSave({ observations, references });
+    setIsModalOpen(true);
   };
 
   return (
@@ -39,13 +43,18 @@ export default function ModalDecoration({
         <div className="w-full min-h-[150px] flex flex-wrap items-start gap-4 px-4 py-3 bg-white rounded-lg border-gradient overflow-auto">
           {references.length > 0 ? (
             references.map((file, index) => (
-              <div key={index} className="flex items-center gap-2 text-[#103464] text-sm">
+              <div
+                key={index}
+                className="flex items-center gap-2 text-[#103464] text-sm"
+              >
                 <FaFileAlt className="text-xl" />
                 <span className="truncate max-w-[150px]">{file.name}</span>
               </div>
             ))
           ) : (
-            <span className="text-sm text-gray-500">Nenhum arquivo selecionado</span>
+            <span className="text-sm text-gray-500">
+              Nenhum arquivo selecionado
+            </span>
           )}
         </div>
 
@@ -88,6 +97,7 @@ export default function ModalDecoration({
           textColor="text-blue"
           borderColor="border-gold"
         />
+        {isModalOpen && <ModalConfirmarEdicao onClose={closeModal} step={"Decoração"} />}
       </div>
     </ModalBaseForm>
   );
