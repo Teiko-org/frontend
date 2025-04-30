@@ -54,7 +54,7 @@ function Header() {
                     <img
                       src="src/assets/user_icon.png"
                       width={"50px"}
-                      onClick={navigate('/pagina-usuario')}
+                      onClick={() => navigate('/pagina-usuario')}
                     />
                   </button>)
             }
