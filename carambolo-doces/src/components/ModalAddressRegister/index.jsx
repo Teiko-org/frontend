@@ -23,7 +23,9 @@ function ModalAddressRegister({ onClose }) {
   const formatCep = (value) => {
     const cleanCep = value.replace(/\D/g, "");
     if (cleanCep.length <= 5) {
+
       return cleanCep;
+
     }
     return `${cleanCep.substring(0, 5)}-${cleanCep.substring(5, 8)}`;
   };
@@ -112,6 +114,7 @@ function ModalAddressRegister({ onClose }) {
               type="text"
               className="w-24 border-2 border-gold rounded-xl px-4 py-2"
               value={estado}
+              readOnly
             />
           </div>
 
@@ -121,6 +124,7 @@ function ModalAddressRegister({ onClose }) {
               type="text"
               className="w-48 border-2 border-gold rounded-xl px-4 py-2"
               value={cidade}
+              onChange={(e) => setCidade(e.target.value)}
             />
           </div>
 
@@ -130,6 +134,7 @@ function ModalAddressRegister({ onClose }) {
               type="text"
               className="w-48 border-2 border-gold rounded-xl px-4 py-2"
               value={bairro}
+              onChange={(e) => setBairro(e.target.value)}
             />
           </div>
         </section>
@@ -141,6 +146,7 @@ function ModalAddressRegister({ onClose }) {
               type="text"
               className="w-[565px] border-2 border-gold rounded-xl px-4 py-2"
               value={rua}
+              onChange={(e) => setRua(e.target.value)}
             />
           </div>
 

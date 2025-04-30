@@ -1,33 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import ModalBaseForm from '../ModalBaseForm';
-import Button from '../Button';
-import './modalMontagem.css';
+import React, { useState, useEffect } from "react";
+import ModalBaseForm from "../ModalBaseForm";
+import ModalConfirmarEdicao from "../ModalConfirmarEdicao";
+import Button from "../Button";
+import "./modalMontagem.css";
 
-export default function ModalMontagem({ 
-  isOpen, 
-  onClose, 
-  selectedSize = '13cm', 
-  selectedShape = 'Redondo', 
-  selectedMass = '', 
-  selectedFilling = '', 
-  onSave
+export default function ModalMontagem({
+  isOpen,
+  onClose,
+  selectedSize = "13cm",
+  selectedShape = "Redondo",
+  selectedMass = "",
+  selectedFilling = "",
+  onSave,
 }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const closeModal = () => setIsModalOpen(false);
+
   const [tamanhoSelecionado, setTamanhoSelecionado] = useState(selectedSize);
   const [formatoSelecionado, setFormatoSelecionado] = useState(selectedShape);
   const [massaSelecionada, setMassaSelecionada] = useState(selectedMass);
   const [recheioSelecionado, setRecheioSelecionado] = useState(selectedFilling);
 
-  const tamanhos = ['11cm', '13cm', '15cm', '17cm'];
-  const formatos = ['Redondo', 'Coração'];
+  const tamanhos = ["11cm", "13cm", "15cm", "17cm"];
+  const formatos = ["Redondo", "Coração"];
 
   const handleSave = () => {
-    onSave({
-      size: tamanhoSelecionado,
-      shape: formatoSelecionado,
-      mass: massaSelecionada,
-      filling: recheioSelecionado
-    });
-    onClose();
+    // onSave({
+    //   size: tamanhoSelecionado,
+    //   shape: formatoSelecionado,
+    //   mass: massaSelecionada,
+    //   filling: recheioSelecionado,
+    // });
+    setIsModalOpen(true);
   };
 
   useEffect(() => {
@@ -42,7 +46,7 @@ export default function ModalMontagem({
       {/* TAMANHO */}
       <div className="mb-4">
         <p className="text-sm font-semibold text-[#103464] mb-2">
-          TAMANHO{' '}
+          TAMANHO{" "}
           <span className="text-blue-700 text-xs cursor-pointer underline ml-9">
             Tabela de medidas
           </span>
@@ -52,7 +56,9 @@ export default function ModalMontagem({
             <button
               key={size}
               onClick={() => setTamanhoSelecionado(size)}
-              className={`botao-gradiente ${tamanhoSelecionado === size ? 'selecionado' : ''}`}
+              className={`botao-gradiente ${
+                tamanhoSelecionado === size ? "selecionado" : ""
+              }`}
             >
               {size}
             </button>
@@ -68,7 +74,9 @@ export default function ModalMontagem({
             <button
               key={format}
               onClick={() => setFormatoSelecionado(format)}
-              className={`botao-gradiente ${formatoSelecionado === format ? 'selecionado' : ''}`}
+              className={`botao-gradiente ${
+                formatoSelecionado === format ? "selecionado" : ""
+              }`}
             >
               {format}
             </button>
@@ -81,7 +89,9 @@ export default function ModalMontagem({
         <p className="text-sm font-semibold text-[#103464] mb-1">MASSA</p>
         <div
           className="relative w-[191px] h-[39px] p-[1px] rounded-md"
-          style={{ background: 'linear-gradient(180deg, #A47032 0%, #D4B076 100%)' }}
+          style={{
+            background: "linear-gradient(180deg, #A47032 0%, #D4B076 100%)",
+          }}
         >
           <select
             className="w-full h-full pl-2 pr-8 rounded-md bg-white text-sm text-gray-700 appearance-none border-none outline-none"
@@ -100,7 +110,11 @@ export default function ModalMontagem({
               strokeWidth="2"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </div>
         </div>
@@ -111,7 +125,9 @@ export default function ModalMontagem({
         <p className="text-sm font-semibold text-[#103464] mb-1">RECHEIO</p>
         <div
           className="relative w-full p-[1px] rounded-md"
-          style={{ background: 'linear-gradient(180deg, #A47032 0%, #D4B076 100%)' }}
+          style={{
+            background: "linear-gradient(180deg, #A47032 0%, #D4B076 100%)",
+          }}
         >
           <select
             className="w-full h-[39px] pl-2 pr-8 rounded-md bg-white text-sm text-gray-700 appearance-none border-none outline-none"
@@ -130,7 +146,11 @@ export default function ModalMontagem({
               strokeWidth="2"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </div>
         </div>
@@ -146,6 +166,8 @@ export default function ModalMontagem({
           textColor="text-blue"
           borderColor="border-gold"
         />
+
+        {isModalOpen && <ModalConfirmarEdicao onClose={closeModal} step={"Montagem"} />}
       </div>
     </ModalBaseForm>
   );

@@ -1,7 +1,7 @@
 import React from 'react';
 import ModalBase from '../ModalBase';
 
-export default function ModalConfirmarEdicao({ isOpen, onClose, onConfirm }) {
+export default function ModalConfirmarEdicao({ isOpen, onClose, onConfirm, step }) {
   return (
     <ModalBase isOpen={isOpen} onClose={onClose} title="CONFIRMAR EDIÇÃO">
       <div className="flex flex-col items-center justify-between h-full">
@@ -14,7 +14,7 @@ export default function ModalConfirmarEdicao({ isOpen, onClose, onConfirm }) {
             color: 'white',
           }}
         >
-          Tem certeza que deseja editar a fase de <span style={{ fontWeight: 600 }}>Montagem</span>?
+          Tem certeza que deseja editar os dados da fase de <span style={{ fontWeight: 600 }}>{step}</span>?
         </p>
 
         {/* Botões */}

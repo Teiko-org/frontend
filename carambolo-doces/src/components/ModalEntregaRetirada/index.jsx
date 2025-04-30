@@ -1,13 +1,14 @@
 // ModalEntregaRetirada.jsx
-import React, { useState, useEffect } from 'react';
-import { FaCalendarAlt } from 'react-icons/fa';
-import CampoComGradiente from '../gradientField';
-import Button from '../Button';
-import ModalBaseForm from '../ModalBaseForm';
-import PhoneNumberInput from '../PhoneInput';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import { FaCalendarAlt } from "react-icons/fa";
+import CampoComGradiente from "../gradientField";
+import Button from "../Button";
+import ModalBaseForm from "../ModalBaseForm";
+import PhoneNumberInput from "../PhoneInput";
+import ModalConfirmarEdicao from "../ModalConfirmarEdicao";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import axios from "axios";
 
 export default function ModalEntregaRetirada({
   isOpen,
@@ -25,21 +26,26 @@ export default function ModalEntregaRetirada({
   selectedComplemento,
   selectedTipoEntrega,
 }) {
-  const [telefone, setTelefone] = useState(selectedTelefone || '');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const closeModal = () => setIsModalOpen(false);
+
+  const [telefone, setTelefone] = useState(selectedTelefone || "");
   const [data, setData] = useState(selectedData || null);
-  const [nome, setNome] = useState(selectedNome || '');
-  const [cep, setCep] = useState(selectedCep || '');
-  const [uf, setUf] = useState(selectedUf || '');
-  const [cidade, setCidade] = useState(selectedCidade || '');
-  const [bairro, setBairro] = useState(selectedBairro || '');
-  const [rua, setRua] = useState(selectedRua || '');
-  const [numero, setNumero] = useState(selectedNumero || '');
-  const [complemento, setComplemento] = useState(selectedComplemento || '');
-  const [tipoEntrega, setTipoEntrega] = useState(selectedTipoEntrega || 'entrega');
+  const [nome, setNome] = useState(selectedNome || "");
+  const [cep, setCep] = useState(selectedCep || "");
+  const [uf, setUf] = useState(selectedUf || "");
+  const [cidade, setCidade] = useState(selectedCidade || "");
+  const [bairro, setBairro] = useState(selectedBairro || "");
+  const [rua, setRua] = useState(selectedRua || "");
+  const [numero, setNumero] = useState(selectedNumero || "");
+  const [complemento, setComplemento] = useState(selectedComplemento || "");
+  const [tipoEntrega, setTipoEntrega] = useState(
+    selectedTipoEntrega || "entrega"
+  );
 
   // Estado adicional para retirada
-  const [localRetirada, setLocalRetirada] = useState('');
-  const [horarioRetirada, setHorarioRetirada] = useState('');
+  const [localRetirada, setLocalRetirada] = useState("");
+  const [horarioRetirada, setHorarioRetirada] = useState("");
 
   useEffect(() => {
     if (cep.length === 8) {
@@ -48,7 +54,7 @@ export default function ModalEntregaRetirada({
   }, [cep]);
 
   const formatarCep = (valor) => {
-    const cepLimpo = valor.replace(/\D/g, '');
+    const cepLimpo = valor.replace(/\D/g, "");
     if (cepLimpo.length <= 5) {
       return cepLimpo;
     }
@@ -57,39 +63,41 @@ export default function ModalEntregaRetirada({
 
   const buscarEnderecoPorCep = async (cepDigitado) => {
     try {
-      const cepSomenteNumeros = cepDigitado.replace(/\D/g, '');
+      const cepSomenteNumeros = cepDigitado.replace(/\D/g, "");
 
       if (cepSomenteNumeros.length !== 8) return;
 
-      const response = await axios.get(`https://viacep.com.br/ws/${cepSomenteNumeros}/json/`);
+      const response = await axios.get(
+        `https://viacep.com.br/ws/${cepSomenteNumeros}/json/`
+      );
 
       if (response.data && !response.data.erro) {
-        setUf(response.data.uf || '');
-        setCidade(response.data.localidade || '');
-        setBairro(response.data.bairro || '');
-        setRua(response.data.logradouro || '');
+        setUf(response.data.uf || "");
+        setCidade(response.data.localidade || "");
+        setBairro(response.data.bairro || "");
+        setRua(response.data.logradouro || "");
       } else {
-        console.error('CEP não encontrado.');
+        console.error("CEP não encontrado.");
         limparCamposEndereco();
       }
     } catch (error) {
-      console.error('Erro ao buscar o CEP:', error);
+      console.error("Erro ao buscar o CEP:", error);
       limparCamposEndereco();
     }
   };
 
   const limparCamposEndereco = () => {
-    setUf('');
-    setCidade('');
-    setBairro('');
-    setRua('');
+    setUf("");
+    setCidade("");
+    setBairro("");
+    setRua("");
   };
 
   const handleCepChange = (e) => {
     const valorFormatado = formatarCep(e.target.value);
     setCep(valorFormatado);
 
-    const cepSemMascara = valorFormatado.replace(/\D/g, '');
+    const cepSemMascara = valorFormatado.replace(/\D/g, "");
 
     if (cepSemMascara.length === 8) {
       buscarEnderecoPorCep(valorFormatado);
@@ -106,7 +114,7 @@ export default function ModalEntregaRetirada({
       tipoEntrega,
     };
 
-    if (tipoEntrega === 'entrega') {
+    if (tipoEntrega === "entrega") {
       dados.cep = cep;
       dados.uf = uf;
       dados.cidade = cidade;
@@ -119,23 +127,29 @@ export default function ModalEntregaRetirada({
       dados.horarioRetirada = horarioRetirada;
     }
 
-    onSave(dados);
-    onClose();
+    // onSave(dados);
+    setIsModalOpen(true);
   };
 
   return (
-    <ModalBaseForm isOpen={isOpen} onClose={onClose} title="Escolha a Forma de Entrega">
+    <ModalBaseForm
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Escolha a Forma de Entrega"
+    >
       {/* ENTREGA OU RETIRADA */}
       <div className="mb-6 flex items-center text-[#103464]">
-        <p className="text-base font-semibold whitespace-nowrap">Seu pedido será?</p>
+        <p className="text-base font-semibold whitespace-nowrap">
+          Seu pedido será?
+        </p>
         <div className="flex gap-6 ml-10">
           <label className="flex items-center gap-2 text-sm">
             <input
               type="radio"
               name="orderType"
               value="entrega"
-              checked={tipoEntrega === 'entrega'}
-              onChange={() => setTipoEntrega('entrega')}
+              checked={tipoEntrega === "entrega"}
+              onChange={() => setTipoEntrega("entrega")}
               className="accent-[#caa77e]"
             />
             Entrega
@@ -145,8 +159,8 @@ export default function ModalEntregaRetirada({
               type="radio"
               name="orderType"
               value="retirada"
-              checked={tipoEntrega === 'retirada'}
-              onChange={() => setTipoEntrega('retirada')}
+              checked={tipoEntrega === "retirada"}
+              onChange={() => setTipoEntrega("retirada")}
               className="accent-[#caa77e]"
             />
             Retirada
@@ -197,7 +211,7 @@ export default function ModalEntregaRetirada({
       </div>
 
       {/* CAMPOS DINÂMICOS */}
-      {tipoEntrega === 'entrega' ? (
+      {tipoEntrega === "entrega" ? (
         <>
           {/* CAMPOS ENTREGA */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
@@ -300,7 +314,9 @@ export default function ModalEntregaRetirada({
         <>
           {/* CAMPOS RETIRADA */}
           <div className="flex flex-col mb-4">
-            <label className="text-sm font-semibold mb-1">Local de Retirada</label>
+            <label className="text-sm font-semibold mb-1">
+              Local de Retirada
+            </label>
             <CampoComGradiente>
               <input
                 type="text"
@@ -313,7 +329,9 @@ export default function ModalEntregaRetirada({
           </div>
 
           <div className="flex flex-col mb-6">
-            <label className="text-sm font-semibold mb-1">Horário da Retirada</label>
+            <label className="text-sm font-semibold mb-1">
+              Horário da Retirada
+            </label>
             <CampoComGradiente>
               <input
                 type="text"
@@ -331,6 +349,7 @@ export default function ModalEntregaRetirada({
       <div className="flex justify-end mt-6">
         <Button text="Salvar" onClick={handleSave} />
       </div>
+      {isModalOpen && <ModalConfirmarEdicao onClose={closeModal} step={"Entrega"} />}
     </ModalBaseForm>
   );
 }
