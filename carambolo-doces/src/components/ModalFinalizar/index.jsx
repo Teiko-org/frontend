@@ -2,6 +2,7 @@ import React from 'react';
 import ModalBase from '../ModalBase';
 import Button from '../Button';
 import TextGradiante from '../textGradiente';
+import { useNavigate } from 'react-router-dom';
 
 export default function ModalResumoFinal({
   isOpen,
@@ -28,6 +29,9 @@ export default function ModalResumoFinal({
     'Prazo de Validade de até 5 dias.',
   ]
 }) {
+
+  const navigate = useNavigate();
+
   return (
     <ModalBase isOpen={isOpen} onClose={onClose} width="700px" height="auto">
       <div className="flex flex-col h-full justify-between">
@@ -82,7 +86,7 @@ export default function ModalResumoFinal({
         <div className="flex justify-center mt-8">
           <Button
             text="Finalizar"
-            onClick={onClose}
+            onClick={() => {navigate("/")}}
             bgColor="bg-gradient-to-l from-gold to-darkGold"
             fontSize="text-base"
             textColor="text-blue"

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Search, ShoppingCart, ChevronDown } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Button from "../Button";
 import LoginModal from "../LoginModal";
 
 function Header() {
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [userSigned, setUserSigned] = useState(false)
@@ -13,8 +14,20 @@ function Header() {
   const closeModal = () => setIsModalOpen(false);
 
   useEffect(() => {
-    setUserSigned(localStorage.getItem("IS_SIGNED"))
-  }, [localStorage.getItem("IS_SIGNED")])
+    const checkLoginStatus = () => {
+      setUserSigned(!!localStorage.getItem("IS_SIGNED"));
+    };
+
+    checkLoginStatus();
+
+    window.addEventListener("storage", checkLoginStatus);
+
+    return () => {
+      window.removeEventListener("storage", checkLoginStatus);
+    };
+  }, [])
+
+  const navigate = useNavigate();
 
   return (
     <header className="bg-gradient-to-b from-blue to-darkBlue h-30 max-w-full">
@@ -51,6 +64,7 @@ function Header() {
                     <img
                       src="src/assets/user_icon.png"
                       width={"50px"}
+                      onClick={() => navigate('/pagina-usuario')}
                     />
                   </button>)
             }
