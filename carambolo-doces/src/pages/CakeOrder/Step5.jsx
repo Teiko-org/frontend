@@ -1,62 +1,67 @@
 import React, { useState, useContext } from "react";
 import { FormContext } from "../../contexts/FormContext";
 import Button from "../../components/Button";
-import ModalBase from "../../components/ModalBase";
 import { FaEdit } from "react-icons/fa";
+import ModalMontagem from "../../components/ModalMontagem";
+import ModalDecoracao from "../../components/ModalDecoracao";
+import ModalAdicionais from "../../components/ModalAdicionais";
+import ModalEntregaRetirada from "../../components/ModalEntregaRetirada";
 
 const Step5 = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeModal, setActiveModal] = useState(null);
   const { prevStep } = useContext(FormContext);
 
   const handlePrev = () => {
     prevStep();
   };
 
-  const handleFinalize = () => {
-    setIsModalOpen(true);
+  const handleOpenModal = (modalType) => {
+    setActiveModal(modalType);
   };
 
   const closeModal = () => {
-    setIsModalOpen(false);
+    setActiveModal(null);
   };
 
   return (
     <div className="p-6 bg-bgNativeHome rounded-lg shadow-md">
       <h2 className="text-blue text-2xl mb-6 font-bold">Revise seu pedido</h2>
       
+      {/* MONTAGEM */}
       <div className="mb-5 pb-4 border-b border-gray-300">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-bold text-lg text-blue">MONTAGEM</h3>
-          <FaEdit className="text-gold cursor-pointer" onClick={() => setIsModalOpen(true)} />
+          <FaEdit className="text-gold cursor-pointer" onClick={() => handleOpenModal('montagem')} />
         </div>
         <div className="flex flex-col gap-2">
           <div className="flex gap-10 mb-6">
             <div className="flex flex-col gap-2">
-            <span className="text-blue font-semibold">TAMANHO</span> 
-            <span className="bg-gradient-to-l from-darkGoldButton to-goldButton rounded-full border-2 border-gold px-4 py-1 text-blue font-bold text-center">13cm</span>
+              <span className="text-blue font-semibold">TAMANHO</span> 
+              <span className="bg-gradient-to-l from-darkGoldButton to-goldButton rounded-full border-2 border-gold px-4 py-1 text-blue font-bold text-center">13cm</span>
             </div>
             <div className="flex flex-col gap-2">
-            <span className="text-blue font-semibold">FORMATO</span> 
-            <span className="bg-gradient-to-l from-darkGoldButton to-goldButton rounded-full border-2 border-gold px-4 py-1 text-blue font-bold text-center">Redondo</span>
+              <span className="text-blue font-semibold">FORMATO</span> 
+              <span className="bg-gradient-to-l from-darkGoldButton to-goldButton rounded-full border-2 border-gold px-4 py-1 text-blue font-bold text-center">Redondo</span>
             </div>
           </div>
           <div className="flex gap-12">
             <div className="flex flex-col">
-            <span className="text-blue font-semibold">MASSA</span> 
-            Red-Velvet
+              <span className="text-blue font-semibold">MASSA</span> 
+              Red-Velvet
             </div>
-          <div className="flex flex-col">
-            <span className="text-blue font-semibold">RECHEIO</span> 
-            Brigadeiro de Pistache com Redução de Frutas Vermelhas
-          </div>
+            <div className="flex flex-col">
+              <span className="text-blue font-semibold">RECHEIO</span> 
+              Brigadeiro de Pistache com Redução de Frutas Vermelhas
+            </div>
           </div>
         </div>
       </div>
 
+      {/* DECORAÇÃO */}
       <div className="mb-5 pb-4 border-b border-gray-300">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-bold text-lg text-blue">DECORAÇÃO</h3>
-          <FaEdit className="text-gold cursor-pointer" onClick={() => setIsModalOpen(true)} />
+          <FaEdit className="text-gold cursor-pointer" onClick={() => handleOpenModal('decoracao')} />
         </div>
         <div className="flex flex-col">
           <span className="text-blue font-semibold">Observações</span> 
@@ -64,10 +69,11 @@ const Step5 = () => {
         </div>
       </div>
 
+      {/* ADICIONAIS */}
       <div className="mb-5 pb-4 border-b border-gray-300">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-bold text-lg text-blue">ADICIONAIS</h3>
-          <FaEdit className="text-gold cursor-pointer" onClick={() => setIsModalOpen(true)} />
+          <FaEdit className="text-gold cursor-pointer" onClick={() => handleOpenModal('adicionais')} />
         </div>
         <div className="flex gap-2">
           {["Cereja", "Glitter", "Perolado"].map((item, index) => (
@@ -76,10 +82,11 @@ const Step5 = () => {
         </div>
       </div>
 
+      {/* DADOS ENTREGA */}
       <div className="mb-5 pb-4 border-b border-gray-300">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-bold text-lg text-blue">DADOS ENTREGA</h3>
-          <FaEdit className="text-gold cursor-pointer" onClick={() => setIsModalOpen(true)} />
+          <FaEdit className="text-gold cursor-pointer" onClick={() => handleOpenModal('dadosEntrega')} />
         </div>
         <div className="grid grid-cols-2 gap-y-4 mb-4 text-blue">
           <div><span className="font-semibold">SEU PEDIDO SERÁ:</span> Entrega</div>
@@ -114,20 +121,23 @@ const Step5 = () => {
           <Button
             text="Finalizar Pedido"
             className="px-6 py-1"
-            onClick={handleFinalize}
+            onClick={handlePrev}
             bgColor="bg-gradient-to-l from-darkGoldButton to-goldButton"
           />
         </div>
       </div>
 
-      {isModalOpen && (
-        <ModalBase title="Editar" onClose={closeModal}>
-          <p>Conteúdo do modal de edição aqui.</p>
-          <div className="flex justify-end mt-4">
-            <Button text="Cancelar" className="mr-2" onClick={closeModal} />
-            <Button text="Salvar" />
-          </div>
-        </ModalBase>
+      {activeModal === 'montagem' && (
+        <ModalMontagem isOpen={!!activeModal} onClose={closeModal} />
+      )}
+      {activeModal === 'decoracao' && (
+        <ModalDecoracao isOpen={!!activeModal} onClose={closeModal} />
+      )}
+      {activeModal === 'adicionais' && (
+        <ModalAdicionais isOpen={!!activeModal} onClose={closeModal} />
+      )}
+      {activeModal === 'dadosEntrega' && (
+        <ModalEntregaRetirada isOpen={!!activeModal} onClose={closeModal} />
       )}
     </div>
   );
