@@ -18,7 +18,11 @@ function LoginModal({ onClose }) {
     }).then((response) => {
       toast.success("Login realizado com sucesso!");
       localStorage.setItem("TOKEN_JWT", response.data.token);
-      localStorage.setItem("IS_SIGNED", true);
+      localStorage.setItem("IS_SIGNED", "true");
+
+      window.dispatchEvent(new Event("storage"));
+
+      closeModal();
     }).catch((error) => {
       if (error.status == 401) {
         toast.error("Telefone ou Senha incorretos.");
