@@ -1,6 +1,7 @@
 import React, { useState, useContext } from "react";
 import { FormContext } from "../../contexts/FormContext";
 import Button from "../../components/Button";
+
 import ModalBase from "../../components/ModalBase";
 
 import ModalMontagem from "../../components/ModalMontagem";
@@ -10,6 +11,10 @@ import ModalEntregaRetirada from "../../components/ModalEntregaRetirada";
 import ModalFinalizar from "../../components/ModalFinalizar";
 
 import { FaEdit } from "react-icons/fa";
+import ModalMontagem from "../../components/ModalMontagem";
+import ModalDecoracao from "../../components/ModalDecoracao";
+import ModalAdicionais from "../../components/ModalAdicionais";
+import ModalEntregaRetirada from "../../components/ModalEntregaRetirada";
 
 const Step5 = () => {
   const { prevStep } = useContext(FormContext);
@@ -53,10 +58,12 @@ const Step5 = () => {
           {isModalMontagemOpen && (
             <ModalMontagem onClose={closeModalMontagem} />
           )}
+
         </div>
         <div className="flex flex-col gap-2">
           <div className="flex gap-10 mb-6">
             <div className="flex flex-col gap-2">
+
               <span className="text-blue font-semibold">TAMANHO</span>
               <span className="bg-gradient-to-l from-darkGoldButton to-goldButton rounded-full border-2 border-gold px-4 py-1 text-blue font-bold text-center">
                 13cm
@@ -67,24 +74,29 @@ const Step5 = () => {
               <span className="bg-gradient-to-l from-darkGoldButton to-goldButton rounded-full border-2 border-gold px-4 py-1 text-blue font-bold text-center">
                 Redondo
               </span>
+
             </div>
           </div>
           <div className="flex gap-12">
             <div className="flex flex-col">
+
               <span className="text-blue font-semibold">MASSA</span>
               Red-Velvet
             </div>
             <div className="flex flex-col">
               <span className="text-blue font-semibold">RECHEIO</span>
+
               Brigadeiro de Pistache com Redução de Frutas Vermelhas
             </div>
           </div>
         </div>
       </div>
 
+      {/* DECORAÇÃO */}
       <div className="mb-5 pb-4 border-b border-gray-300">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-bold text-lg text-blue">DECORAÇÃO</h3>
+
           <FaEdit
             className="text-gold cursor-pointer"
             onClick={() => setIsModalDecoracaoOpen(true)}
@@ -93,6 +105,7 @@ const Step5 = () => {
           {isModalDecoracaoOpen && (
             <ModalDecoracao onClose={closeModalDecoracao} />
           )}
+
         </div>
         <div className="flex flex-col">
           <span className="text-blue font-semibold">Observações</span>
@@ -100,9 +113,11 @@ const Step5 = () => {
         </div>
       </div>
 
+      {/* ADICIONAIS */}
       <div className="mb-5 pb-4 border-b border-gray-300">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-bold text-lg text-blue">ADICIONAIS</h3>
+
           <FaEdit
             className="text-gold cursor-pointer"
             onClick={() => setIsModalAdicionaisOpen(true)}
@@ -111,6 +126,7 @@ const Step5 = () => {
           {isModalAdicionaisOpen && (
             <ModalAdicionais onClose={closeModalAdicionais} />
           )}
+
         </div>
         <div className="flex gap-2">
           {["Cereja", "Glitter", "Perolado"].map((item, index) => (
@@ -124,9 +140,11 @@ const Step5 = () => {
         </div>
       </div>
 
+      {/* DADOS ENTREGA */}
       <div className="mb-5 pb-4 border-b border-gray-300">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-bold text-lg text-blue">DADOS ENTREGA</h3>
+
           <FaEdit
             className="text-gold cursor-pointer"
             onClick={() => setIsModalEntregaRetiradaOpen(true)}
@@ -135,6 +153,7 @@ const Step5 = () => {
           {isModalEntregaRetiradaOpen && (
             <ModalEntregaRetirada onClose={closeModalEntregaRetirada} />
           )}
+
         </div>
         <div className="grid grid-cols-2 gap-y-4 mb-4 text-blue">
           <div>
@@ -194,7 +213,7 @@ const Step5 = () => {
           <Button
             text="Finalizar Pedido"
             className="px-6 py-1"
-            onClick={handleFinalize}
+            onClick={handlePrev}
             bgColor="bg-gradient-to-l from-darkGoldButton to-goldButton"
           />
 

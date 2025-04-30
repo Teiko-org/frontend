@@ -81,10 +81,10 @@ function Header() {
         <Link to="/" className="hover:text-darkGold">
           HOME
         </Link>
-        <a href="#" className="hover:text-darkGold flex items-center">
+        <a href="/carambolos" className="hover:text-darkGold flex items-center">
           CARAMBOLOS <ChevronDown className="ml-1" size={16} />
         </a>
-        <a href="#" className="hover:text-darkGold">
+        <a href="/fornada" className="hover:text-darkGold">
           FORNADA DA SEMANA
         </a>
         <a href="#" className="hover:text-darkGold">
