@@ -15,6 +15,13 @@ function UserSideMenu() {
     }
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem("IS_SIGNED");
+    localStorage.removeItem("TOKEN_JWT");
+    window.dispatchEvent(new Event("storage")); // Força a "notificação" do evento
+    navigate("/");
+  };
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const openModal = () => setIsModalOpen(true);
@@ -58,7 +65,7 @@ function UserSideMenu() {
 
       <footer className="flex justify-center pb-10">
         <button
-          onClick={openModal}
+          onClick={handleLogout}
           className="bg-bgNativeHome border-2 border-red rounded-2xl text-red font-semibold p-2 px-8"
         >
           Desconectar

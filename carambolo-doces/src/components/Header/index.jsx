@@ -14,8 +14,18 @@ function Header() {
   const closeModal = () => setIsModalOpen(false);
 
   useEffect(() => {
-    setUserSigned(localStorage.getItem("IS_SIGNED"))
-  }, [localStorage.getItem("IS_SIGNED")])
+    const checkLoginStatus = () => {
+      setUserSigned(!!localStorage.getItem("IS_SIGNED"));
+    };
+
+    checkLoginStatus();
+
+    window.addEventListener("storage", checkLoginStatus);
+
+    return () => {
+      window.removeEventListener("storage", checkLoginStatus);
+    };
+  }, [])
 
   const navigate = useNavigate();
 
