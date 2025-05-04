@@ -10,11 +10,7 @@ import ModalAdicionais from "../../components/ModalAdicionais";
 import ModalEntregaRetirada from "../../components/ModalEntregaRetirada";
 import ModalFinalizar from "../../components/ModalFinalizar";
 
-import { FaEdit } from "react-icons/fa";
-import ModalMontagem from "../../components/ModalMontagem";
-import ModalDecoracao from "../../components/ModalDecoracao";
-import ModalAdicionais from "../../components/ModalAdicionais";
-import ModalEntregaRetirada from "../../components/ModalEntregaRetirada";
+import { FaEdit } from "react-icons/fa";  
 
 const Step5 = () => {
   const { prevStep } = useContext(FormContext);
@@ -213,7 +209,7 @@ const Step5 = () => {
           <Button
             text="Finalizar Pedido"
             className="px-6 py-1"
-            onClick={handlePrev}
+            onClick={handleFinalize}
             bgColor="bg-gradient-to-l from-darkGoldButton to-goldButton"
           />
 
