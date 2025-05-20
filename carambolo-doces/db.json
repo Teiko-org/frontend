@@ -1,0 +1,12 @@
+{
+    "produtos": [
+        {
+            "id": 1,
+            "produto": "bolo de natal",
+            "categoria": "carambolo",
+            "preco": 999.99,
+            "quantidade": 0,
+            "status": true
+        }
+    ]
+}
