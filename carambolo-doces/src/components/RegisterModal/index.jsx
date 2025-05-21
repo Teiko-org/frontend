@@ -5,7 +5,7 @@ import Button from "../Button";
 import PhoneNumberInput from "../PhoneInput";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-import { axiosApi } from "../../provider/AxiosApi";
+import { register as registerUser } from "../../service/userService";
 
 function RegisterModal({ onClose, switchToLogin }) {
   const {
@@ -18,20 +18,11 @@ function RegisterModal({ onClose, switchToLogin }) {
   } = useForm();
 
   const onSubmit = async (data) => {
-    await axiosApi.post("/usuarios", {
-      nome: data.name,
-      senha: data.password,
-      contato: data.phone
-    }).then((response) => {
-      toast.success("Cadastro criado com sucesso!");
-      switchToLogin();
-    }).catch((error) => {
-      if(error.status == 409) {
-        alert(`Usuario com contato ${data.phone} ja existente`);
-      } else if(error.status == 500) {
-        alert(`Tivemos problemas para processar seu cadastro. Tente novamente mais tarde!`);
-      }
-    })
+    await registerUser(data.name, data.password, data.phone)
+      .then(() => switchToLogin())
+      .catch((error) => {
+        console.error("Erro ao registrar:", error);
+      });
   };
 
   const handleErrors = () => {
