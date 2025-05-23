@@ -8,7 +8,7 @@ import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import { axiosApi } from '../../provider/AxiosApi';
-import { LuEye } from "react-icons/lu";
+import { LuEye, LuEyeClosed } from "react-icons/lu";
 import { FaRegEdit } from "react-icons/fa";
 import { RiDeleteBinLine } from "react-icons/ri";
 
@@ -70,13 +70,13 @@ export default function ProductList() {
     const [page, setPage] = React.useState(0);
     const [rowsPerPage, setRowsPerPage] = React.useState(10);
 
-    const handleVisibility = (event) => {
-        
-    }
-
     React.useEffect(() => {
         getData();
     }, []);
+
+    React.useEffect(() => {
+        getData();
+    }, [products]);
 
     const getData = () => {
         axiosApi.get("/produtos")
@@ -85,14 +85,29 @@ export default function ProductList() {
             })
     }
 
-    const handleChangePage = (event, newPage) => {
-        setPage(newPage);
-    };
+    const handleDeleteRow = (id) => {
+        axiosApi.delete(`/produtos/${id}`)
+            .then((response) => {
+                getData();
+            });
+    }
 
-    const handleChangeRowsPerPage = (event) => {
-        setRowsPerPage(+event.target.value);
-        setPage(0);
-    };
+    const handleVisibility = (id) => {
+        axiosApi.get(`/produtos/${id}`)
+            .then((response) => {
+                switch (response.data.status) {
+                    case true:
+                        response.data.status = false;
+                        break;
+                    case false:
+                        response.data.status = true;
+                        break
+                }
+
+                axiosApi.patch(`/produtos/${id}`, response.data)
+                getData();
+            })
+    }
 
     return (
         <Paper sx={{ width: '100%', overflow: 'hidden' }}>
@@ -119,11 +134,20 @@ export default function ProductList() {
                                         {columns.map((column) => {
                                             const value = row[column.id];
                                             if (column.id == 'ativo') {
-                                                return (
-                                                    <TableCell key={column.id} align={column.align}>
-                                                        <LuEye className='w-5' onClick={(e) => {handleVisibility(e.target)}}/>
-                                                    </ TableCell>
-                                                )
+                                                if (row.status == true) {
+                                                    return (
+                                                        <TableCell key={column.id} align={column.align}>
+                                                            <LuEye className='w-5' onClick={() => handleVisibility(row.id)} />
+                                                        </ TableCell>
+                                                    )
+                                                } else {
+                                                    return (
+                                                        <TableCell key={column.id} align={column.align}>
+                                                            <LuEyeClosed className='w-5' onClick={() => handleVisibility(row.id)} />
+                                                        </ TableCell>
+                                                    )
+                                                }
+
                                             }
                                             if (column.id == 'quantidade') {
                                                 if (row.categoria.includes("carambolo")) {
@@ -169,17 +193,22 @@ export default function ProductList() {
                                             if (column.id == 'edit') {
                                                 return (
                                                     <TableCell key={column.id} align={column.align} style={{ borderRight: '1px solid black' }}>
-                                                        <FaRegEdit />
+                                                        <div className='flex justify-end'>
+                                                            <FaRegEdit />
+                                                        </div>
                                                     </ TableCell>
                                                 )
                                             }
                                             if (column.id == 'delete') {
                                                 return (
                                                     <TableCell key={column.id} align={column.align} style={{ borderLeft: '1px solid black' }}>
-                                                        <RiDeleteBinLine />
+                                                        <div className='flex justify-left'>
+                                                            <RiDeleteBinLine onClick={() => handleDeleteRow(row.id)} />
+                                                        </div>
                                                     </ TableCell>
                                                 )
                                             }
+
                                             return (
                                                 <TableCell key={column.id} align={column.align} >
                                                     {column.format && typeof value === 'number'
