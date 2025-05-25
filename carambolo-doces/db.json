@@ -15,6 +15,14 @@
       "preco": 999.99,
       "quantidade": 10,
       "status": true
+    },
+    {
+      "id": "3",
+      "produto": "bolo de pascoa",
+      "categoria": "fornada",
+      "preco": 999.99,
+      "quantidade": 10,
+      "status": true
     }
   ]
 }

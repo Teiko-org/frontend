@@ -7,12 +7,13 @@ import Application from '../pages/CakeOrder/Application';
 import Carambolos from '../pages/Carambolos';
 import FornadaSemana from '../pages/Fornada';
 import ProductList from '../components/ProductList';
+import ModalFilterProduct from '../components/ModalFilterProduct';
 
 const AppRoutes = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<ProductList />} />
+        <Route path="/" element={<ModalFilterProduct />} />
         <Route path="/pagina-usuario" element={<UserPage />} />
         <Route path="/pagina-enderecos" element={<AddressPage />} />
         <Route path="/pedido-bolo" element={<Application />} />
