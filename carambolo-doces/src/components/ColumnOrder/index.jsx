@@ -1,20 +1,20 @@
 import CardOrder from "../CardOrder";
 
-function ColumnOrder(/*{title, orders}*/) {
+function ColumnOrder({title}/*{orders}*/) {
   return (
-    <>
-      <div className="bg-gradient-blue p-2 w-[200px] border border-gold rounded-t-md border-b-0 text-center text-gold font-bold">Pedidos Cancelados{/*title*/}</div>
-      <div className="bg-gradient-blue p-1 w-fit h-fit border border-gold rounded-md rounded-tl-none">
-        <div className="flex flex-col items-center gap-y-5 p-2 w-[300px] h-[800px]  overflow-x-hidden border border-gold rounded-md bg-bgHome">
-          <CardOrder />
-          <CardOrder />
-          <CardOrder />
-          <CardOrder />
-          <CardOrder />
-          <CardOrder />
+      <div>
+        <div className="bg-gradient-blue p-2 w-[200px] border border-gold rounded-t-md border-b-0 text-center text-gold font-bold">
+          {title}
+        </div>
+        <div className="bg-gradient-blue p-1 w-fit h-fit border border-gold rounded-md rounded-tl-none">
+          <div className="flex flex-col items-center gap-y-5 p-2 w-[300px] h-[800px]  overflow-x-hidden border border-gold rounded-md bg-bgHome">
+            <CardOrder />
+            <CardOrder />
+            <CardOrder />
+            <CardOrder />
+          </div>
         </div>
       </div>
-    </>
   );
 }
 
