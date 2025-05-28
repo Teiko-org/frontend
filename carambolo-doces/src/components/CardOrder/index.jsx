@@ -1,7 +1,13 @@
 import { Draggable } from "@hello-pangea/dnd";
+import ModalOrderDetails from "../ModalOrderDetails";
+import { useState } from "react";
 
 function CardOrder(props) {
-  //   const pedido = props.pedido;
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
 
   return (
     <div className="flex flex-col justify-center gap-1 p-3 w-[280px] h-[120px] border border-gold rounded-md bg-bgNativeHome">
@@ -12,9 +18,12 @@ function CardOrder(props) {
         <span className="font-medium">
           <span className="font-semibold">R$</span>{props.pedido.valor}
         </span>
-        <button className="border border-gold rounded-md text-gold font-bold px-1">
+        <button className="border border-gold rounded-md text-gold font-bold px-1"
+        onClick={openModal}>
           Detalhes
         </button>
+
+        {isModalOpen && <ModalOrderDetails onClose={closeModal} />}
       </footer>
     </div>
   );
