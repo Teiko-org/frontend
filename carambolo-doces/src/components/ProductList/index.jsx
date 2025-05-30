@@ -14,6 +14,7 @@ import { RiDeleteBinLine } from "react-icons/ri";
 import { ConfirmToast } from 'react-confirm-toast'
 import Button from '../Button';
 import { CiFilter } from "react-icons/ci";
+import ModalFilterProduct from '../ModalFilterProduct';
 
 const columns = [
     {
@@ -71,6 +72,7 @@ const columns = [
 export default function ProductList() {
     const [products, setProducts] = React.useState([]);
     const [show, setShow] = React.useState(false);
+    const [isFilterModalOpen, setFilterModalOpen] = React.useState(false);
 
     React.useEffect(() => {
         getData();
@@ -118,16 +120,19 @@ export default function ProductList() {
     }
 
     return (
-        <div className='flex flex-col w-[80%] h-full'>
+        <div className='flex flex-col w-[100%] h-[70%]'>
             <div className='flex flex-row justify-between items-center bg-gradient-blue h-[4.6875rem] w-full'>
                 <h1 className='bg-gradient-gold text-transparent bg-clip-text pl-[5%]'>Listagem de produtos</h1>
                 <div className='pr-[5%] w-[45%] flex flex-row justify-between'>
                     <input type="text" placeholder='Procurar por produto' className='h-[60%]' />
-                    <Button text={'FILTRAR'} icon={<CiFilter />}/>
+                    <Button text={'FILTRAR'} icon={<CiFilter />} onClick={() => setFilterModalOpen(true)}/>
+                    {
+                        isFilterModalOpen && <ModalFilterProduct products={products} onClose={() => setFilterModalOpen(false)}/>
+                    }
                 </div>
             </div>
-            <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-                <TableContainer sx={{ maxHeight: 440 }} >
+            <Paper sx={{ width: '100%', maxHeight: '100%', overflow: 'hidden', border: 'none', boxShadow: 'none'}} >
+                <TableContainer sx={{ maxHeight: 440 }} className='bg-bgNativeHome'>
                     <Table stickyHeader aria-label="sticky table">
                         <TableHead>
                             <TableRow>
@@ -146,14 +151,14 @@ export default function ProductList() {
                             {products
                                 .map((row, index) => {
                                     return (
-                                        <TableRow hover role="checkbox" tabIndex={-1} key={row.id} className={index % 2 === 0 ? 'bg-[#FFEEE7]' : 'bg-[#FFE7DD]'}>
+                                        <TableRow hover role="checkbox" tabIndex={-1} key={row.id} className={`${index % 2 === 0 ? 'bg-[#FFEEE7]' : 'bg-[#FFE7DD]'}`}>
                                             {columns.map((column) => {
                                                 const value = row[column.id];
                                                 if (column.id == 'ativo') {
                                                     if (row.status == true) {
                                                         return (
-                                                            <TableCell key={column.id} align={column.align}>
-                                                                <LuEye className='w-5' onClick={() => handleVisibility(row.id)} />
+                                                            <TableCell key={column.id} align={column.align} className='rounded-l-full'>
+                                                                <LuEye className='w-5' onClick={() => handleVisibility(row.id)}/>
                                                             </ TableCell>
                                                         )
                                                     } else {
@@ -216,7 +221,7 @@ export default function ProductList() {
                                                 }
                                                 if (column.id == 'delete') {
                                                     return (
-                                                        <TableCell key={column.id} align={column.align} style={{ borderLeft: '.0625rem solid black' }}>
+                                                        <TableCell key={column.id} align={column.align} style={{ borderLeft: '.0625rem solid black' }} className='rounded-e-full'>
                                                             <div className='flex justify-left'>
                                                                 <ConfirmToast
                                                                     buttonNoText='Não'

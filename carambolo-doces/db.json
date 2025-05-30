@@ -23,6 +23,62 @@
       "preco": 999.99,
       "quantidade": 10,
       "status": true
+    },
+    {
+      "id": "4",
+      "produto": "bolo de natal",
+      "categoria": "asjdhas",
+      "preco": 999.99,
+      "quantidade": 0,
+      "status": true
+    },
+    {
+      "id": "5",
+      "produto": "bolo de natal",
+      "categoria": "carambolo",
+      "preco": 999.99,
+      "quantidade": 10,
+      "status": true
+    },
+    {
+      "id": "6",
+      "produto": "bolo de pascoa",
+      "categoria": "fornada",
+      "preco": 999.99,
+      "quantidade": 10,
+      "status": true
+    },
+    {
+      "id": "7",
+      "produto": "bolo de pascoa",
+      "categoria": "fornada",
+      "preco": 999.99,
+      "quantidade": 10,
+      "status": true
+    },
+    {
+      "id": "8",
+      "produto": "bolo de natal",
+      "categoria": "asjdhas",
+      "preco": 999.99,
+      "quantidade": 0,
+      "status": true
+    },
+    {
+      "id": "9",
+      "produto": "bolo de natal",
+      "categoria": "carambolo",
+      "preco": 999.99,
+      "quantidade": 10,
+      "status": true
+    },
+    {
+      "id": "10",
+      "produto": "bolo de pascoa",
+      "categoria": "fornada",
+      "preco": 999.99,
+      "quantidade": 10,
+      "status": true
     }
   ]
 }

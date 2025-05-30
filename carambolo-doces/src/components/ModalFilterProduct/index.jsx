@@ -2,9 +2,17 @@ import ModalBaseForm from "../ModalBaseForm";
 import Button from "../Button";
 
 export default function ModalFilterProduct(props) {
+    const products = props.products;
+    let categories = new Set();
+    products.forEach(product => {
+        categories.add(product.categoria);
+    });
+    const categoriesFiltered = [...categories];
+
     return (
         <>
             <ModalBaseForm
+                onClose={props.onClose}
                 title={'Filtrar Produtos'}
             >
                 <div className="flex flex-row ">
@@ -12,12 +20,13 @@ export default function ModalFilterProduct(props) {
                         <div>
                             <h2>Categoria</h2>
                             <select name="category" id="cartegory">
-                                <option value="">
-                                    Selecione a categoria do produto
-                                </option>
-                                <option value="">aaaa</option>
-                                <option value="">bbbb</option>
-                                <option value="">aaaa</option>
+                                {
+                                    categoriesFiltered.map((category) => {
+                                        return (
+                                            <option value={`${category}`} key={category}>{category}</option>
+                                        );
+                                    })
+                                }
                             </select>
                         </div>
                         <div>
@@ -48,13 +57,11 @@ export default function ModalFilterProduct(props) {
                         <div>
                             <h2>Status</h2>
                             <select name="status">
-                                <option value="">aaaaa</option>
-                                <option value="">bbbb</option>
-                                <option value="">cccc</option>
+                                <option value="avaliable">Disponível</option>
+                                <option value="unavaliable">Indisponível</option>
                             </select>
                         </div>
                     </div>
-
                 </div>
                 <Button text={'Filtrar'} />
             </ModalBaseForm>

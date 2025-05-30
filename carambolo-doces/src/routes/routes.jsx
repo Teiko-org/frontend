@@ -8,12 +8,13 @@ import Carambolos from '../pages/Carambolos';
 import FornadaSemana from '../pages/Fornada';
 import ProductList from '../components/ProductList';
 import ModalFilterProduct from '../components/ModalFilterProduct';
+import Products from '../pages/Products';
 
 const AppRoutes = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<ModalFilterProduct />} />
+        <Route path="/" element={<Products />} />
         <Route path="/pagina-usuario" element={<UserPage />} />
         <Route path="/pagina-enderecos" element={<AddressPage />} />
         <Route path="/pedido-bolo" element={<Application />} />
