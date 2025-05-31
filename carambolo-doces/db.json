@@ -10,7 +10,7 @@
     },
     {
       "id": "2",
-      "produto": "bolo de natal",
+      "produto": "fornada",
       "categoria": "carambolo",
       "preco": 999.99,
       "quantidade": 10,
@@ -18,7 +18,7 @@
     },
     {
       "id": "3",
-      "produto": "bolo de pascoa",
+      "produto": "fornada",
       "categoria": "fornada",
       "preco": 999.99,
       "quantidade": 10,
@@ -29,7 +29,7 @@
       "produto": "bolo de natal",
       "categoria": "asjdhas",
       "preco": 999.99,
-      "quantidade": 0,
+      "quantidade": 20,
       "status": true
     },
     {
@@ -37,47 +37,15 @@
       "produto": "bolo de natal",
       "categoria": "carambolo",
       "preco": 999.99,
-      "quantidade": 10,
+      "quantidade": 30,
       "status": true
     },
     {
       "id": "6",
-      "produto": "bolo de pascoa",
+      "produto": "rapadura",
       "categoria": "fornada",
       "preco": 999.99,
-      "quantidade": 10,
-      "status": true
-    },
-    {
-      "id": "7",
-      "produto": "bolo de pascoa",
-      "categoria": "fornada",
-      "preco": 999.99,
-      "quantidade": 10,
-      "status": true
-    },
-    {
-      "id": "8",
-      "produto": "bolo de natal",
-      "categoria": "asjdhas",
-      "preco": 999.99,
-      "quantidade": 0,
-      "status": true
-    },
-    {
-      "id": "9",
-      "produto": "bolo de natal",
-      "categoria": "carambolo",
-      "preco": 999.99,
-      "quantidade": 10,
-      "status": true
-    },
-    {
-      "id": "10",
-      "produto": "bolo de pascoa",
-      "categoria": "fornada",
-      "preco": 999.99,
-      "quantidade": 10,
+      "quantidade": 40,
       "status": true
     }
   ]
