@@ -1,6 +1,7 @@
 import ModalBaseForm from "../ModalBaseForm";
 import Button from "../Button";
 import { useState } from "react";
+import Select from "../Select";
 
 export default function ModalFilterProduct(props) {
     const products = props.products;
@@ -27,6 +28,7 @@ export default function ModalFilterProduct(props) {
         localStorage.setItem('PRICE_DE', priceDe);
         localStorage.setItem('PRICE_ATE', priceAte);
         localStorage.setItem('STATUS', status);
+        props.setFilterModalOpen(false);
     }
 
     return (
@@ -37,28 +39,38 @@ export default function ModalFilterProduct(props) {
             >
                 <div className="flex flex-row ">
                     <div className="w-[50%]">
-                        <div>
-                            <h2>Categoria</h2>
-                            <select name="category" id="cartegory" onChange={(e) => setCategory(e.target.value)}>
-                                <option value="--">--</option>
-                                {
-                                    categoriesFiltered.map((category) => {
-                                        return (
-                                            <option value={`${category}`} key={category}>{category}</option>
-                                        );
-                                    })
-                                }
-                            </select>
+                        <h2 className="mb-6">Categoria</h2>
+                        <div className="w-[80%]">
+                            <Select
+                                options={categoriesFiltered.map(category => ({ value: category, label: category }))}
+                                // value={localStorage.getItem("CATEGORY")}
+                                onChange={(e) => setCategory(e.target.value)}
+                                placeholder="Selecione a categoria do produto"
+                            />
                         </div>
                         <div>
-                            <h2>Quantidade</h2>
-                            <div>
-                                <span>De:</span>
-                                <input type="number" placeholder="999" onChange={(e) => setQtdDe(e.target.value)}/>
-                            </div>
-                            <div>
-                                <span>Até:</span>
-                                <input type="number" placeholder="999" onChange={(e) => setQtdAte(e.target.value)}/>
+                            <h2 className="mb-1">Quantidade</h2>
+                            <div className="flex flex-row mb-3">
+                                <div className="flex flex-col justify-start">
+                                    <span>De:</span>
+                                    <input
+                                        className="border-2 border-gold rounded-lg px-4 py-2 w-[40%]"
+                                        // value={localStorage.getItem("QTD_DE")}
+                                        type="number"
+                                        onChange={(e) => setQtdDe(e.target.value)}
+                                        placeholder="999"
+                                    />
+                                </div>
+                                <div className="flex flex-col justify-start">
+                                    <span>Até:</span>
+                                    <input
+                                        className="border-2 border-gold rounded-lg px-4 py-2 w-[40%]"
+                                        // value={localStorage.getItem("QTD_ATE")}
+                                        type="number"
+                                        onChange={(e) => setQtdAte(e.target.value)}
+                                        placeholder="999"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -66,26 +78,49 @@ export default function ModalFilterProduct(props) {
                     <div className="w-[50%]">
                         <div>
                             <h2>Preço</h2>
-                            <div>
-                                <span>De:</span>
-                                <input type="text" placeholder="R$" onChange={(e) => setPriceDe(e.target.value)}/>
-                            </div>
-                            <div>
-                                <span>Até:</span>
-                                <input type="text" placeholder="R$" onChange={(e) => setPriceAte(e.target.value)}/>
+                            <div className="flex flex-row mb-3">
+                                <div className="flex flex-col justify-start">
+                                    <span>De:</span>
+                                    <input
+                                        className="border-2 border-gold rounded-lg px-4 py-2 w-[50%]"
+                                        // value={localStorage.getItem("PRICE_DE")}
+                                        type="number"
+                                        onChange={(e) => setPriceDe(e.target.value)}
+                                        placeholder="R$"
+                                    />
+                                </div>
+                                <div className="flex flex-col justify-start">
+                                    <span>Até:</span>
+                                    <input
+                                        className="border-2 border-gold rounded-lg px-4 py-2 w-[50%]"
+                                        // value={localStorage.getItem("PRICE_ATE")}
+                                        type="number"
+                                        onChange={(e) => setPriceAte(e.target.value)}
+                                        placeholder="R$"
+                                    />
+                                </div>
                             </div>
                         </div>
-                        <div>
-                            <h2>Status</h2>
-                            <select name="status" onChange={(e) => setStatus(e.target.value)}>
-                                <option value="--">--</option>
-                                <option value="avaliable">Disponível</option>
-                                <option value="unavaliable">Indisponível</option>
-                            </select>
+                        <div className="w-[80%]">
+                            <h2 className="mb-7">Status</h2>
+                            <Select
+                                options={
+                                    [
+                                        { value: "avaliable", label: "Disponível" },
+                                        { value: "unavaliable", label: "Indisponível" },
+
+                                    ]
+                                }
+                                value={category}
+                                onChange={(e) => setStatus(e.target.value)}
+                                placeholder="Selecionar status"
+                            />
                         </div>
                     </div>
                 </div>
-                <Button text={'Filtrar'} onClick={() => handleFilter()} />
+                <div className="w-full flex justify-end">
+                    <Button text={'Filtrar'} onClick={() => handleFilter()} />
+                </div>
             </ModalBaseForm>
         </>
     );

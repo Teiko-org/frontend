@@ -56,15 +56,32 @@ export default function ProductList() {
         });
     };
 
-    const filteredProducts = products.filter(product =>
-        product.produto.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        product.categoria.toLowerCase() == localStorage.getItem('CATEGORY') &&
-        product.preco >= localStorage.getItem('PRICE_DE') &&
-        product.preco <= localStorage.getItem('PRICE_ATE') &&
-        product.quantidade >= localStorage.getItem('QTD_DE') &&
-        product.quantidade <= localStorage.getItem('QTD_ATE') &&
-        product.status == localStorage.getItem('STATUS')
-    );
+    const filteredProducts = products.filter(product => {
+        const categoryFilter = localStorage.getItem('CATEGORY');
+        const priceDe = parseFloat(localStorage.getItem('PRICE_DE')) || 0;
+        const priceAte = parseFloat(localStorage.getItem('PRICE_ATE')) || Infinity;
+        const qtdDe = parseInt(localStorage.getItem('QTD_DE')) || 0;
+        const qtdAte = parseInt(localStorage.getItem('QTD_ATE')) || Infinity;
+        const statusFilter = localStorage.getItem('STATUS');
+
+        const categoryToSearch = product.categoria?.toLowerCase?.() || '';
+
+        const matchCategory = !categoryFilter || categoryFilter === '--' || product.categoria === categoryFilter;
+        const matchPrice = product.preco >= priceDe && product.preco <= priceAte;
+        const matchQuantity = product.quantidade >= qtdDe && product.quantidade <= qtdAte;
+        const matchStatus =
+            !statusFilter || statusFilter === '' ||
+            (statusFilter === 'avaliable' &&
+                product.quantidade > 0 &&
+                categoryToSearch.includes('fornada')) ||
+            (statusFilter === 'unavaliable' &&
+                product.quantidade <= 0 &&
+                categoryToSearch.includes('fornada'));
+
+        const matchSearch = product.produto.toLowerCase().includes(searchTerm.toLowerCase());
+
+        return matchCategory && matchPrice && matchQuantity && matchStatus && matchSearch;
+    });
 
     return (
         <div className='flex flex-col w-[100%] h-[70%]'>
@@ -80,9 +97,11 @@ export default function ProductList() {
                         />
                     </div>
                     <Button text={'FILTRAR'} icon={<CiFilter />} onClick={() => setFilterModalOpen(true)} />
-                    {isFilterModalOpen && (
-                        <ModalFilterProduct products={products} onClose={() => setFilterModalOpen(false)} />
-                    )}
+                    {
+                        isFilterModalOpen && (
+                            <ModalFilterProduct products={products} setFilterModalOpen={setFilterModalOpen} onClose={() => setFilterModalOpen(false)} />
+                        )
+                    }
                 </div>
             </div>
 

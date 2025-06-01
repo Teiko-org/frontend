@@ -4,39 +4,39 @@
       "id": "1",
       "produto": "bolo de natal",
       "categoria": "asjdhas",
-      "preco": 999.99,
-      "quantidade": 0,
+      "preco": 10.0,
+      "quantidade": null,
       "status": true
     },
     {
       "id": "2",
       "produto": "fornada",
       "categoria": "carambolo",
-      "preco": 999.99,
-      "quantidade": 10,
+      "preco": 20.0,
+      "quantidade": 0,
       "status": true
     },
     {
       "id": "3",
       "produto": "fornada",
       "categoria": "fornada",
-      "preco": 999.99,
+      "preco": 30.0,
       "quantidade": 10,
       "status": true
     },
     {
       "id": "4",
       "produto": "bolo de natal",
-      "categoria": "asjdhas",
-      "preco": 999.99,
-      "quantidade": 20,
+      "categoria": "carambolo",
+      "preco": 40.0,
+      "quantidade": 0,
       "status": true
     },
     {
       "id": "5",
       "produto": "bolo de natal",
       "categoria": "carambolo",
-      "preco": 999.99,
+      "preco": 50.0,
       "quantidade": 30,
       "status": true
     },
@@ -44,8 +44,8 @@
       "id": "6",
       "produto": "rapadura",
       "categoria": "fornada",
-      "preco": 999.99,
-      "quantidade": 40,
+      "preco": 60.0,
+      "quantidade": 0,
       "status": true
     }
   ]
