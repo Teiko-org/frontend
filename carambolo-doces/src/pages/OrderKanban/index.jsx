@@ -2,7 +2,7 @@ import ColumnOrder from "../../components/ColumnOrder";
 import BarraLateralDashboard from "../../components/BarraLateralDashboard";
 
 function OrderKanban() {
-
+  
     const orders = [{
 
         "nome": "Raíne Neres Teixeira Jardim",
