@@ -1,4 +1,3 @@
-import { Draggable } from "@hello-pangea/dnd";
 import ModalOrderDetails from "../ModalOrderDetails";
 import { useState } from "react";
 
