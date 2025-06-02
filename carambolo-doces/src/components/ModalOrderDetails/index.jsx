@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function ModalOrderDetails({ onClose }) {
+export default function ModalOrderDetails(props) {
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex justify-center pt-10 pb-5">
       <div className="shadow-xl relative border bg-bgNativeHome border-[#d6a87c] w-[810px] min-h-[150px] flex flex-col rounded-2xl">
@@ -8,7 +8,7 @@ export default function ModalOrderDetails({ onClose }) {
 
           <div className="pl-10">
             <h1 className="text-3xl font-bold text-gold">
-              Número do Pedido: 9999999
+              Número do Pedido: {props.order.id}
             </h1>
             <h1 className="text-2xl font-thin text-white">
               Bolo de Cenoura c/ cobertura de Chocolate
@@ -16,7 +16,7 @@ export default function ModalOrderDetails({ onClose }) {
           </div>
 
           <button
-            onClick={onClose}
+            onClick={props.onClose}
             className="text-red text-3xl font-bold hover:scale-105"
           >
             ✕
@@ -30,22 +30,22 @@ export default function ModalOrderDetails({ onClose }) {
             <div className="grid grid-cols-2 gap-y-5">
                 <div className="gap-2">
                   <span className="text-blue font-semibold">Tamanho: </span>
-                  <span>13cm</span>
+                  <span>{props.order.tamanho}</span>
                 </div>
 
                 <div className="gap-2">
                   <span className="text-blue font-semibold">Formato: </span>
-                  <span>Redondo</span>
+                  <span>{props.order.formato}</span>
                 </div>
 
                 <div className="flex flex-col">
                   <span className="text-blue font-semibold">Massa</span>
-                  Red-Velvet
+                  {props.order.massa}
                 </div>
 
                 <div className="flex flex-col">
                   <span className="text-blue font-semibold">Recheio</span>
-                  Brigadeiro de Pistache com Redução de Frutas Vermelhas
+                  {props.order.recheio}
                 </div>
             </div>
           </div>
@@ -56,22 +56,19 @@ export default function ModalOrderDetails({ onClose }) {
             </div>
             <div className="flex flex-col">
               <span className="italic pb-8">
-                Nenhuma imagem de referência adicionada
+
+                {props.order.imagem ? "props.order.imagem " : "Nenhuma imagem de referência adicionada"}
+
               </span>
               <span className="text-blue font-semibold">Observações</span>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed arcu
-              mauris, aliquet nec pulvinar a, rhoncus eu tortor. Phasellus at
-              mauris posuere, placerat ante eu, tincidunt libero. Vivamus
-              ultrices porttitor dui. Phasellus eu pellentesque metus.
-              Suspendisse quis arcu tortor. Curabitur non rutrum massa. Aenean a
-              varius lectus. Phasellus quis tristique elit.
+              {props.order.observacoes}
             </div>
           </div>
 
           <div className="px-10 pt-10 pb-10 border-b border-[#FFC8B2]">
             <h3 className="font-bold text-2xl text-blue pb-5">Adicionais</h3>
             <div className="flex gap-2">
-              {["Cereja", "Glitter", "Perolado"].map((item, index) => (
+              {props.order.adicionais.split(",").map((item, index) => (
                 <span
                   key={index}
                   className="bg-gradient-to-l from-darkGoldButton to-goldButton border-2 border-gold rounded px-2 py-1 text-blue font-bold"
@@ -87,10 +84,10 @@ export default function ModalOrderDetails({ onClose }) {
 
             <div className="grid grid-cols-2 gap-y-4 mb-4">
               <div>
-                <span className="font-semibold text-blue">O pedido será:</span> Entrega
+                <span className="font-semibold text-blue">O pedido será:</span> {props.order.tipo}
               </div>
               <div>
-                <span className="font-semibold text-blue">Data:</span> 99/99
+                <span className="font-semibold text-blue">Data:</span> {props.order.data}
               </div>
             </div>
 
@@ -100,11 +97,10 @@ export default function ModalOrderDetails({ onClose }) {
               </h3>
               <div className="grid grid-cols-2 gap-y-4 mb-4">
                 <div>
-                  <span className="font-semibold text-blue">Nome:</span> Murilo Do
-                  Nascimento Barros
+                  <span className="font-semibold text-blue">Nome:</span> {props.order.nome}
                 </div>
                 <div>
-                  <span className="font-semibold text-blue">Telefone:</span> +55 (11) 96809-0282
+                  <span className="font-semibold text-blue">Telefone:</span> {props.order.telefone}
                 </div>
               </div>
             </div>
@@ -113,30 +109,29 @@ export default function ModalOrderDetails({ onClose }) {
               <h3 className="font-bold text-2xl text-blue pb-5">Endereço</h3>
               <div className="grid grid-cols-3 mb-8">
                 <div>
-                  <span className="font-semibold text-blue">CEP:</span> 00000-00
+                  <span className="font-semibold text-blue">CEP:</span> {props.order.cep}
                 </div>
                 <div>
-                  <span className="font-semibold text-blue">Estado:</span> SP
+                  <span className="font-semibold text-blue">Estado:</span> {props.order.estado}
                 </div>
                 <div>
-                  <span className="font-semibold text-blue">Cidade:</span> São Paulo
+                  <span className="font-semibold text-blue">Cidade:</span> {props.order.cidade}
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-y-8">
                 <div>
-                  <span className="font-semibold text-blue">Bairro:</span> Jardim Guairaca
+                  <span className="font-semibold text-blue">Bairro:</span> {props.order.bairro}
                 </div>
                 <div>
-                  <span className="font-semibold text-blue">Rua:</span> Rua Antônio
-                  Marques Julião
+                  <span className="font-semibold text-blue">Rua:</span> {props.order.rua}
                 </div>
                 <div>
-                  <span className="font-semibold text-blue">Número:</span> 9999
+                  <span className="font-semibold text-blue">Número:</span> {props.order.numero}
                 </div>
                 <div>
-                  <span className="font-semibold text-blue">Complemento:</span> Inserir
-                  seu endereço
+                  <span className="font-semibold text-blue">Complemento: </span>
+                  {props.order.complemento}
                 </div>
               </div>
             </div>

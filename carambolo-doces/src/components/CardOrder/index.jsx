@@ -11,7 +11,7 @@ function CardOrder(props) {
   return (
     <div className="flex flex-col justify-center gap-1 p-3 w-[280px] h-[120px] border border-gold rounded-md bg-bgNativeHome">
       <header className="font-semibold">{props.pedido.nome}</header>
-      <span>{props.pedido.numero}</span>
+      <span>{props.pedido.telefone}</span>
       <span>{props.pedido.tipo}</span>
       <footer className="flex justify-between items-center">
         <span className="font-medium">
@@ -22,7 +22,7 @@ function CardOrder(props) {
           Detalhes
         </button>
 
-        {isModalOpen && <ModalOrderDetails onClose={closeModal} />}
+        {isModalOpen && <ModalOrderDetails onClose={closeModal} order={props.pedido}/>}
       </footer>
     </div>
   );
