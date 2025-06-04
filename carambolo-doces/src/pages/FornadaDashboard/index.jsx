@@ -12,6 +12,7 @@ function FornadaDashboard() {
         <header>HEADER HEADER HEADER HEADER HEADER HEADER HEADER HEADER HEADER HEADER HEADER HEADER HEADER HEADER HEADER HEADER HEADER HEADER HEADER HEADER HEADER HEADER HEADER</header>
         <div className="flex justify-evenly items-center gap-10">
           <FornadaDatePicker/>
+          
         </div>
       </div>
     </div>
