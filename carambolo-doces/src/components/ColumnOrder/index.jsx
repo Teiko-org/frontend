@@ -9,12 +9,12 @@ function ColumnOrder(props) {
         </div>
         <div className="bg-gradient-blue p-1 w-fit h-fit border border-gold rounded-md rounded-tl-none">
           <div className="flex flex-col items-center gap-y-5 p-2 w-[300px] h-[800px]  overflow-x-hidden border border-gold rounded-md bg-bgHome">
-            {/* <CardOrder /> */}
-            {props.orderFilter.map((pedido) => {
+
+            {props.orderFilter.map((order) => {
 
               return (
 
-                <CardOrder pedido={pedido}/>
+                <CardOrder order={order}/>
 
               )
 
