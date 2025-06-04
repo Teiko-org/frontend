@@ -4,31 +4,31 @@
       "id": "1",
       "produto": "bolo de natal",
       "categoria": "asjdhas",
-      "preco": 10.0,
-      "quantidade": null,
-      "status": true
-    },
-    {
-      "id": "2",
-      "produto": "fornada",
-      "categoria": "carambolo",
-      "preco": 20.0,
+      "preco": 999.99,
       "quantidade": 0,
       "status": true
     },
     {
+      "id": "2",
+      "produto": "bolo de natal",
+      "categoria": "carambolo",
+      "preco": 999.99,
+      "quantidade": 10,
+      "status": true
+    },
+    {
       "id": "3",
-      "produto": "fornada",
+      "produto": "bolo de pascoa",
       "categoria": "fornada",
-      "preco": 30.0,
+      "preco": 999.99,
       "quantidade": 10,
       "status": true
     },
     {
       "id": "4",
       "produto": "bolo de natal",
-      "categoria": "carambolo",
-      "preco": 40.0,
+      "categoria": "asjdhas",
+      "preco": 999.99,
       "quantidade": 0,
       "status": true
     },
@@ -36,16 +36,48 @@
       "id": "5",
       "produto": "bolo de natal",
       "categoria": "carambolo",
-      "preco": 50.0,
-      "quantidade": 30,
+      "preco": 999.99,
+      "quantidade": 10,
       "status": true
     },
     {
       "id": "6",
-      "produto": "rapadura",
+      "produto": "bolo de pascoa",
       "categoria": "fornada",
-      "preco": 60.0,
+      "preco": 999.99,
+      "quantidade": 10,
+      "status": true
+    },
+    {
+      "id": "7",
+      "produto": "bolo de pascoa",
+      "categoria": "fornada",
+      "preco": 999.99,
+      "quantidade": 10,
+      "status": true
+    },
+    {
+      "id": "8",
+      "produto": "bolo de natal",
+      "categoria": "asjdhas",
+      "preco": 999.99,
       "quantidade": 0,
+      "status": true
+    },
+    {
+      "id": "9",
+      "produto": "bolo de natal",
+      "categoria": "carambolo",
+      "preco": 999.99,
+      "quantidade": 10,
+      "status": true
+    },
+    {
+      "id": "10",
+      "produto": "bolo de pascoa",
+      "categoria": "fornada",
+      "preco": 999.99,
+      "quantidade": 10,
       "status": true
     }
   ]

@@ -38,6 +38,12 @@ export default function ProductList() {
     }, []);
 
     const getData = async () => {
+        try {
+            const data = await findAllFornada();
+            console.log(JSON.stringify(data));
+        } catch (error) {
+            console.log(error);
+        }
         const response = await axiosApi.get("/produtos");
         setProducts(response.data);
     };
@@ -96,7 +102,7 @@ export default function ProductList() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <Button text={'FILTRAR'} icon={<CiFilter />} onClick={() => setFilterModalOpen(true)} />
+                    <Button text={'FILTRAR'} children={<CiFilter />} onClick={() => setFilterModalOpen(true)} className='flex flex-row items-center'/>
                     {
                         isFilterModalOpen && (
                             <ModalFilterProduct products={products} setFilterModalOpen={setFilterModalOpen} onClose={() => setFilterModalOpen(false)} />
