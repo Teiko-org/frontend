@@ -3,13 +3,13 @@ import { axiosApi } from "../provider/AxiosApi"
 
 export const findAllFornada = async () => {
     try {
-        await axiosApi.get(`/fornadas/produto-fornada`, {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem("TOKEN_JWT")}`
-            }
-        }).then((response) => {
-            return response.data;
-        })
+        const fornadas = await axiosApi.get(`/fornadas`);
+
+        const lastFornada = fornadas.data[fornadas.data.length - 1];
+
+        const products = await axiosApi.get(`/fornadas/da-vez/produtos?data_inicio=${lastFornada.dataInicio}&data_fim=${lastFornada.dataFim}`);
+        console.log(products.data)
+        return products.data;
     } catch (error) {
         console.log(error)
     }

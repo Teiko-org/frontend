@@ -20,7 +20,6 @@ export default function ModalFilterProduct(props) {
     const [priceAte, setPriceAte] = useState('');
     const [status, setStatus] = useState('');
 
-
     const handleFilter = () => {
         localStorage.setItem('CATEGORY', category);
         localStorage.setItem('QTD_DE', qtdDe);

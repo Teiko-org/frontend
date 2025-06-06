@@ -14,6 +14,7 @@ import { ConfirmToast } from 'react-confirm-toast';
 import Button from '../Button';
 import { CiFilter } from "react-icons/ci";
 import ModalFilterProduct from '../ModalFilterProduct';
+import { findAllFornada } from '../../service/productService';
 
 const columns = [
     { id: 'ativo', label: '', minWidth: 50, align: 'left' },
@@ -39,13 +40,11 @@ export default function ProductList() {
 
     const getData = async () => {
         try {
-            const data = await findAllFornada();
-            console.log(JSON.stringify(data));
+            const response = await findAllFornada();
+            setProducts(response);
         } catch (error) {
             console.log(error);
         }
-        const response = await axiosApi.get("/produtos");
-        setProducts(response.data);
     };
 
     const handleDeleteRow = async (id) => {
@@ -73,7 +72,7 @@ export default function ProductList() {
         const categoryToSearch = product.categoria?.toLowerCase?.() || '';
 
         const matchCategory = !categoryFilter || categoryFilter === '--' || product.categoria === categoryFilter;
-        const matchPrice = product.preco >= priceDe && product.preco <= priceAte;
+        const matchPrice = product.valor >= priceDe && product.valor <= priceAte;
         const matchQuantity = product.quantidade >= qtdDe && product.quantidade <= qtdAte;
         const matchStatus =
             !statusFilter || statusFilter === '' ||
@@ -92,7 +91,7 @@ export default function ProductList() {
     return (
         <div className='flex flex-col w-[100%] h-[70%]'>
             <div className='flex flex-row justify-between items-center bg-gradient-blue h-[4.6875rem] w-full'>
-                <h1 className='bg-gradient-gold text-transparent bg-clip-text pl-[5%] text-[1.5rem]'>Listagem de produtos</h1>
+                <h1 className='bg-gradient-gold text-transparent bg-clip-text pl-[5%] text-[1.5rem] font-bold'>Listagem de produtos</h1>
                 <div className='pr-[5%] w-[45%] flex flex-row justify-between'>
                     <div className='h-[100%] w-[60%]'>
                         <input
@@ -138,11 +137,10 @@ export default function ProductList() {
                                 >
                                     {columns.map((column) => {
                                         const value = row[column.id];
-
                                         if (column.id === 'ativo') {
                                             return (
                                                 <TableCell key={column.id} align={column.align} className='rounded-l-full'>
-                                                    {row.status
+                                                    {row.isAtivoPf
                                                         ? <LuEye className='w-5 cursor-pointer' onClick={() => handleVisibility(row.id)} />
                                                         : <LuEyeClosed className='w-5 cursor-pointer' onClick={() => handleVisibility(row.id)} />}
                                                 </TableCell>
@@ -195,6 +193,14 @@ export default function ProductList() {
                                             );
                                         }
 
+                                        if (column.id == 'preco') {
+                                            return(
+                                                <TableCell key={column.id} align={column.align}>
+                                                    <span>{row.valor}</span>
+                                                </TableCell>
+                                            )
+                                        }
+
                                         return (
                                             <TableCell key={column.id} align={column.align}>
                                                 {column.format && typeof value === 'number'
@@ -203,6 +209,7 @@ export default function ProductList() {
                                             </TableCell>
                                         );
                                     })}
+                                
                                 </TableRow>
                             ))}
                         </TableBody>
