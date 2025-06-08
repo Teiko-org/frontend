@@ -5,31 +5,21 @@ import RegisterModal from "../RegisterModal";
 import { useForm } from "react-hook-form";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-import { axiosApi } from "../../provider/AxiosApi";
+import { login } from "../../service/userService";
 
 function LoginModal({ onClose }) {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
   const onSubmit = async (data) => {
-    await axiosApi.post("/usuarios/login", {
-      contato: data.phone,
-      senha: data.password
-    }).then((response) => {
-      toast.success("Login realizado com sucesso!");
-      localStorage.setItem("TOKEN_JWT", response.data.token);
-      localStorage.setItem("IS_SIGNED", "true");
-
-      window.dispatchEvent(new Event("storage"));
-
-      closeModal();
-    }).catch((error) => {
-      if (error.status == 401) {
-        toast.error("Telefone ou Senha incorretos.");
-      } else if (error.status == 404) {
-        toast.error(`Usuário com contato ${data.phone} não encontrado`);
-      }
-    })
+    await login(data.phone, data.password)
+      .then(() => {
+        window.dispatchEvent(new Event("storage"));
+        closeModal();
+      })
+      .catch((error) => {
+        console.error("Erro ao logar:", error);
+      });
   };
 
   const handleRegisterClick = () => {

@@ -1,24 +1,43 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useState, useRef } from 'react';
+import { useForm, FormProvider as RHFProvider } from 'react-hook-form';
 
 export const FormContext = createContext();
 
 export const FormProvider = ({ children }) => {
-  const [formData, setFormData] = useState({});
+  const methods = useForm({ defaultValues: {} });
+
+  const formDataRef = useRef(new FormData());
+
   const [currentStep, setCurrentStep] = useState(1);
 
   const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 5));
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
 
-  const updateFormData = (stepData) => {
-    setFormData((prev) => ({
-      ...prev,
-      [`step${currentStep}`]: stepData,
-    }));
+  const appendFormData = (data) => {
+    for (const key in data) {
+      formDataRef.current.append(key, data[key]);
+    }
+  };
+
+  const submitForm = async () => {
+    try {
+      const response = await fetch('/your-endpoint', {
+        method: 'POST',
+        body: formDataRef.current,
+      });
+      if (!response.ok) {
+        throw new Error('Erro ao enviar o formulário');
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
-    <FormContext.Provider value={{ formData, updateFormData, currentStep, nextStep, prevStep }}>
-      {children}
-    </FormContext.Provider>
+    <RHFProvider {...methods}>
+      <FormContext.Provider value={{ currentStep, nextStep, prevStep, appendFormData, submitForm, formData: formDataRef.current }}>
+        {children}
+      </FormContext.Provider>
+    </RHFProvider>
   );
 };
