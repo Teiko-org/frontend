@@ -18,7 +18,11 @@ function UserSideMenu() {
   const handleLogout = () => {
     localStorage.removeItem("IS_SIGNED");
     localStorage.removeItem("TOKEN_JWT");
-    window.dispatchEvent(new Event("storage")); // Força a "notificação" do evento
+    localStorage.removeItem("userId");
+    localStorage.removeItem("token");
+    localStorage.removeItem("userData");
+    
+    window.dispatchEvent(new Event("storage")); 
     navigate("/");
   };
 

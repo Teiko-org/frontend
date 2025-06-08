@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import ModalBase from "../ModalBase";
 import Button from "../Button";
 import { useNavigate } from "react-router-dom";
@@ -7,22 +7,14 @@ function ModalConfirmationLogOff({ onClose }) {
   const navigate = useNavigate();
 
   const logOff = () => {
-    let statusLogOn = localStorage.getItem("IS_SIGNED");
-
-    if (statusLogOn) {
-
-      localStorage.setItem("IS_SIGNED", false);
-
-      navigate("/");
-
-      return;
-
-    } else {
-
-      navigate("/");
-
-    }
+    localStorage.removeItem("IS_SIGNED");
+    localStorage.removeItem("TOKEN_JWT");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("token");
+    localStorage.removeItem("userData");
     
+    window.dispatchEvent(new Event("storage"));
+    navigate("/");
   };
 
   return (
