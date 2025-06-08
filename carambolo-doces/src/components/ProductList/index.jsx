@@ -14,7 +14,7 @@ import { ConfirmToast } from 'react-confirm-toast';
 import Button from '../Button';
 import { CiFilter } from "react-icons/ci";
 import ModalFilterProduct from '../ModalFilterProduct';
-import { findAllBolo, findAllFornada } from '../../service/productService';
+import { findAllBolo, findAllFornada, handleDeleteBolo, handleVisibilityBolo, handleVisibilityProdutoFornada } from '../../service/productService';
 
 const columns = [
     { id: 'ativo', label: '', minWidth: 50, align: 'left' },
@@ -24,14 +24,20 @@ const columns = [
     { id: 'quantidade', label: 'QUANTIDADE', minWidth: 100, align: 'left' },
     { id: 'status', label: 'STATUS', minWidth: 100, align: 'center' },
     { id: 'edit', label: '', minWidth: 100 },
-    { id: 'delete', label: '', minWidth: 100 },
+
+    // LÓGICA PARA DELEÇÃO DE PRODUTOS - TODO -> ADD LIXEIRA
+    // { id: 'delete', label: '', minWidth: 100 },
 ];
 
 export default function ProductList() {
     const [products, setProducts] = React.useState([]);
     const [searchTerm, setSearchTerm] = React.useState('');
     const [isFilterModalOpen, setFilterModalOpen] = React.useState(false);
-    const [idToDelete, setIdToDelete] = React.useState(null);
+
+    // LÓGICA PARA DELEÇÃO DE PRODUTOS - TODO -> ADD LIXEIRA
+    // const [idToDelete, setIdToDelete] = React.useState(null);
+    // const [categoryToDelete, setCategoryToDelete] = React.useState("")
+
     const [showConfirm, setShowConfirm] = React.useState(false);
 
     React.useEffect(() => {
@@ -40,12 +46,11 @@ export default function ProductList() {
 
     const getData = async () => {
         try {
-            console.log('Buscando produtos...'); // Adicionado para depuração
+            console.log('Buscando produtos...');
             const fornadas = await findAllFornada();
             const bolos = await findAllBolo();
-            console.log('Bolos retornados:', bolos); // Verificar duplicidade
+            console.log('Bolos retornados:', bolos);
 
-            // Sempre sobrescreve, nunca concatena com o estado anterior
             const responseProducts = [...(fornadas || []), ...(bolos || [])];
             setProducts(responseProducts);
         } catch (error) {
@@ -53,21 +58,35 @@ export default function ProductList() {
         }
     }
 
+    //LÓGICA PARA DELEÇÃO DE PRODUTOS - TODO -> ADD LIXEIRA
     const handleDeleteRow = async (id) => {
-        await axiosApi.delete(`/produtos/${id}`);
+        if (categoryToDelete.toLowerCase().includes("carambolo")) {
+            handleDeleteBolo(id);
+        }
         await getData();
         setShowConfirm(false);
         setIdToDelete(null);
     }
 
-    const handleVisibility = (id) => {
-        axiosApi.get(`/produtos/${id}`).then((response) => {
-            const updated = { ...response.data, status: !response.data.status };
-            axiosApi.patch(`/produtos/${id}`, updated).then(() => getData());
-        });
+    const handleVisibility = (id, category) => {
+        const productToChange = products.filter((product) => product.id == id && product.categoria == category);
+
+        if (productToChange[0].isAtivo == true) {
+            productToChange[0].isAtivo = false
+        } else {
+            productToChange[0].isAtivo = true
+        }
+
+        if (productToChange[0].categoria.toLowerCase().includes("carambolo")) {
+            handleVisibilityBolo(productToChange, id);
+        } else {
+            handleVisibilityProdutoFornada(productToChange, id)
+        }
+        getData();
     }
 
     const filteredProducts = products.filter(product => {
+        console.log(product);
         const categoryFilter = localStorage.getItem('CATEGORY');
         const priceDe = parseFloat(localStorage.getItem('PRICE_DE')) || 0;
         const priceAte = parseFloat(localStorage.getItem('PRICE_ATE')) || Infinity;
@@ -150,8 +169,8 @@ export default function ProductList() {
                                             return (
                                                 <TableCell key={column.id} align={column.align} className='rounded-l-full'>
                                                     {row.isAtivo
-                                                        ? <LuEye className='w-5 cursor-pointer' onClick={() => handleVisibility(row.id)} />
-                                                        : <LuEyeClosed className='w-5 cursor-pointer' onClick={() => handleVisibility(row.id)} />}
+                                                        ? <LuEye className='w-5 cursor-pointer' onClick={() => handleVisibility(row.id, row.categoria)} />
+                                                        : <LuEyeClosed className='w-5 cursor-pointer' onClick={() => handleVisibility(row.id, row.categoria)} />}
                                                 </TableCell>
                                             );
                                         }
@@ -178,7 +197,7 @@ export default function ProductList() {
 
                                         if (column.id === 'edit') {
                                             return (
-                                                <TableCell key={column.id} align={column.align} style={{ borderRight: '.0625rem solid black' }}>
+                                                <TableCell key={column.id} align={column.align} className='rounded-e-full items-center'>
                                                     <div className='flex justify-end'>
                                                         <FaRegEdit />
                                                     </div>
@@ -186,21 +205,23 @@ export default function ProductList() {
                                             );
                                         }
 
-                                        if (column.id === 'delete') {
-                                            return (
-                                                <TableCell key={column.id} align={column.align} style={{ borderLeft: '.0625rem solid black' }} className='rounded-e-full'>
-                                                    <div className='flex justify-left'>
-                                                        <RiDeleteBinLine
-                                                            onClick={() => {
-                                                                setIdToDelete(row.id);
-                                                                setShowConfirm(true);
-                                                            }}
-                                                            className='cursor-pointer'
-                                                        />
-                                                    </div>
-                                                </TableCell>
-                                            );
-                                        }
+                                        // LÓGICA PARA DELEÇÃO DE PRODUTOS - TODO -> ADD LIXEIRA
+                                        // if (column.id === 'delete') {
+                                        //     return (
+                                        //         <TableCell key={column.id} align={column.align} style={{ borderLeft: '.0625rem solid black' }} className='rounded-e-full'>
+                                        //             <div className='flex justify-left'>
+                                        //                 <RiDeleteBinLine
+                                        //                     onClick={() => {
+                                        //                         setIdToDelete(row.id);
+                                        //                         setCategoryToDelete(row.categoria);
+                                        //                         setShowConfirm(true);
+                                        //                     }}
+                                        //                     className='cursor-pointer'
+                                        //                 />
+                                        //             </div>
+                                        //         </TableCell>
+                                        //     );
+                                        // }
 
                                         if (column.id == 'preco') {
                                             return (
@@ -226,7 +247,8 @@ export default function ProductList() {
                 </TableContainer>
             </Paper>
 
-            {showConfirm && (
+            {/* LÓGICA PARA DELEÇÃO DE PRODUTOS - TODO -> ADD LIXEIRA */}
+            {/* {showConfirm && (
                 <ConfirmToast
                     buttonNoText='Não'
                     buttonYesText='Sim'
@@ -237,7 +259,7 @@ export default function ProductList() {
                     toastText='Deseja excluir o produto selecionado?'
                     className='z-10'
                 />
-            )}
+            )} */}
         </div>
     );
 }
