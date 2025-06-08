@@ -8,48 +8,58 @@ import fornadaDaVezService from "../../service/fornadaDaVezService";
 import { useState } from "react";
 
 function FornadaDashboard() {
-
   const [fornada, setFornada] = useState({
-  dataInicio: "2023-10-01",
-  dataFim: "2023-10-07",
-});
+    dataInicio: "",
+    dataFim: "",
+  });
 
-const selectedProducts = localStorage.getItem("selectedProducts");
+  const handleDateChange = (field, value) => {
+    setFornada((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
-const [idFornada, setIdFornada] = useState(0);
+  function formatDate(date) {
+    const formattedDate = new Date(date);
 
-const registerFornada = async () => {
-  try {
-    const response = await fornadaService();
+    const yyyy = formattedDate.getFullYear();
+    const mm = String(formattedDate.getMonth() + 1).padStart(2, "0");
+    const dd = String(formattedDate.getDate()).padStart(2, "0");
 
-    console.log(response);
-    setIdFornada(response.id);
-    registerFornadaDaVez();
-  } catch (error) {
-    console.log(error);
+    return `${yyyy}-${mm}-${dd}`;
   }
-};
 
-const registerFornadaDaVez = async () => {
-  try {
-    const responses = await Promise.all(
-      selectedProducts.forEach(produto => {
+  const registerFornada = async () => {
+    try {
+      const response = await fornadaService(fornada);
 
-        fornadaDaVezService({
-          produtoFornadaId: idFornada,
-          fornadaId: produto.id,
-          quantidade: produto.quantidade,
-        });
-        
-      })
-      
-    );
+      registerFornadaDaVez(response.id);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
-    console.log(responses);
-  } catch (error) {
-    console.log(error);
-  }
-};
+  const registerFornadaDaVez = async (idFornada) => {
+    try {
+      console.log("AAAAAAAAAAAAAAAAAAAAAAA");
+      console.log(localStorage.getItem("selectedProducts"));
+      const selectedProductsJson = JSON.parse(localStorage.getItem("selectedProducts"));
+      console.log(selectedProductsJson);
+      const responses = await Promise.all(
+        selectedProductsJson.map((produto) => {
+          return fornadaDaVezService({
+            fornadaId: idFornada,
+            produtoFornadaId: produto.id,
+            quantidade: produto.quantidade,
+          });
+        })
+      );
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <div className="flex bg-bgNativeHome">
@@ -61,7 +71,18 @@ const registerFornadaDaVez = async () => {
         </header>
 
         <div className="flex flex-col justify-evenly items-center gap-24">
-          <FornadaDatePicker />
+          <FornadaDatePicker
+            dataInicio={
+              fornada.dataInicio ? new Date(fornada.dataInicio) : null
+            }
+            dataFim={fornada.dataFim ? new Date(fornada.dataFim) : null}
+            onChangeInicio={(date) =>
+              handleDateChange("dataInicio", formatDate(date))
+            }
+            onChangeFim={(date) => {
+              handleDateChange("dataFim", formatDate(date));
+            }}
+          />
           <div className="flex flex-col w-full items-center gap-5">
             <TableSelectProductsFornada />
             <Button

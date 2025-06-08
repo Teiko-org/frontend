@@ -1,14 +1,16 @@
 import { axiosApi } from '../provider/AxiosApi.js';
 
-const fornadaDaVezService = async (data) => {
+const fornadaDaVezService = async ({fornadaId, produtoFornadaId, quantidade}) => {
 
     try {
         const response = await axiosApi.post('/fornadas/da-vez', {
-            headers: {Authorization: (`Bearer ${localStorage.getItem('JWT_TOKEN')}`)},
-            produtoFornadaId: data.produtoFornadaId,
-            fornadaId: data.fornadaId,
-            quantidade: data.quantidade
-        });
+            fornadaId: fornadaId,
+            produtoFornadaId: produtoFornadaId,
+            quantidade: quantidade
+        }, {
+            headers: { Authorization: (`Bearer ${localStorage.getItem('JWT_TOKEN')}`) }
+        }
+        );
         return response.data;
     } catch (error) {
         console.error("Erro ao cadastrar Fornada da Vez:", error);
