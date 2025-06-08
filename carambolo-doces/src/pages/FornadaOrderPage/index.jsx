@@ -158,7 +158,6 @@ function FornadaOrderPage() {
                 nomeCliente: nome,
                 telefoneCliente: telefone,
                 observacoes: observacoes,
-                complemento: complemento,
                 enderecoId: enderecoId,
                 horarioRetirada: horario
             };
