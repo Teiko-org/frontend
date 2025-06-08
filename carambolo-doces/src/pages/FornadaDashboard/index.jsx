@@ -6,8 +6,12 @@ import HeaderDashboard from "../../components/headerDashboard";
 import fornadaService from "../../service/fornadaService";
 import fornadaDaVezService from "../../service/fornadaDaVezService";
 import { useState } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 function FornadaDashboard() {
+  const navigate = useNavigate();
+
   const [fornada, setFornada] = useState({
     dataInicio: "",
     dataFim: "",
@@ -31,6 +35,26 @@ function FornadaDashboard() {
   }
 
   const registerFornada = async () => {
+    if (!fornada.dataInicio || !fornada.dataFim) {
+      toast("Preencha as duas datas!", { type: "error" });
+      return;
+    }
+    const dataInicio = new Date(fornada.dataInicio);
+    const dataFim = new Date(fornada.dataFim);
+
+    if (dataInicio > dataFim) {
+      toast("A data de início deve ser menor que a data final!", {
+        type: "error",
+      });
+      return;
+    }
+
+    const selectedProducts = JSON.parse(localStorage.getItem("selectedProducts") || "[]");
+    if (!selectedProducts.length) {
+    toast("Selecione pelo menos um produto!", { type: "error" });
+    return;
+  }
+
     try {
       const response = await fornadaService(fornada);
 
@@ -40,22 +64,33 @@ function FornadaDashboard() {
     }
   };
 
+  const notify = () => {
+    toast("Fornada cadastrada com sucesso! Redirecionando...", {
+      type: "success",
+    });
+    setTimeout(() => {
+      navigate("/dashboard-pedidos-kanban");
+    }, 3000);
+  };
+
   const registerFornadaDaVez = async (idFornada) => {
     try {
-      console.log("AAAAAAAAAAAAAAAAAAAAAAA");
-      console.log(localStorage.getItem("selectedProducts"));
-      const selectedProductsJson = JSON.parse(localStorage.getItem("selectedProducts"));
-      console.log(selectedProductsJson);
-      const responses = await Promise.all(
-        selectedProductsJson.map((produto) => {
-          return fornadaDaVezService({
-            fornadaId: idFornada,
-            produtoFornadaId: produto.id,
-            quantidade: produto.quantidade,
-          });
-        })
+      const selectedProductsJson = JSON.parse(
+        localStorage.getItem("selectedProducts")
       );
 
+      const responses = await Promise.all(
+        selectedProductsJson.map((produto) => {
+          return (
+            fornadaDaVezService({
+              fornadaId: idFornada,
+              produtoFornadaId: produto.id,
+              quantidade: produto.quantidade,
+            }),
+            notify()
+          );
+        })
+      );
     } catch (error) {
       console.error(error);
     }
@@ -89,6 +124,7 @@ function FornadaDashboard() {
               text={"INICIAR FORNADA"}
               onClick={() => registerFornada()}
             />
+            <ToastContainer />
           </div>
         </div>
       </div>
