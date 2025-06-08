@@ -7,6 +7,7 @@ import CampoComGradiente from "../../components/gradientField";
 import PhoneNumberInput from "../../components/PhoneInput";
 import CustomDatePicker from "../../components/DatePicker";
 import Select from "../../components/Select";
+import { axiosApi } from "../../provider/AxiosApi";
 import axios from "axios";
 import { IoIosInformationCircle } from "react-icons/io";
 
@@ -17,7 +18,7 @@ function FornadaOrderPage() {
         'valorUnitario': 12.00
     }
 
-    const [amount, setAmount] = useState();
+    const [amount, setAmount] = useState(1);
 
     const [deliveryOption, setDeliveryOption] = useState("Entrega");
 
@@ -26,9 +27,18 @@ function FornadaOrderPage() {
     const [bairro, setBairro] = useState("");
     const [rua, setRua] = useState("");
 
+    const [nome, setNome] = useState("");
+    const [telefone, setTelefone] = useState("");
+    const [numero, setNumero] = useState("");
+    const [complemento, setComplemento] = useState("");
+    const [referencia, setReferencia] = useState("");
+    const [dataEntrega, setDataEntrega] = useState("");
+    const [horario, setHorario] = useState("");
+    const [observacoes, setObservacoes] = useState("");
+
     useEffect(() => {
         if (cep.length === 8) {
-            searchAddresByCep(cep);
+            searchAddressByCep(cep);
         }
     }, [cep]);
 
@@ -47,13 +57,13 @@ function FornadaOrderPage() {
         const cepWithoutMask = formattedValue.replace(/\D/g, "");
 
         if (cepWithoutMask.length === 8) {
-            searchAddresByCep(formattedValue);
+            searchAddressByCep(formattedValue);
         } else {
-            cleanAddressFields();
+            clearAddressFields();
         }
     };
 
-    const searchAddresByCep = async (typedCep) => {
+    const searchAddressByCep = async (typedCep) => {
         try {
             const cepOnlyNumbers = typedCep.replace(/\D/g, "");
 
@@ -71,18 +81,113 @@ function FornadaOrderPage() {
                 setRua(response.data.logradouro || "");
             } else {
                 console.error("CEP não encontrado.");
-                cleanAddressFields();
+                clearAddressFields();
             }
         } catch (error) {
             console.error("Erro ao buscar o CEP:", error);
-            cleanAddressFields();
+            clearAddressFields();
         }
     };
 
-    const cleanAddressFields = () => {
+    const clearAddressFields = () => {
         setCidade("");
         setBairro("");
         setRua("");
+    };
+
+    const registerAddress = async (endereco) => {
+        const response = await axiosApi.post("/enderecos", endereco);
+        return response.data.id;
+    };
+
+    const registerFornadaOrder = async (pedido) => {
+        const response = await axiosApi.post("/fornadas/pedidos", pedido);
+        return response.data.id;
+    };
+
+    const registerFornadaOrderSummary = async (pedidoFornadaId, dataEntrega, horario) => {
+        const body = {
+            pedidoFornadaId,
+            dataEntrega: dataEntrega && horario ? `${dataEntrega}T${horario}:00` : null
+        };
+        const response = await axiosApi.post("/resumo-pedido", body);
+        return response.data;
+    };
+
+    const sendOrder = async () => {
+        if (!dataEntrega) {
+            alert("Por favor, selecione a data de entrega.");
+            return;
+        }
+        if (!telefone) {
+            alert("Por favor, preencha o telefone.");
+            return;
+        }
+        if (deliveryOption === "Entrega" && !cep) {
+            alert("Por favor, preencha o CEP para entrega.");
+            return;
+        }
+        if (deliveryOption === "Retirada" && !horario) {
+            alert("Por favor, selecione o horário da retirada.");
+            return;
+        }
+        try {
+            let enderecoId = null;
+
+            if (deliveryOption === "Entrega") {
+                const endereco = {
+                    cep: cep.replace("-", ""),
+                    estado: "SP",
+                    cidade,
+                    bairro,
+                    logradouro: rua,
+                    numero,
+                    complemento,
+                    referencia,
+                    usuario: null 
+                };
+                enderecoId = await registerAddress(endereco);
+            }
+
+            const pedido = {
+                fornadaDaVezId: 1,
+                usuarioId: null, 
+                quantidade: Number(amount),
+                dataPrevisaoEntrega: dataEntrega, 
+                tipoEntrega: deliveryOption.toUpperCase(), 
+                nomeCliente: nome,
+                telefoneCliente: telefone,
+                observacoes: observacoes,
+                complemento: complemento,
+                enderecoId: enderecoId,
+                horarioRetirada: horario
+            };
+
+            if (deliveryOption === "Entrega") {
+                pedido.enderecoId = enderecoId;
+            }
+
+            if (deliveryOption === "Retirada") {
+                pedido.horarioRetirada = horario;
+            }
+
+            console.log("Pedido enviado:", pedido); 
+
+            const pedidoId = await registerFornadaOrder(pedido);
+            const resumo = await registerFornadaOrderSummary(pedidoId, dataEntrega, horario);
+            console.log("Mensagem do resumo:", resumo.mensagem);
+
+            const numeroWhatsApp = "11964849864";
+            const mensagem = resumo.mensagem;
+            const linkWhatsApp = `https://wa.me/55${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`;
+
+            window.open(linkWhatsApp, "_blank");
+
+            alert("Pedido realizado com sucesso!");
+        } catch (error) {
+            alert("Erro ao realizar pedido!");
+            console.error(error);
+        }
     };
 
     return (
@@ -107,10 +212,8 @@ function FornadaOrderPage() {
                             type="number"
                             maxLength={2}
                             min="1" max="12"
-                            defaultValue="1"
-
+                            value={amount}
                             onChange={e => setAmount(e.target.value)}
-
                             className="w-[10%] border-2 border-gold rounded-xl px-3 py-2"
                         />
                     </div>
@@ -139,6 +242,8 @@ function FornadaOrderPage() {
                                 <input
                                     placeholder="Inserir o seu nome"
                                     className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                                    value={nome}
+                                    onChange={e => setNome(e.target.value)}
                                 />
                             </div>
                             <div className="col-span-4">
@@ -147,11 +252,24 @@ function FornadaOrderPage() {
                                     <PhoneNumberInput
                                         placeholder="(XX) X XXXX-XXXX"
                                         className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                                        value={telefone}
+                                        onChange={value => setTelefone(value)}
                                     />
                                 </CampoComGradiente>
                             </div>
                             <div className="col-span-2">
-                                <CustomDatePicker label="Data" placeholder="DD/MM" />
+                                <CustomDatePicker
+                                    label="Data"
+                                    placeholder="DD/MM"
+                                    value={dataEntrega}
+                                    onChange={value => {
+                                        let formatted = value;
+                                        if (value instanceof Date) {
+                                            formatted = value.toISOString().split("T")[0];
+                                        }
+                                        setDataEntrega(formatted);
+                                    }}
+                                />
                             </div>
 
                             {deliveryOption === "Entrega" && (
@@ -221,14 +339,14 @@ function FornadaOrderPage() {
                                         <label className="block text-blue font-semibold mb-1">
                                             Número
                                         </label>
-                                        <input className="border-2 border-gold rounded-lg px-4 py-2 w-full" />
+                                        <input className="border-2 border-gold rounded-lg px-4 py-2 w-full" value={numero} onChange={e => setNumero(e.target.value)} />
                                     </div>
 
                                     <div className="col-span-8">
                                         <label className="block text-blue font-semibold mb-1">
                                             Complemento
                                         </label>
-                                        <input className="border-2 border-gold rounded-lg px-4 py-2 w-full" />
+                                        <input className="border-2 border-gold rounded-lg px-4 py-2 w-full" value={complemento} onChange={e => setComplemento(e.target.value)} />
                                     </div>
                                 </>
                             )}
@@ -244,6 +362,8 @@ function FornadaOrderPage() {
                                             { value: "19:00", label: "19:00" },
                                         ]}
                                         placeholder={""}
+                                        value={horario}
+                                        onChange={e => setHorario(e.target.value)}
                                     />
                                 </div>
                             )}
@@ -258,6 +378,8 @@ function FornadaOrderPage() {
                         <textarea
                             className="border-2 border-gold rounded-lg px-4 py-2 w-full mt-2 h-32"
                             placeholder="Descreva abaixo como você quer o seu Carambolo"
+                            value={observacoes}
+                            onChange={e => setObservacoes(e.target.value)}
                         ></textarea>
                     </div>
 
@@ -267,14 +389,13 @@ function FornadaOrderPage() {
                             <span className="flex items-center gap-1 text-[#665853] text-sm"><IoIosInformationCircle className="text-red" /> Esse valor não inclui o valor do frete</span>
                         </div>
                         <Button
-                            text="Adicionar ao Carrinho"
+                            text="Finalizar Pedido"
+                            onClick={sendOrder}
                         />
                     </div>
 
                 </div>
-
             </div>
-
             <Footer />
         </div>
     );
