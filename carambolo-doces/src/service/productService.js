@@ -7,18 +7,28 @@ export const findAllFornada = async () => {
 
         const lastFornada = fornadas.data[fornadas.data.length - 1];
 
-        const products = await axiosApi.get(`/fornadas/da-vez/produtos?data_inicio=${lastFornada.dataInicio}&data_fim=${lastFornada.dataFim}`);
-        console.log(products.data)
-        return products.data;
+        const productsFornada = await axiosApi.get(`/fornadas/da-vez/produtos?data_inicio=${lastFornada.dataInicio}&data_fim=${lastFornada.dataFim}`);
+
+        return productsFornada.data;
     } catch (error) {
-        console.log(error)
+        console.log(error);
+        return [];
     }
 }
 
-export const findAllBolo = () => {
-    const response = axiosApi.get(`/fornadas/bolos`, {
-        headers: {
-            Authorization: `Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI1NTExOTkxMTE3NzM0IiwiaWF0IjoxNzQ4OTAzMzY2LCJleHAiOjE3NTI1MDMzNjZ9.nKKQR_e9NfSIiTc0uUMpG4Di2_aarkgP0pK-t5kyT-c2bvwQpg4urQDloWXT2VemKJ95e_NJXX3LY2pfoXNygw`
-        }
-    })
-}
+export const findAllBolo = async () => {
+    let bolosToResponse = []
+    const bolos = await axiosApi.get(`/bolos/detalhe`)
+
+    bolos.data.map(item => bolosToResponse.push({
+        categoria: item.categoria,
+        descricao: null,
+        isAtivo: item.ativo,
+        produto: item.produto,
+        id: item.boloId,
+        valor: item.precoTotal,
+        quantidade: 0
+    }));
+
+    return bolosToResponse;
+};

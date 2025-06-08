@@ -14,7 +14,7 @@ import { ConfirmToast } from 'react-confirm-toast';
 import Button from '../Button';
 import { CiFilter } from "react-icons/ci";
 import ModalFilterProduct from '../ModalFilterProduct';
-import { findAllFornada } from '../../service/productService';
+import { findAllBolo, findAllFornada } from '../../service/productService';
 
 const columns = [
     { id: 'ativo', label: '', minWidth: 50, align: 'left' },
@@ -40,26 +40,32 @@ export default function ProductList() {
 
     const getData = async () => {
         try {
-            const response = await findAllFornada();
-            setProducts(response);
+            console.log('Buscando produtos...'); // Adicionado para depuração
+            const fornadas = await findAllFornada();
+            const bolos = await findAllBolo();
+            console.log('Bolos retornados:', bolos); // Verificar duplicidade
+
+            // Sempre sobrescreve, nunca concatena com o estado anterior
+            const responseProducts = [...(fornadas || []), ...(bolos || [])];
+            setProducts(responseProducts);
         } catch (error) {
             console.log(error);
         }
-    };
+    }
 
     const handleDeleteRow = async (id) => {
         await axiosApi.delete(`/produtos/${id}`);
         await getData();
         setShowConfirm(false);
         setIdToDelete(null);
-    };
+    }
 
     const handleVisibility = (id) => {
         axiosApi.get(`/produtos/${id}`).then((response) => {
             const updated = { ...response.data, status: !response.data.status };
             axiosApi.patch(`/produtos/${id}`, updated).then(() => getData());
         });
-    };
+    }
 
     const filteredProducts = products.filter(product => {
         const categoryFilter = localStorage.getItem('CATEGORY');
@@ -74,14 +80,16 @@ export default function ProductList() {
         const matchCategory = !categoryFilter || categoryFilter === '--' || product.categoria === categoryFilter;
         const matchPrice = product.valor >= priceDe && product.valor <= priceAte;
         const matchQuantity = product.quantidade >= qtdDe && product.quantidade <= qtdAte;
-        const matchStatus =
-            !statusFilter || statusFilter === '' ||
-            (statusFilter === 'avaliable' &&
-                product.quantidade > 0 &&
-                categoryToSearch.includes('fornada')) ||
-            (statusFilter === 'unavaliable' &&
-                product.quantidade <= 0 &&
-                categoryToSearch.includes('fornada'));
+        const isFornada = categoryToSearch.includes('fornada');
+        const isBolo = !isFornada;
+
+        let matchStatus = true;
+
+        if (statusFilter === 'avaliable') {
+            matchStatus = isBolo || (isFornada && product.quantidade > 0);
+        } else if (statusFilter === 'unavaliable') {
+            matchStatus = isBolo || (isFornada && product.quantidade <= 0);
+        }
 
         const matchSearch = product.produto.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -101,7 +109,7 @@ export default function ProductList() {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <Button text={'FILTRAR'} children={<CiFilter />} onClick={() => setFilterModalOpen(true)} className='flex flex-row items-center'/>
+                    <Button text={'FILTRAR'} children={<CiFilter />} onClick={() => setFilterModalOpen(true)} className='flex flex-row items-center' />
                     {
                         isFilterModalOpen && (
                             <ModalFilterProduct products={products} setFilterModalOpen={setFilterModalOpen} onClose={() => setFilterModalOpen(false)} />
@@ -120,6 +128,7 @@ export default function ProductList() {
                                         key={column.id}
                                         align={column.align}
                                         style={{ minWidth: column.minWidth }}
+                                        sx={{ backgroundColor: "transparent", fontWeight: "bold", boxShadow: "none", borderBottom: "none", paddingTop: "0.5rem", paddingBottom: "0.5rem" }}
                                     >
                                         {column.label}
                                     </TableCell>
@@ -132,7 +141,7 @@ export default function ProductList() {
                                     hover
                                     role="checkbox"
                                     tabIndex={-1}
-                                    key={row.id}
+                                    key={`${row.id}-${row.categoria}`}
                                     className={`${index % 2 === 0 ? 'bg-[#FFEEE7]' : 'bg-[#FFE7DD]'}`}
                                 >
                                     {columns.map((column) => {
@@ -140,7 +149,7 @@ export default function ProductList() {
                                         if (column.id === 'ativo') {
                                             return (
                                                 <TableCell key={column.id} align={column.align} className='rounded-l-full'>
-                                                    {row.isAtivoPf
+                                                    {row.isAtivo
                                                         ? <LuEye className='w-5 cursor-pointer' onClick={() => handleVisibility(row.id)} />
                                                         : <LuEyeClosed className='w-5 cursor-pointer' onClick={() => handleVisibility(row.id)} />}
                                                 </TableCell>
@@ -194,7 +203,7 @@ export default function ProductList() {
                                         }
 
                                         if (column.id == 'preco') {
-                                            return(
+                                            return (
                                                 <TableCell key={column.id} align={column.align}>
                                                     <span>{row.valor}</span>
                                                 </TableCell>
@@ -209,7 +218,7 @@ export default function ProductList() {
                                             </TableCell>
                                         );
                                     })}
-                                
+
                                 </TableRow>
                             ))}
                         </TableBody>
