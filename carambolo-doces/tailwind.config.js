@@ -36,7 +36,8 @@ export default withMT({
       },
       backgroundImage: {
         'gradient-blue': 'linear-gradient(to top, #30344F 0%, #103464 100%)',
-      },  
+        'gradient-gold': 'linear-gradient(to top, #D4B076 0%, #A47032 100%)'
+      }
     },
   },
   plugins: [],

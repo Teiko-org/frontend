@@ -6,6 +6,9 @@ import AddressPage from '../pages/AddressPage/index';
 import Application from '../pages/CakeOrder/Application';
 import Carambolos from '../pages/Carambolos';
 import FornadaSemana from '../pages/Fornada';
+import ProductList from '../components/ProductList';
+import ModalFilterProduct from '../components/ModalFilterProduct';
+import Products from '../pages/Products';
 import FornadaDashboard from '../pages/FornadaDashboard';
 import TableSelectProductsFornada from '../components/TableSelectProductsFornada';
 
