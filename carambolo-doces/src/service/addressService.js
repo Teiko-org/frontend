@@ -27,6 +27,20 @@ export const listAddresses = async () => {
   }
 };
 
+export const listUserAddresses = async (userId) => {
+  try {
+    const response = await axiosApi.get(`/enderecos/usuario/${userId}`);
+    
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.status === 204) {
+      return [];
+    }
+    handleAddressError(error, 'Erro ao carregar endereços do usuário');
+    throw error;
+  }
+};
+
 export const getAddressById = async (addressId) => {
   try {
     const response = await axiosApi.get(`/enderecos/${addressId}`);

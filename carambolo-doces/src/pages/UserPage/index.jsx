@@ -63,8 +63,24 @@ function UserPage() {
           genero: tempGenero || null
         };
 
-        await updateUserData(userId, updatedData, token);
-        navigate("/");
+        // Verifica se o telefone foi alterado
+        const telefoneAlterado = tempTelefone !== userData.contato;
+        
+        await updateUserData(userId, updatedData, token, telefoneAlterado);
+        
+        if (telefoneAlterado) {
+          // Se telefone foi alterado, redireciona para home (será feito logout)
+          navigate("/");
+        } else {
+          // Se apenas data/gênero foram alterados, recarrega os dados e sai do modo edição
+          const newData = await getUserData(userId);
+          setUserData(newData);
+          setTempNome(newData.nome);
+          setTempTelefone(newData.contato);
+          setTempDataNascimento(newData.dataNascimento || "");
+          setTempGenero(newData.genero || "");
+          setIsEditing(false);
+        }
       } catch (error) {
         console.error("Erro ao salvar dados:", error);
       }

@@ -97,7 +97,7 @@ export const getUserData = async (userId) => {
   }
 };
 
-export const updateUserData = async (userId, userData, token) => {
+export const updateUserData = async (userId, userData, token, shouldLogout = true) => {
   try {
     const response = await axiosApi.patch(`/usuarios/${userId}/dados-pessoais`, userData, {
       headers: {
@@ -105,8 +105,13 @@ export const updateUserData = async (userId, userData, token) => {
       }
     });
     
-    toast.success("Dados atualizados com sucesso! Faça login novamente.");
-    clearAuthData();
+    if (shouldLogout) {
+      toast.success("Telefone alterado com sucesso! Faça login novamente.");
+      clearAuthData();
+    } else {
+      toast.success("Dados atualizados com sucesso!");
+    }
+    
     return response.data;
   } catch (error) {
     if (error.response && error.response.status === 409) {

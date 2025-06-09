@@ -10,6 +10,7 @@ import Select from "../../components/Select";
 import { axiosApi } from "../../provider/AxiosApi";
 import axios from "axios";
 import { IoIosInformationCircle } from "react-icons/io";
+import { listUserAddresses } from "../../service/addressService";
 
 function FornadaOrderPage() {
 
@@ -21,6 +22,11 @@ function FornadaOrderPage() {
     const [amount, setAmount] = useState(1);
 
     const [deliveryOption, setDeliveryOption] = useState("Entrega");
+
+    // Estados para endereços
+    const [userAddresses, setUserAddresses] = useState([]);
+    const [selectedAddressId, setSelectedAddressId] = useState("");
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     const [cep, setCep] = useState("");
     const [cidade, setCidade] = useState("");
@@ -35,6 +41,26 @@ function FornadaOrderPage() {
     const [dataEntrega, setDataEntrega] = useState("");
     const [horario, setHorario] = useState("");
     const [observacoes, setObservacoes] = useState("");
+
+    // Carrega endereços do usuário se estiver logado
+    useEffect(() => {
+        const checkUserAndLoadAddresses = async () => {
+            const userId = localStorage.getItem("userId");
+            const isSignedIn = localStorage.getItem("IS_SIGNED");
+            
+            if (userId && isSignedIn) {
+                setIsLoggedIn(true);
+                try {
+                    const addresses = await listUserAddresses(userId);
+                    setUserAddresses(addresses);
+                } catch (error) {
+                    console.error("Erro ao carregar endereços do usuário:", error);
+                }
+            }
+        };
+
+        checkUserAndLoadAddresses();
+    }, []);
 
     useEffect(() => {
         if (cep.length === 8) {
@@ -51,6 +77,11 @@ function FornadaOrderPage() {
     };
 
     const handleCepChange = (e) => {
+        // Não permite alteração se um endereço existente estiver selecionado
+        if (selectedAddressId && selectedAddressId !== "novo") {
+            return;
+        }
+
         const formattedValue = formatCep(e.target.value);
         setCep(formattedValue);
 
@@ -95,6 +126,31 @@ function FornadaOrderPage() {
         setRua("");
     };
 
+    const handleAddressSelection = (addressId) => {
+        setSelectedAddressId(addressId);
+        
+        if (addressId === "novo") {
+            // Limpa os campos para permitir inserir novo endereço
+            clearAddressFields();
+            setCep("");
+            setNumero("");
+            setComplemento("");
+            setReferencia("");
+        } else if (addressId) {
+            // Preenche com o endereço selecionado
+            const selectedAddress = userAddresses.find(addr => addr.id === parseInt(addressId));
+            if (selectedAddress) {
+                setCep(selectedAddress.cep);
+                setCidade(selectedAddress.cidade);
+                setBairro(selectedAddress.bairro);
+                setRua(selectedAddress.logradouro);
+                setNumero(selectedAddress.numero);
+                setComplemento(selectedAddress.complemento || "");
+                setReferencia(selectedAddress.referencia || "");
+            }
+        }
+    };
+
     const registerAddress = async (endereco) => {
         const response = await axiosApi.post("/enderecos", endereco);
         return response.data.id;
@@ -127,6 +183,10 @@ function FornadaOrderPage() {
             alert("Por favor, preencha o CEP para entrega.");
             return;
         }
+        if (deliveryOption === "Entrega" && (!cidade || !bairro || !rua || !numero)) {
+            alert("Por favor, preencha todos os campos obrigatórios do endereço (cidade, bairro, endereço e número).");
+            return;
+        }
         if (deliveryOption === "Retirada" && !horario) {
             alert("Por favor, selecione o horário da retirada.");
             return;
@@ -135,18 +195,26 @@ function FornadaOrderPage() {
             let enderecoId = null;
 
             if (deliveryOption === "Entrega") {
-                const endereco = {
-                    cep: cep.replace("-", ""),
-                    estado: "SP",
-                    cidade,
-                    bairro,
-                    logradouro: rua,
-                    numero,
-                    complemento,
-                    referencia,
-                    usuario: null 
-                };
-                enderecoId = await registerAddress(endereco);
+                if (selectedAddressId && selectedAddressId !== "novo") {
+                    // Usa endereço existente
+                    enderecoId = parseInt(selectedAddressId);
+                } else {
+                    // Cria novo endereço
+                    const userId = localStorage.getItem("userId");
+                    const endereco = {
+                        nome: "Endereço de Entrega",
+                        cep: cep.replace("-", ""),
+                        estado: "SP",
+                        cidade,
+                        bairro,
+                        logradouro: rua,
+                        numero,
+                        complemento,
+                        referencia,
+                        usuario: userId ? parseInt(userId) : null
+                    };
+                    enderecoId = await registerAddress(endereco);
+                }
             }
 
             const pedido = {
@@ -273,14 +341,36 @@ function FornadaOrderPage() {
 
                             {deliveryOption === "Entrega" && (
                                 <>
+                                    {isLoggedIn && userAddresses.length > 0 && (
+                                        <div className="col-span-12 mb-4">
+                                            <label className="block text-blue font-semibold mb-1">
+                                                Escolher Endereço
+                                            </label>
+                                            <select
+                                                className="w-full border-2 border-gold rounded-lg px-4 py-2"
+                                                value={selectedAddressId}
+                                                onChange={(e) => handleAddressSelection(e.target.value)}
+                                            >
+                                                <option value="">Selecione um endereço ou digite um novo</option>
+                                                {userAddresses.map((address) => (
+                                                    <option key={address.id} value={address.id}>
+                                                        {address.nome} - {address.logradouro}, {address.numero} - {address.bairro}
+                                                    </option>
+                                                ))}
+                                                <option value="novo">+ Inserir novo endereço</option>
+                                            </select>
+                                        </div>
+                                    )}
+                                    
                                     <div className="col-span-3">
                                         <label className="block text-blue font-semibold mb-1">CEP</label>
                                         <input
                                             placeholder="00000-000"
-                                            className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                                            className={`border-2 border-gold rounded-lg px-4 py-2 w-full ${selectedAddressId && selectedAddressId !== "novo" ? 'bg-gray-100' : ''}`}
                                             value={cep}
                                             maxLength={9}
                                             onChange={handleCepChange}
+                                            readOnly={selectedAddressId && selectedAddressId !== "novo"}
                                         />
                                         <span className="text-xs text-blue mt-1">
                                             Não sabe o CEP?{" "}
@@ -307,9 +397,10 @@ function FornadaOrderPage() {
                                             Cidade
                                         </label>
                                         <input
-                                            className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                                            className={`border-2 border-gold rounded-lg px-4 py-2 w-full ${selectedAddressId && selectedAddressId !== "novo" ? 'bg-gray-100' : ''}`}
                                             value={cidade}
                                             onChange={(e) => setCidade(e.target.value)}
+                                            readOnly={selectedAddressId && selectedAddressId !== "novo"}
                                         />
                                     </div>
                                     <div className="col-span-3">
@@ -317,9 +408,10 @@ function FornadaOrderPage() {
                                             Bairro
                                         </label>
                                         <input
-                                            className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                                            className={`border-2 border-gold rounded-lg px-4 py-2 w-full ${selectedAddressId && selectedAddressId !== "novo" ? 'bg-gray-100' : ''}`}
                                             value={bairro}
                                             onChange={(e) => setBairro(e.target.value)}
+                                            readOnly={selectedAddressId && selectedAddressId !== "novo"}
                                         />
                                     </div>
 
@@ -329,23 +421,34 @@ function FornadaOrderPage() {
                                         </label>
                                         <input
                                             placeholder="Inserir seu endereço"
-                                            className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                                            className={`border-2 border-gold rounded-lg px-4 py-2 w-full ${selectedAddressId && selectedAddressId !== "novo" ? 'bg-gray-100' : ''}`}
                                             value={rua}
                                             onChange={(e) => setRua(e.target.value)}
+                                            readOnly={selectedAddressId && selectedAddressId !== "novo"}
                                         />
                                     </div>
                                     <div className="col-span-3">
                                         <label className="block text-blue font-semibold mb-1">
                                             Número
                                         </label>
-                                        <input className="border-2 border-gold rounded-lg px-4 py-2 w-full" value={numero} onChange={e => setNumero(e.target.value)} />
+                                        <input 
+                                            className={`border-2 border-gold rounded-lg px-4 py-2 w-full ${selectedAddressId && selectedAddressId !== "novo" ? 'bg-gray-100' : ''}`} 
+                                            value={numero} 
+                                            onChange={e => setNumero(e.target.value)}
+                                            readOnly={selectedAddressId && selectedAddressId !== "novo"}
+                                        />
                                     </div>
 
                                     <div className="col-span-8">
                                         <label className="block text-blue font-semibold mb-1">
                                             Complemento
                                         </label>
-                                        <input className="border-2 border-gold rounded-lg px-4 py-2 w-full" value={complemento} onChange={e => setComplemento(e.target.value)} />
+                                        <input 
+                                            className={`border-2 border-gold rounded-lg px-4 py-2 w-full ${selectedAddressId && selectedAddressId !== "novo" ? 'bg-gray-100' : ''}`} 
+                                            value={complemento} 
+                                            onChange={e => setComplemento(e.target.value)}
+                                            readOnly={selectedAddressId && selectedAddressId !== "novo"}
+                                        />
                                     </div>
                                 </>
                             )}
