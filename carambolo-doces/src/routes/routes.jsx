@@ -9,12 +9,14 @@ import FornadaSemana from '../pages/Fornada';
 import ProductList from '../components/ProductList';
 import ModalFilterProduct from '../components/ModalFilterProduct';
 import Products from '../pages/Products';
+import FornadaDashboard from '../pages/FornadaDashboard';
+import TableSelectProductsFornada from '../components/TableSelectProductsFornada';
 
 const AppRoutes = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Products />} />
+        <Route path="/" element={<TableSelectProductsFornada />} />
         <Route path="/pagina-usuario" element={<UserPage />} />
         <Route path="/pagina-enderecos" element={<AddressPage />} />
         <Route path="/pedido-bolo" element={<Application />} />

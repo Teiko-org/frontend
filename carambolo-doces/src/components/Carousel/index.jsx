@@ -4,17 +4,15 @@ import {
   BsFillArrowLeftCircleFill,
 } from "react-icons/bs";
 
-export default function Carousel({ slides = ["src/assets/image_cake.png", "src/assets/image_cake.png", "src/assets/image_cake.png"] }) {
-  let [current, setCurrent] = useState(0);
+export default function Carousel({ slides }) {
+  const [current, setCurrent] = useState(0);
 
-  let previousSlide = () => {
-    if (current === 0) setCurrent(slides.length - 1);
-    else setCurrent(current - 1);
+  const previousSlide = () => {
+    setCurrent((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
   };
 
-  let nextSlide = () => {
-    if (current === slides.length - 1) setCurrent(0);
-    else setCurrent(current + 1);
+  const nextSlide = () => {
+    setCurrent((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
   };
 
   return (
@@ -26,13 +24,13 @@ export default function Carousel({ slides = ["src/assets/image_cake.png", "src/a
         }}
       >
         {slides.map((s, index) => (
-          <img key={index} src={s} alt={`Imagem Ilustrativa ${index}`} />
+          <img key={index} src={s.image} alt={`Imagem Ilustrativa ${index}`} />
         ))}
       </div>
 
       <div className="absolute top-0 h-full w-full justify-between items-center flex text-pink px-6 text-2xl">
         <button onClick={previousSlide}>
-          <BsFillArrowLeftCircleFill/>
+          <BsFillArrowLeftCircleFill />
         </button>
         <button onClick={nextSlide}>
           <BsFillArrowRightCircleFill />
@@ -42,10 +40,12 @@ export default function Carousel({ slides = ["src/assets/image_cake.png", "src/a
       <div className="absolute bottom-0 py-4 flex justify-center gap-3 w-full">
         {slides.map((s, i) => (
           <div
-            onClick={() => { setCurrent(i); }}
+            onClick={() => setCurrent(i)}
             key={"circle" + i}
-            className={`rounded-full w-3 h-3 cursor-pointer mb-4 ${i === current ? "bg-pink" : "bg-blue"}`}
-          ></div>
+            className={`rounded-full w-3 h-3 cursor-pointer mb-4 ${
+              i === current ? "bg-pink" : "bg-blue"
+            }`}
+          />
         ))}
       </div>
     </div>
