@@ -1,7 +1,4 @@
-import React, { useEffect, useState } from "react";
-import orderFornada from "../../services/orderFornada";
-import orderCake from "../../services/orderCake";
-import getAddressById from "../../services/getAddressById";
+import OrderStatusChanger from "../orderStatusChanger";
 
 function formatPhone(phone) {
   if (!phone) return "Carregando...";
@@ -25,10 +22,19 @@ function formatDate(dateString) {
   return `${day}/${month}/${year}`;
 }
 
+function formatCep(cep) {
+  if (!cep) return "Carregando...";
+  const cleaned = cep.replace(/\D/g, "");
+  if (cleaned.length === 8) {
+    return `${cleaned.slice(0, 5)}-${cleaned.slice(5)}`;
+  }
+  return cep;
+}
+
 export default function ModalOrderDetails(props) {
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex justify-center pt-10 pb-5">
-      <div className="shadow-xl relative border bg-bgNativeHome border-[#d6a87c] w-[810px] min-h-[150px] flex flex-col rounded-2xl">
+      <div className="shadow-xl relative border bg-bgNativeHome border-[#d6a87c] w-[1000px] min-h-[150px] flex flex-col rounded-2xl">
         <header className="flex justify-between bg-gradient-blue border-2 border-gold px-10 py-7 rounded-t-2xl">
           <div className="pl-10">
             <h1 className="text-3xl font-bold text-gold">
@@ -49,176 +55,193 @@ export default function ModalOrderDetails(props) {
           </button>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-10 py-4  rounded-b">
-          {props.fornada == null ? (
-            <div className="px-10 pt-5 pb-10 border-b border-[#FFC8B2]">
-              <h3 className="font-bold text-2xl text-blue pb-5">Montagem</h3>
+        <div className="flex-1 overflow-y-auto px-10 py-4 rounded-b">
+          <div className="flex flex-row gap-5">
+            <div>
+              {props.fornada == null ? (
+                <div className="px-10 pt-5 pb-10 border-b border-[#FFC8B2]">
+                  <h3 className="font-bold text-2xl text-blue pb-5">Montagem</h3>
 
-              <div className="grid grid-cols-2 gap-y-5">
-                <div className="gap-2">
-                  <span className="text-blue font-semibold">Tamanho: </span>
-                  <span>
-                    {props?.order?.tamanho === "TAMANHO_5"
-                      ? "5 centímetros"
-                      : props?.order?.tamanho === "TAMANHO_7"
-                      ? "7 centímetros"
-                      : props?.order?.tamanho === "TAMANHO_12"
-                      ? "12 centímetros"
-                      : props?.order?.tamanho === "TAMANHO_15"
-                      ? "15 centímetros"
-                      : props?.order?.tamanho === "TAMANHO_17"
-                      ? "17 centímetros"
+                  <div className="grid grid-cols-2 gap-y-5">
+                    <div className="gap-2">
+                      <span className="text-blue font-semibold">Tamanho: </span>
+                      <span>
+                        {props?.order?.tamanho === "TAMANHO_5"
+                          ? "5 centímetros"
+                          : props?.order?.tamanho === "TAMANHO_7"
+                            ? "7 centímetros"
+                            : props?.order?.tamanho === "TAMANHO_12"
+                              ? "12 centímetros"
+                              : props?.order?.tamanho === "TAMANHO_15"
+                                ? "15 centímetros"
+                                : props?.order?.tamanho === "TAMANHO_17"
+                                  ? "17 centímetros"
+                                  : "Carregando..."}
+                      </span>
+                    </div>
+
+                    <div className="gap-2">
+                      <span className="text-blue font-semibold">Formato: </span>
+                      <span>
+                        {props?.order?.formato === "CORACAO"
+                          ? "Coração"
+                          : props?.order?.formato === "CIRCULO"
+                            ? "Círculo"
+                            : props?.order?.formato ?? "Carregando..."}
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col">
+                      <span className="text-blue font-semibold">Massa</span>
+                      {props?.order?.massa ?? "Carregando..."}
+                    </div>
+
+                    <div className="flex flex-col">
+                      <span className="text-blue font-semibold">Recheio</span>
+                      {props?.order?.recheio ?? "Carregando..."}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="px-10 pt-5 pb-10 border-b border-[#FFC8B2] flex flex-col">
+                  <h3 className="font-bold text-2xl text-blue  pb-5">Quantidade</h3>
+                  {props?.order?.quantidade} unidades
+                </div>
+              )}
+
+              <div className="px-10 pt-10 pb-10 border-b border-[#FFC8B2]">
+                <div className="flex justify-between items-center pb-5">
+                  <h3 className="font-bold text-2xl text-blue">Decoração</h3>
+                </div>
+                <div className="flex flex-col">
+                  <span className="italic pb-8">
+                    {props?.order?.decoracao
+                      ? "props.order.imagem"
+                      : "Nenhuma imagem de referência adicionada"}
+                  </span>
+
+                  <span className="text-blue font-semibold">Observações</span>
+                  {props?.order?.observacoes
+                    ? props.order.observacoes
+                    : props.order.observacao
+                      ? props.order.observacao
                       : "Carregando..."}
-                  </span>
-                </div>
-
-                <div className="gap-2">
-                  <span className="text-blue font-semibold">Formato: </span>
-                  <span>
-                    {props?.order?.formato === "CORACAO"
-                      ? "Coração"
-                      : props?.order?.formato === "CIRCULO"
-                      ? "Círculo"
-                      : props?.order?.formato ?? "Carregando..."}
-                  </span>
-                </div>
-
-                <div className="flex flex-col">
-                  <span className="text-blue font-semibold">Massa</span>
-                  {props?.order?.massa ?? "Carregando..."}
-                </div>
-
-                <div className="flex flex-col">
-                  <span className="text-blue font-semibold">Recheio</span>
-                  {props?.order?.recheio ?? "Carregando..."}
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="px-10 pt-5 pb-10 border-b border-[#FFC8B2] flex flex-col">
-              <h3 className="font-bold text-2xl text-blue  pb-5">Quantidade</h3>
-              {props?.order?.quantidade} unidades
-            </div>
-          )}
 
-          <div className="px-10 pt-10 pb-10 border-b border-[#FFC8B2]">
-            <div className="flex justify-between items-center pb-5">
-              <h3 className="font-bold text-2xl text-blue">Decoração</h3>
-            </div>
-            <div className="flex flex-col">
-              <span className="italic pb-8">
-                {props?.order?.decoracao
-                  ? "props.order.imagem"
-                  : "Nenhuma imagem de referência adicionada"}
-              </span>
-
-              <span className="text-blue font-semibold">Observações</span>
-              {props?.order?.observacoes
-                ? props.order.observacoes
-                : props.order.observacao
-                ? props.order.observacao
-                : "Carregando..."}
-            </div>
-          </div>
-
-          {props.fornada == null && (
-            <div className="px-10 pt-10 pb-10 border-b border-[#FFC8B2]">
-              <h3 className="font-bold text-2xl text-blue pb-5">Adicionais</h3>
-              <div className="flex gap-2">
-                {props?.order?.adicionais?.split(",").map((item, index) => (
-                  <span
-                    key={index}
-                    className="bg-gradient-to-l from-darkGoldButton to-goldButton border-2 border-gold rounded px-2 py-1 text-blue font-bold"
-                  >
-                    {item}
-                  </span>
-                )) ?? "Carregando..."}
-              </div>
-            </div>
-          )}
-
-          <div className="px-10 pt-10 pb-10">
-            <h3 className="font-bold text-2xl text-blue pb-5">Dados Entrega</h3>
-
-            <div className="grid grid-cols-2 gap-y-4 mb-4">
-              <div>
-                <span className="font-semibold text-blue">O pedido será:</span>{" "}
-                {props?.order?.tipoEntrega === "ENTREGA"
-                  ? "Entrega"
-                  : props?.order?.tipoEntrega === "RETIRADA"
-                  ? "Retirada"
-                  : "Carregando..."}
-              </div>
-              <div>
-                <span className="font-semibold text-blue">Data:</span>{" "}
-                {props?.order?.data
-                  ? formatDate(props.order.data)
-                  : props.order.dataPedido
-                    ? formatDate(props.order.dataPedido)
-                    : "Carregando..."}
-              </div>
-            </div>
-
-            <div className="pt-5">
-              <h3 className="font-bold text-2xl text-blue pb-5">
-                Dados do Solicitante
-              </h3>
-              <div className="grid grid-cols-2 gap-y-4 mb-4">
-                <div>
-                  <span className="font-semibold text-blue">Nome:</span>{" "}
-                  {props?.order?.nomeCliente ?? "Carregando..."}
+              {props.fornada == null && (
+                <div className="px-10 pt-10 pb-10 border-b border-[#FFC8B2]">
+                  <h3 className="font-bold text-2xl text-blue pb-5">Adicionais</h3>
+                  <div className="flex gap-2">
+                    {props?.order?.adicionais?.split(",").map((item, index) => (
+                      <span
+                        key={index}
+                        className="bg-gradient-to-l from-darkGoldButton to-goldButton border-2 border-gold rounded px-2 py-1 text-blue font-bold"
+                      >
+                        {item}
+                      </span>
+                    )) ?? "Carregando..."}
+                  </div>
                 </div>
-                <div>
-                  <span className="font-semibold text-blue">Telefone:</span>{" "}
-                  {props?.order?.telefoneCliente
-                    ? formatPhone(props.order.telefoneCliente)
-                    : props?.order?.telefone
-                    ? formatPhone(props.order.telefone)
-                    : "Carregando..."}
-                </div>
-              </div>
-            </div>
+              )}
 
-            {props?.order?.tipoEntrega !== "RETIRADA" && (
-              <div className="pt-5">
-                <h3 className="font-bold text-2xl text-blue pb-5">Endereço</h3>
-                <div className="grid grid-cols-3 mb-8">
+              <div className="px-10 pt-10 pb-10">
+                <h3 className="font-bold text-2xl text-blue pb-5">Dados Entrega</h3>
+
+                <div className="grid grid-cols-2 gap-y-4 mb-4">
                   <div>
-                    <span className="font-semibold text-blue">CEP:</span>{" "}
-                    {props?.order?.endereco?.cep ?? "Carregando..."}
+                    <span className="font-semibold text-blue">O pedido será:</span>{" "}
+                    {props?.order?.tipoEntrega === "ENTREGA"
+                      ? "Entrega"
+                      : props?.order?.tipoEntrega === "RETIRADA"
+                        ? "Retirada"
+                        : "Carregando..."}
                   </div>
                   <div>
-                    <span className="font-semibold text-blue">Estado:</span>{" "}
-                    {props?.order?.endereco?.estado ?? "Carregando..."}
+                    <span className="font-semibold text-blue">Data:</span>{" "}
+                    {props?.order?.data
+                      ? formatDate(props.order.data)
+                      : props.order.dataPedido
+                        ? formatDate(props.order.dataPedido)
+                        : "Carregando..."}
                   </div>
-                  <div>
-                    <span className="font-semibold text-blue">Cidade:</span>{" "}
-                    {props?.order?.endereco?.cidade ?? "Carregando..."}
+                  {props?.order?.tipoEntrega === "RETIRADA" && (
+
+                    <div>
+                      <span className="font-semibold text-blue">Horário:</span>
+                      {props?.order?.horarioRetirada}
+                    </div>
+                  )}
+
+                </div>
+
+                <div className="pt-5">
+                  <h3 className="font-bold text-2xl text-blue pb-5">
+                    Dados do Solicitante
+                  </h3>
+                  <div className="grid grid-cols-2 gap-y-4 mb-4">
+                    <div>
+                      <span className="font-semibold text-blue">Nome:</span>{" "}
+                      {props?.order?.nomeCliente ?? "Carregando..."}
+                    </div>
+                    <div>
+                      <span className="font-semibold text-blue">Telefone:</span>{" "}
+                      {props?.order?.telefoneCliente
+                        ? formatPhone(props.order.telefoneCliente)
+                        : props?.order?.telefone
+                          ? formatPhone(props.order.telefone)
+                          : "Carregando..."}
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-y-8">
-                  <div>
-                    <span className="font-semibold text-blue">Bairro:</span>{" "}
-                    {props?.order?.endereco?.bairro ?? "Carregando..."}
+                {props?.order?.tipoEntrega !== "RETIRADA" && (
+                  <div className="pt-5">
+                    <h3 className="font-bold text-2xl text-blue pb-5">Endereço</h3>
+                    <div className="grid grid-cols-3 mb-8">
+                      <div>
+                        <span className="font-semibold text-blue">CEP:</span>{" "}
+                        {formatCep(props?.order?.endereco?.cep) ?? "Carregando..."}
+                      </div>
+                      <div>
+                        <span className="font-semibold text-blue">Estado:</span>{" "}
+                        {props?.order?.endereco?.estado ?? "Carregando..."}
+                      </div>
+                      <div>
+                        <span className="font-semibold text-blue">Cidade:</span>{" "}
+                        {props?.order?.endereco?.cidade ?? "Carregando..."}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-y-8">
+                      <div>
+                        <span className="font-semibold text-blue">Bairro:</span>{" "}
+                        {props?.order?.endereco?.bairro ?? "Carregando..."}
+                      </div>
+                      <div>
+                        <span className="font-semibold text-blue">Rua:</span>{" "}
+                        {props?.order?.endereco?.logradouro ?? "Carregando..."}
+                      </div>
+                      <div>
+                        <span className="font-semibold text-blue">Número:</span>{" "}
+                        {props?.order?.endereco?.numero ?? "Carregando..."}
+                      </div>
+                      <div>
+                        <span className="font-semibold text-blue">
+                          Complemento:{" "}
+                        </span>
+                        {props?.order?.endereco?.complemento ?? "Carregando..."}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-semibold text-blue">Rua:</span>{" "}
-                    {props?.order?.endereco?.logradouro ?? "Carregando..."}
-                  </div>
-                  <div>
-                    <span className="font-semibold text-blue">Número:</span>{" "}
-                    {props?.order?.endereco?.numero ?? "Carregando..."}
-                  </div>
-                  <div>
-                    <span className="font-semibold text-blue">
-                      Complemento:{" "}
-                    </span>
-                    {props?.order?.endereco?.complemento ?? "Carregando..."}
-                  </div>
-                </div>
+                )}
               </div>
-            )}
+            </div>
+            <OrderStatusChanger
+              orderSummaryId={props.orderSummaryId}
+              orderStatus={props.orderStatus}
+              onStatusChange={props.onStatusChange}
+            />
           </div>
         </div>
       </div>

@@ -9,6 +9,7 @@ import { FaDownload } from "react-icons/fa6";
 
 function OrderKanban() {
   const [orders, setOrders] = useState([]);
+  const [refresh, setRefresh] = useState(false); // novo estado
 
   const getData = async () => {
     try {
@@ -22,7 +23,10 @@ function OrderKanban() {
 
   useEffect(() => {
     getData();
-  }, []);
+  }, [refresh]); // agora depende de refresh
+
+  // Função para ser chamada quando status mudar
+  const handleStatusChange = () => setRefresh((prev) => !prev);
 
 const generateReport = async () => {
   try {
@@ -58,18 +62,26 @@ const generateReport = async () => {
           <ColumnOrder
             title="Pedidos Cancelados"
             orderFilter={orders?.filter((item) => item.status == "CANCELADO")}
+            status={"CANCELADO"}
+            onStatusChange={handleStatusChange}
           />
           <ColumnOrder
             title="Pedidos Pendetes"
             orderFilter={orders?.filter((item) => item.status == "PENDENTE")}
+            status={"PENDENTE"}
+            onStatusChange={handleStatusChange}
           />
           <ColumnOrder
             title="Pedidos Pagos"
             orderFilter={orders?.filter((item) => item.status == "PAGO")}
+            status={"PAGO"}
+            onStatusChange={handleStatusChange}
           />
           <ColumnOrder
             title="Pedidos Concluídos"
             orderFilter={orders?.filter((item) => item.status == "CONCLUIDO")}
+            status={"CONCLUIDO"}
+            onStatusChange={handleStatusChange}
           />
         </div>
         <footer className="flex justify-end items-center gap-5 p-5 pr-16 bg-bgNativeHome">

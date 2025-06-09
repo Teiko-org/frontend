@@ -11,7 +11,12 @@ function ColumnOrder(props) {
           <div className="flex flex-col items-center gap-y-5 p-2 w-[300px] h-[680px]  overflow-x-hidden border border-gold rounded-md bg-bgHome">
 
             {(props.orderFilter || []).map((order) => (
-              <CardOrder order={order}/>
+              <CardOrder
+                order={order}
+                orderStatus={props.status}
+                orderSummaryId={order.id}
+                onStatusChange={props.onStatusChange}
+              />
             ))}
             
           </div>

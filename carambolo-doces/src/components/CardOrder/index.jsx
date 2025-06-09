@@ -2,7 +2,6 @@ import ModalOrderDetails from "../ModalOrderDetails";
 import React, { useEffect, useState } from "react";
 import orderCakeDetails from "../../service/orderCakeDetails";
 import orderFornadaDetails from "../../service/orderFornadaDetails";
-import getAddressById from "../../services/getAddressById";
 
 function CardOrder(props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -84,7 +83,14 @@ function CardOrder(props) {
         </button>
 
         {isModalOpen && (
-          <ModalOrderDetails onClose={closeModal} order={detalhesPedido} fornada={idPedidoFornada}/>
+          <ModalOrderDetails
+            onClose={closeModal}
+            order={detalhesPedido}
+            fornada={idPedidoFornada}
+            orderStatus={props.orderStatus}
+            orderSummaryId={props.orderSummaryId}
+            onStatusChange={props.onStatusChange}
+          />
         )}
       </footer>
     </div>
