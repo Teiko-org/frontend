@@ -50,7 +50,6 @@ function ModalAddressEdition({ onClose, endereco, onAddressUpdated }) {
     if (cepWithoutMask.length === 8) {
       searchAddresByCep(formattedValue);
     } else if (cepWithoutMask.length < 8) {
-      // Don't clear fields when editing, only when CEP is invalid
     }
   };
 
@@ -312,12 +311,19 @@ function ModalAddressEdition({ onClose, endereco, onAddressUpdated }) {
         </section>
 
         <footer className="w-full flex justify-between pt-5 text-white font-bold">
-          <Button 
-            text="Cancelar"
-            bgColor="bg-gray-500"
+          <button
             onClick={onClose}
             disabled={isLoading}
-          />
+            className="font-bold py-1 px-4 rounded-full shadow-md focus:outline-none transform hover:scale-105 transition-transform disabled:cursor-not-allowed"
+            style={{
+              background: '#FF0000',
+              border: '2px solid #CC0000',
+              color: '#FFFFFF',
+              opacity: isLoading ? '0.6' : '1'
+            }}
+          >
+            Cancelar
+          </button>
           
           <Button 
             text={isLoading ? "Salvando..." : "Salvar Alterações"} 

@@ -17,6 +17,7 @@ function UserPage() {
     contato: "",
     dataNascimento: "",
     genero: "",
+    imagemUrl: "",
   });
   const [tempNome, setTempNome] = useState("");
   const [tempTelefone, setTempTelefone] = useState("");
@@ -27,18 +28,26 @@ function UserPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const userId = localStorage.getItem("userId");
-    if (userId) {
-              getUserData(userId)
-        .then(data => {
+    const loadUserData = async () => {
+      const userId = localStorage.getItem("userId");
+      if (userId) {
+        try {
+          console.log("Carregando dados do usuário na UserPage...");
+          const data = await getUserData(userId);
+          console.log("Dados recebidos na UserPage:", data);
+          
           setUserData(data);
           setTempNome(data.nome);
           setTempTelefone(data.contato);
           setTempDataNascimento(data.dataNascimento || "");
           setTempGenero(data.genero || "");
-        })
-        .catch(error => console.error("Erro ao carregar dados:", error));
-    }
+        } catch (error) {
+          console.error("Erro ao carregar dados:", error);
+        }
+      }
+    };
+
+    loadUserData();
   }, []);
 
   const handleEditSave = async () => {
@@ -57,7 +66,6 @@ function UserPage() {
         await updateUserData(userId, updatedData, token);
         navigate("/");
       } catch (error) {
-        // Erro já tratado no serviço
         console.error("Erro ao salvar dados:", error);
       }
     } else {
@@ -84,7 +92,6 @@ function UserPage() {
       await changePassword(userId, senhaAtual, novaSenha, token);
       navigate("/");
     } catch (error) {
-      // Erro já tratado no serviço
     }
   };
 
