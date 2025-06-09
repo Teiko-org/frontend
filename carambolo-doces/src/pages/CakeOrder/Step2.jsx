@@ -1,33 +1,59 @@
 import React, { useContext } from "react";
 import { FormContext } from "../../contexts/FormContext";
+import { useFormContext, Controller } from "react-hook-form";
 import Button from "../../components/Button";
 import InputImage from "../../components/InputImage";
 
 const Step2 = () => {
-  const { nextStep, prevStep } = useContext(FormContext);
+  const { nextStep, prevStep, appendFormData } = useContext(FormContext);
+  const { control, handleSubmit } = useFormContext();
 
-  const handleNext = () => {
-    nextStep();
-  };
+  const handleNext = (data) => {
+  appendFormData({ observacoes: data.observacoes });
+
+  const imageFiles = data.images || [];
+  imageFiles.forEach((file, index) => {
+    appendFormData({ [`imagem_${index}`]: file });
+  });
+
+  console.log("Step 2 data:", data);
+  nextStep();
+};
 
   const handlePrev = () => {
     prevStep();
   };
 
   return (
-    <div>
-      <InputImage />
+    <form onSubmit={handleSubmit(handleNext)}>
+      <Controller
+        name="images"
+        control={control}
+        defaultValue={[]}
+        render={({ field }) => <InputImage {...field} />}
+      />
       <div className="mb-4 mt-6">
         <h2 className="font-semibold tracking-wider text-lg text-blue">
           OBSERVAÇÕES
         </h2>
-        <span className="text-blue text-sm">Escreva abaixo tudo relacionado a o que e como você quer o seu Carambolo</span>
-        <textarea
-          className="border-2 border-gold rounded-lg px-4 py-2 w-full mt-2 h-32"
-          placeholder="Descreva abaixo como você quer o seu Carambolo"
-        ></textarea>
+        <span className="text-blue text-sm">
+          Escreva abaixo tudo relacionado a o que e como você quer o seu
+          Carambolo
+        </span>
+        <Controller
+          name="observacoes"
+          control={control}
+          defaultValue=""
+          render={({ field }) => (
+            <textarea
+              {...field}
+              className="border-2 border-gold rounded-lg px-4 py-2 w-full mt-2 h-32"
+              placeholder="Descreva abaixo como você quer o seu Carambolo"
+            ></textarea>
+          )}
+        />
       </div>
-      <div className="flex justify-between items-center mt-4">
+      <div className="flex justify-between items-center mt-7">
         <div className="text-gradient font-bold text-lg">
           VALOR ESTIMADO: R$ 999,99
         </div>
@@ -41,12 +67,12 @@ const Step2 = () => {
           <Button
             text="Continuar"
             className="px-6 py-1"
-            onClick={handleNext}
+            type="submit"
             bgColor="bg-gradient-to-l from-darkGoldButton to-goldButton"
           />
         </div>
       </div>
-    </div>
+    </form>
   );
 };
 

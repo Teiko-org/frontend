@@ -3,7 +3,7 @@ import { IoChevronDown } from "react-icons/io5";
 
 const Select = React.forwardRef(({ label, options, placeholder, disabled, width, defaultValue, onChange, value }, ref) => {
   return (
-    <div className="mb-4" style={{ width: width || '100%' }}>
+    <div className="mb-1" style={{ width: width || '100%' }}>
       {label && <label className="block text-blue font-semibold mb-1">{label}</label>}
       <div className="relative">
         <select

@@ -1,5 +1,8 @@
 /** @type {import('tailwindcss').Config} */
-export default {
+
+const withMT = require("@material-tailwind/react/utils/withMT");
+
+export default withMT({
   content: [
     './index.html',
     './src/**/*.{js,jsx,ts,tsx}',
@@ -33,8 +36,9 @@ export default {
       },
       backgroundImage: {
         'gradient-blue': 'linear-gradient(to top, #30344F 0%, #103464 100%)',
-      },  
+        'gradient-gold': 'linear-gradient(to top, #D4B076 0%, #A47032 100%)'
+      }
     },
   },
   plugins: [],
-}
+})

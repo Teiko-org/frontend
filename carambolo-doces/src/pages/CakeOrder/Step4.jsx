@@ -1,106 +1,120 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useContext, useEffect } from "react";
 import { FormContext } from "../../contexts/FormContext";
+import { useFormContext, Controller } from "react-hook-form";
 import Button from "../../components/Button";
 import Select from "../../components/Select";
 import InputOption from "../../components/InputOption";
 import CustomDatePicker from "../../components/DatePicker";
 import PhoneNumberInput from "../../components/PhoneInput";
 import CampoComGradiente from "../../components/gradientField";
-import axios from "axios";
+import { searchAddressByCep } from "../../service/viaCepService";
 
 const Step4 = () => {
-  const [deliveryOption, setDeliveryOption] = useState("Entrega");
-  const { nextStep, prevStep } = useContext(FormContext);
+  const { nextStep, prevStep, appendFormData } = useContext(FormContext);
+  const { control, handleSubmit, setValue, watch } = useFormContext();
 
-  const handleNext = () => {
-    nextStep();
+  const onSubmit = (data) => {
+  const plainData = {
+    ...data,
+    data: data.data ? data.data.toString() : '',
+    horario: data.horario || '',
+    telefone: data.telefone || '',
   };
+
+  appendFormData(plainData);
+  console.log("Step 4 data:", plainData);
+  nextStep();
+};
 
   const handlePrev = () => {
     prevStep();
   };
 
-  const [cep, setCep] = useState("");
-  const [estado, setEstado] = useState("");
-  const [cidade, setCidade] = useState("");
-  const [bairro, setBairro] = useState("");
-  const [rua, setRua] = useState("");
+  const cep = watch("cep", "");
+  const deliveryOption = watch("deliveryOption", "Entrega");
 
   useEffect(() => {
-    if (cep.length === 8) {
-      searchAddresByCep(cep);
+    if (deliveryOption === "Entrega") {
+      setValue("horario", null);
+    } else if (deliveryOption === "Retirada") {
+      setValue("cep", "");
+      setValue("estado", "");
+      setValue("cidade", "");
+      setValue("bairro", "");
+      setValue("rua", "");
+      setValue("numero", "");
+      setValue("complemento", "");
+    }
+  }, [deliveryOption, setValue]);
+
+  useEffect(() => {
+    if (cep.replace("-", "").length === 8) {
+      fetchAddressByCep(cep);
     }
   }, [cep]);
 
-  const formatCep = (value) => {
-    const cleanCep = value.replace(/\D/g, "");
-    if (cleanCep.length <= 5) {
-      return cleanCep;
-    }
-    return `${cleanCep.substring(0, 5)}-${cleanCep.substring(5, 8)}`;
-  };
+  const handleCepChange = (value) => {
+    const formattedValue = formatCep(value);
+    setValue("cep", formattedValue);
 
-  const handleCepChange = (e) => {
-    const formattedValue = formatCep(e.target.value);
-    setCep(formattedValue);
-
-    const cepWithoutMask = formattedValue.replace(/\D/g, "");
-
-    if (cepWithoutMask.length === 8) {
-      searchAddresByCep(formattedValue);
+    if (formattedValue.replace("-", "").length === 8) {
+      fetchAddressByCep(formattedValue);
     } else {
       cleanAddressFields();
     }
   };
 
-  const searchAddresByCep = async (typedCep) => {
-    try {
-      const cepOnlyNumbers = typedCep.replace(/\D/g, "");
-
-      if (cepOnlyNumbers.length !== 8) {
-        return;
-      }
-
-      const response = await axios.get(
-        `https://viacep.com.br/ws/${cepOnlyNumbers}/json/`
-      );
-
-      if (response.data && !response.data.erro) {
-        setEstado(response.data.uf || "");
-        setCidade(response.data.localidade || "");
-        setBairro(response.data.bairro || "");
-        setRua(response.data.logradouro || "");
-      } else {
-        console.error("CEP não encontrado.");
-        cleanAddressFields();
-      }
-    } catch (error) {
-      console.error("Erro ao buscar o CEP:", error);
-      cleanAddressFields();
-    }
+  const fetchAddressByCep = async (typedCep) => {
+    await searchAddressByCep(
+      typedCep.replace("-", ""),
+      (val) => setValue("estado", val),
+      (val) => setValue("cidade", val),
+      (val) => setValue("bairro", val),
+      (val) => setValue("rua", val),
+      cleanAddressFields
+    );
   };
 
   const cleanAddressFields = () => {
-    setEstado("");
-    setCidade("");
-    setBairro("");
-    setRua("");
+    setValue("estado", "");
+    setValue("cidade", "");
+    setValue("bairro", "");
+    setValue("rua", "");
+  };
+
+  const formatCep = (value) =>
+    value.replace(/\D/g, "").replace(/(\d{5})(\d{3})/, "$1-$2");
+
+  const preventEnterSubmit = (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+    }
   };
 
   return (
-    <div>
+    <form onSubmit={handleSubmit(onSubmit)}>
       <div className="mb-4">
         <div className="flex space-x-4 mt-2 mb-4">
           <h2 className="font-semibold tracking-wider text-xl text-blue">
             Seu pedido será?
           </h2>
           {["Entrega", "Retirada"].map((option) => (
-            <InputOption
+            <Controller
               key={option}
-              type="radio"
-              label={option}
-              checked={deliveryOption === option}
-              onChange={() => setDeliveryOption(option)}
+              name="deliveryOption"
+              control={control}
+              defaultValue="Entrega"
+              render={({ field }) => (
+                <InputOption
+                  type="radio"
+                  label={option}
+                  checked={field.value === option}
+                  onChange={() => {
+                    field.onChange(option);
+                    setValue("horario", null);
+                  }}
+                />
+              )}
             />
           ))}
         </div>
@@ -109,34 +123,72 @@ const Step4 = () => {
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-6">
           <label className="block text-blue font-semibold mb-1">Nome</label>
-          <input
-            placeholder="Inserir o seu nome"
-            className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+          <Controller
+            name="nome"
+            control={control}
+            defaultValue=""
+            render={({ field }) => (
+              <input
+                {...field}
+                placeholder="Inserir o seu nome"
+                className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                onKeyPress={preventEnterSubmit}
+              />
+            )}
           />
         </div>
         <div className="col-span-4">
           <label className="block text-blue font-semibold mb-1">Telefone</label>
           <CampoComGradiente>
-            <PhoneNumberInput
-              placeholder="(XX) X XXXX-XXXX"
-              className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+            <Controller
+              name="telefone"
+              control={control}
+              defaultValue=""
+              render={({ field }) => (
+                <PhoneNumberInput
+                  {...field}
+                  placeholder="(XX) X XXXX-XXXX"
+                  className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                  onKeyPress={preventEnterSubmit}
+                />
+              )}
             />
           </CampoComGradiente>
         </div>
         <div className="col-span-2">
-          <CustomDatePicker label="Data" placeholder="DD/MM" />
+          <Controller
+            name="data"
+            control={control}
+            defaultValue={null}
+            render={({ field }) => (
+              <CustomDatePicker
+                value={field.value}
+                onChange={field.onChange}
+                label="Data"
+                placeholder="DD/MM"
+                onKeyPress={preventEnterSubmit}
+              />
+            )}
+          />
         </div>
 
         {deliveryOption === "Entrega" && (
           <>
             <div className="col-span-3">
               <label className="block text-blue font-semibold mb-1">CEP</label>
-              <input
-                placeholder="00000-000"
-                className="border-2 border-gold rounded-lg px-4 py-2 w-full"
-                value={cep}
-                maxLength={9}
-                onChange={handleCepChange}
+              <Controller
+                name="cep"
+                control={control}
+                defaultValue=""
+                render={({ field }) => (
+                  <input
+                    {...field}
+                    className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                    maxLength={9}
+                    onChange={(e) => handleCepChange(e.target.value)}
+                    onKeyPress={preventEnterSubmit}
+                  />
+                )}
               />
               <span className="text-xs text-blue mt-1">
                 Não sabe o CEP?{" "}
@@ -151,31 +203,53 @@ const Step4 = () => {
               </span>
             </div>
             <div className="col-span-2">
-              <Select
-                label="Estado"
-                options={[{ value: "SP", label: "SP" }]}
-                defaultValue="SP"
-                disabled={true}
+              <Controller
+                name="estado"
+                control={control}
+                defaultValue=""
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    label="Estado"
+                    options={[{ value: "SP", label: "SP" }]}
+                    disabled={true}
+                    onKeyPress={preventEnterSubmit}
+                  />
+                )}
               />
             </div>
             <div className="col-span-3">
               <label className="block text-blue font-semibold mb-1">
                 Cidade
               </label>
-              <input
-                className="border-2 border-gold rounded-lg px-4 py-2 w-full"
-                value={cidade}
-                onChange={(e) => setCidade(e.target.value)}
+              <Controller
+                name="cidade"
+                control={control}
+                defaultValue=""
+                render={({ field }) => (
+                  <input
+                    {...field}
+                    className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                    onKeyPress={preventEnterSubmit}
+                  />
+                )}
               />
             </div>
             <div className="col-span-3">
               <label className="block text-blue font-semibold mb-1">
                 Bairro
               </label>
-              <input
-                className="border-2 border-gold rounded-lg px-4 py-2 w-full"
-                value={bairro}
-                onChange={(e) => setBairro(e.target.value)}
+              <Controller
+                name="bairro"
+                control={control}
+                defaultValue=""
+                render={({ field }) => (
+                  <input
+                    {...field}
+                    className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                    onKeyPress={preventEnterSubmit}
+                  />
+                )}
               />
             </div>
 
@@ -183,40 +257,76 @@ const Step4 = () => {
               <label className="block text-blue font-semibold mb-1">
                 Endereço
               </label>
-              <input
-                placeholder="Inserir seu endereço"
-                className="border-2 border-gold rounded-lg px-4 py-2 w-full"
-                value={rua}
-                onChange={(e) => setRua(e.target.value)}
+              <Controller
+                name="rua"
+                control={control}
+                defaultValue=""
+                render={({ field }) => (
+                  <input
+                    {...field}
+                    className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                    onKeyPress={preventEnterSubmit}
+                  />
+                )}
               />
             </div>
             <div className="col-span-3">
               <label className="block text-blue font-semibold mb-1">
                 Número
               </label>
-              <input className="border-2 border-gold rounded-lg px-4 py-2 w-full" />
+              <Controller
+                name="numero"
+                control={control}
+                defaultValue=""
+                render={({ field }) => (
+                  <input
+                    {...field}
+                    className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                    onKeyPress={preventEnterSubmit}
+                  />
+                )}
+              />
             </div>
 
             <div className="col-span-8">
               <label className="block text-blue font-semibold mb-1">
                 Complemento
               </label>
-              <input className="border-2 border-gold rounded-lg px-4 py-2 w-full" />
+              <Controller
+                name="complemento"
+                control={control}
+                defaultValue=""
+                render={({ field }) => (
+                  <input
+                    {...field}
+                    className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                    onKeyPress={preventEnterSubmit}
+                  />
+                )}
+              />
             </div>
           </>
         )}
         {deliveryOption === "Retirada" && (
           <div className="col-span-2">
-            <Select
-              label="Horário"
-              options={[
-                { value: "17:00", label: "17:00" },
-                { value: "17:30", label: "17:30" },
-                { value: "18:00", label: "18:00" },
-                { value: "18:30", label: "18:30" },
-                { value: "19:00", label: "19:00" },
-              ]}
-              placeholder={""}
+            <Controller
+              name="horario"
+              control={control}
+              defaultValue=""
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  label="Horário"
+                  options={[
+                    { value: "17:00", label: "17:00" },
+                    { value: "17:30", label: "17:30" },
+                    { value: "18:00", label: "18:00" },
+                    { value: "18:30", label: "18:30" },
+                    { value: "19:00", label: "19:00" },
+                  ]}
+                  onKeyPress={preventEnterSubmit}
+                />
+              )}
             />
           </div>
         )}
@@ -236,12 +346,12 @@ const Step4 = () => {
           <Button
             text="Continuar"
             className="px-6 py-1"
-            onClick={handleNext}
+            type="submit"
             bgColor="bg-gradient-to-l from-darkGoldButton to-goldButton"
           />
         </div>
       </div>
-    </div>
+    </form>
   );
 };
 

@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { FaFileAlt } from "react-icons/fa";
+import { useFormContext } from 'react-hook-form';
 
-const InputImage = () => {
+const InputImage = React.forwardRef(({ name }, ref) => {
+  const { setValue } = useFormContext();
   const [files, setFiles] = useState([]);
 
   const handleImageChange = (event) => {
@@ -11,11 +13,14 @@ const InputImage = () => {
     );
 
     const newFilesWithPreview = uniqueFiles.map((file) => ({
+      file,
       name: file.name,
       preview: URL.createObjectURL(file),
     }));
 
     setFiles((prev) => [...prev, ...newFilesWithPreview]);
+
+    setValue(name, [...files.map(f => f.file), ...uniqueFiles]);
   };
 
   return (
@@ -29,6 +34,7 @@ const InputImage = () => {
         accept=".png, .jpeg"
         multiple
         onChange={handleImageChange}
+        ref={ref}
       />
       <label
         htmlFor="file-upload"
@@ -59,6 +65,6 @@ const InputImage = () => {
       </p>
     </div>
   );
-};
+});
 
 export default InputImage;
