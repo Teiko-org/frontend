@@ -21,7 +21,6 @@ export default function ModalCadastroProduto() {
     const [formato, setFormato] = useState("");
     const [tamanho, setTamanho] = useState("");
     const [descricao, setDescricao] = useState("");
-
     const [categoriaBolo, setCategoriaBolo] = useState("");
 
     const [massasDisponiveis, setMassasDisponiveis] = useState([]);
@@ -88,20 +87,20 @@ export default function ModalCadastroProduto() {
 
     const cadastrarProduto = async (e) => {
         e.preventDefault();
-        // const formData = new FormData();
+        const formData = new FormData();
 
-        // if (categoria === "Carambolo") {
-        //   formData.append("massa", massa); // massa é o id selecionado
-        //   formData.append("recheioPedido", recheioPedido); // recheioPedido é o id selecionado
-        //   formData.append("cobertura", cobertura); // cobertura é o id selecionado
-        //   formData.append("formato", formato); // formato string do enum
-        //   formData.append("tamanho", tamanho); // tamanho string do enum
-        //   adicionais.forEach((a) => formData.append("adicionais", a)); // array
-        // } else if (categoria === "Fornada") {
-        //   formData.append("produto", nome);
-        //   formData.append("descricao", descricao);
-        //   formData.append("valor", preco);
-        // }
+        if (categoria === "Carambolo") {
+          formData.append("massa", massa); 
+          formData.append("recheioPedido", recheioPedido); 
+          formData.append("cobertura", cobertura); 
+          formData.append("formato", formato); 
+          formData.append("tamanho", tamanho);
+          adicionais.forEach((a) => formData.append("adicionais", a)); // array
+        } else if (categoria === "Fornada") {
+          formData.append("produto", nome);
+          formData.append("descricao", descricao);
+          formData.append("valor", preco);
+        }
         // formData.append("categoria", categoria);
         // if (file) formData.append("imagem", file);
 
@@ -136,23 +135,23 @@ export default function ModalCadastroProduto() {
 
         let data = {};
 
-        if (categoria === "Carambolo") {
-            data = {
-                massa: massa,
-                recheioPedido: recheioPedido,
-                cobertura: cobertura,
-                formato: formato,
-                tamanho: tamanho,
-                categoria: categoria,
-            };
-        } else if (categoria === "Fornada") {
-            data = {
-                produto: nome,
-                descricao: descricao,
-                valor: preco,
-                categoria: categoria,
-            };
-        }
+        // if (categoria === "Carambolo") {
+        //     data = {
+        //         massa: massa,
+        //         recheioPedido: recheioPedido,
+        //         cobertura: cobertura,
+        //         formato: formato,
+        //         tamanho: tamanho,
+        //         categoria: categoria,
+        //     };
+        // } else if (categoria === "Fornada") {
+        //     data = {
+        //         produto: nome,
+        //         descricao: descricao,
+        //         valor: preco,
+        //         categoria: categoria,
+        //     };
+        // }
 
         try {
             const url =
@@ -346,21 +345,6 @@ export default function ModalCadastroProduto() {
                                         </div>
 
                                         <div className="flex flex-col gap-1">
-                                            <label className="font-medium">Tamanho</label>
-                                            <select
-                                                value={tamanho}
-                                                onChange={(e) => setTamanho(e.target.value)}
-                                                className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
-                                            >
-                                                <option value="">Selecione um tamanho</option>
-                                                {tamanhosDisponiveis.map((t) => (
-                                                    <option key={t} value={t}>
-                                                        {t.charAt(0).toUpperCase() + t.slice(1).toLowerCase()}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="flex flex-col gap-1">
                                             <label className="font-medium">Categoria</label>
                                             <input
                                                 type="text"
@@ -426,11 +410,7 @@ export default function ModalCadastroProduto() {
                                             Cadastrar
                                         </Button>
                                     </>
-
-
                                 )}
-
-
                             </div>
                         </section>
                     </form>
