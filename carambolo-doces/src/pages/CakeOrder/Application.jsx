@@ -1,25 +1,34 @@
 import React, { useEffect, useContext } from 'react';
 import { FormProvider, FormContext } from '../../contexts/FormContext';
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
-import Stepper from "../../components/Stepper";
-import Carousel from "../../components/Carousel";
+import Header from '../../components/Header';
+import Footer from '../../components/Footer';
+import Stepper from '../../components/Stepper';
+import Carousel from '../../components/Carousel';
 import Step1 from './Step1';
 import Step2 from './Step2';
 import Step3 from './Step3';
 import Step4 from './Step4';
 import Step5 from './Step5';
+import cakeImage1 from '../../assets/image_cake.png';
+import cakeImage2 from '../../assets/image_cake.png';
+import cakeImage3 from '../../assets/image_cake.png';
+
+// Declare slides aqui
+const slides = [
+  { id: 1, image: cakeImage1, title: 'Slide 1' },
+  { id: 2, image: cakeImage2, title: 'Slide 2' },
+  { id: 3, image: cakeImage3, title: 'Slide 3' },
+];
 
 const steps = [Step1, Step2, Step3, Step4, Step5];
 
 const Application = () => {
-  const { currentStep, slides } = useContext(FormContext);
+  const { currentStep } = useContext(FormContext);
+  const StepComponent = steps[currentStep - 1];
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-
-  const StepComponent = steps[currentStep - 1];
 
   return (
     <div>

@@ -1,88 +1,95 @@
 import React, { useState, useContext } from "react";
 import { FormContext } from "../../contexts/FormContext";
 import Button from "../../components/Button";
-
-import ModalBase from "../../components/ModalBase";
-
 import ModalMontagem from "../../components/ModalMontagem";
 import ModalDecoracao from "../../components/ModalDecoracao";
 import ModalAdicionais from "../../components/ModalAdicionais";
 import ModalEntregaRetirada from "../../components/ModalEntregaRetirada";
 import ModalFinalizar from "../../components/ModalFinalizar";
-
-import { FaEdit } from "react-icons/fa";  
+import { FaEdit } from "react-icons/fa";
 
 const Step5 = () => {
-  const { prevStep } = useContext(FormContext);
+  const { prevStep, submitForm, formData } = useContext(FormContext);
+
+  const [isModalMontagemOpen, setIsModalMontagemOpen] = useState(false);
+  const [isModalDecoracaoOpen, setIsModalDecoracaoOpen] = useState(false);
+  const [isModalAdicionaisOpen, setIsModalAdicionaisOpen] = useState(false);
+  const [isModalEntregaRetiradaOpen, setIsModalEntregaRetiradaOpen] = useState(false);
+  const [isModalFinalizarOpen, setIsModalFinalizarOpen] = useState(false);
+
+  const formDataEntries = Object.fromEntries(formData.entries());
+
+  const montagemData = {
+    tamanho: formDataEntries.tamanho || "",
+    formato: formDataEntries.formato || "",
+    massa: formDataEntries.massa || "",
+    recheio: formDataEntries.recheio || "",
+  };
+
+  const decoracaoData = formDataEntries.observacoes || "Nenhuma";
+
+  const adicionaisData = formDataEntries.adicionais
+    ? formDataEntries.adicionais.split(",").map((item) => item.trim())
+    : [];
+
+  const entregaRetiradaData = {
+    tipo: formDataEntries.deliveryOption || "",
+    nome: formDataEntries.nome || "",
+    telefone: formDataEntries.telefone || "",
+    data: formDataEntries.data || "",
+    cep: formDataEntries.cep || "",
+    estado: formDataEntries.estado || "",
+    cidade: formDataEntries.cidade || "",
+    bairro: formDataEntries.bairro || "",
+    rua: formDataEntries.rua || "",
+    numero: formDataEntries.numero || "",
+    complemento: formDataEntries.complemento || "",
+    horario: formDataEntries.horario || "",
+  };
 
   const handlePrev = () => {
     prevStep();
   };
 
-  const [isModalMontagemOpen, setIsModalMontagemOpen] = useState(false);
-  const closeModalMontagem = () => setIsModalMontagemOpen(false);
-
-  const [isModalDecoracaoOpen, setIsModalDecoracaoOpen] = useState(false);
-  const closeModalDecoracao = () => setIsModalDecoracaoOpen(false);
-
-  const [isModalAdicionaisOpen, setIsModalAdicionaisOpen] = useState(false);
-  const closeModalAdicionais = () => setIsModalAdicionaisOpen(false);
-
-  const [isModalEntregaRetiradaOpen, setIsModalEntregaRetiradaOpen] =
-    useState(false);
-  const closeModalEntregaRetirada = () => setIsModalEntregaRetiradaOpen(false);
-
-  const [isModalFinalizarOpen, setIsModalFinalizarOpen] = useState(false);
-  const closeModalFinalizar = () => setIsModalFinalizarOpen(false);
-
   const handleFinalize = () => {
     setIsModalFinalizarOpen(true);
+  };
+
+  const handleFinalSubmit = () => {
+    submitForm();
+    setIsModalFinalizarOpen(false);
   };
 
   return (
     <div className="p-6 bg-bgNativeHome rounded-lg shadow-md">
       <h2 className="text-blue text-2xl mb-6 font-bold">Revise seu pedido</h2>
 
+      {/* MONTAGEM */}
       <div className="mb-5 pb-4 border-b border-gray-300">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-bold text-lg text-blue">MONTAGEM</h3>
-          <FaEdit
-            className="text-gold cursor-pointer"
-            onClick={() => setIsModalMontagemOpen(true)}
-          />
-
-          {isModalMontagemOpen && (
-            <ModalMontagem onClose={closeModalMontagem} />
-          )}
-
+          <FaEdit className="text-gold cursor-pointer" onClick={() => setIsModalMontagemOpen(true)} />
+          {isModalMontagemOpen && <ModalMontagem onClose={() => setIsModalMontagemOpen(false)} />}
         </div>
         <div className="flex flex-col gap-2">
           <div className="flex gap-10 mb-6">
             <div className="flex flex-col gap-2">
-
               <span className="text-blue font-semibold">TAMANHO</span>
-              <span className="bg-gradient-to-l from-darkGoldButton to-goldButton rounded-full border-2 border-gold px-4 py-1 text-blue font-bold text-center">
-                13cm
-              </span>
+              <span className="badge">{montagemData.tamanho}</span>
             </div>
             <div className="flex flex-col gap-2">
               <span className="text-blue font-semibold">FORMATO</span>
-              <span className="bg-gradient-to-l from-darkGoldButton to-goldButton rounded-full border-2 border-gold px-4 py-1 text-blue font-bold text-center">
-                Redondo
-              </span>
-
+              <span className="badge">{montagemData.formato}</span>
             </div>
           </div>
           <div className="flex gap-12">
             <div className="flex flex-col">
-
               <span className="text-blue font-semibold">MASSA</span>
-              Red-Velvet
+              {montagemData.massa}
             </div>
             <div className="flex flex-col">
               <span className="text-blue font-semibold">RECHEIO</span>
-
-              Brigadeiro de Pistache com Redução de Frutas Vermelhas
+              {montagemData.recheio}
             </div>
           </div>
         </div>
@@ -92,20 +99,12 @@ const Step5 = () => {
       <div className="mb-5 pb-4 border-b border-gray-300">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-bold text-lg text-blue">DECORAÇÃO</h3>
-
-          <FaEdit
-            className="text-gold cursor-pointer"
-            onClick={() => setIsModalDecoracaoOpen(true)}
-          />
-
-          {isModalDecoracaoOpen && (
-            <ModalDecoracao onClose={closeModalDecoracao} />
-          )}
-
+          <FaEdit className="text-gold cursor-pointer" onClick={() => setIsModalDecoracaoOpen(true)} />
+          {isModalDecoracaoOpen && <ModalDecoracao onClose={() => setIsModalDecoracaoOpen(false)} />}
         </div>
         <div className="flex flex-col">
           <span className="text-blue font-semibold">Observações</span>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit...
+          {decoracaoData}
         </div>
       </div>
 
@@ -113,92 +112,55 @@ const Step5 = () => {
       <div className="mb-5 pb-4 border-b border-gray-300">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-bold text-lg text-blue">ADICIONAIS</h3>
-
-          <FaEdit
-            className="text-gold cursor-pointer"
-            onClick={() => setIsModalAdicionaisOpen(true)}
-          />
-
-          {isModalAdicionaisOpen && (
-            <ModalAdicionais onClose={closeModalAdicionais} />
-          )}
-
+          <FaEdit className="text-gold cursor-pointer" onClick={() => setIsModalAdicionaisOpen(true)} />
+          {isModalAdicionaisOpen && <ModalAdicionais onClose={() => setIsModalAdicionaisOpen(false)} />}
         </div>
         <div className="flex gap-2">
-          {["Cereja", "Glitter", "Perolado"].map((item, index) => (
-            <span
-              key={index}
-              className="bg-gradient-to-l from-darkGoldButton to-goldButton border-2 border-gold rounded px-2 py-1 text-blue font-bold"
-            >
+          {adicionaisData.map((item, index) => (
+            <span key={index} className="badge">
               {item}
             </span>
           ))}
         </div>
       </div>
 
-      {/* DADOS ENTREGA */}
+      {/* ENTREGA/RETIRADA */}
       <div className="mb-5 pb-4 border-b border-gray-300">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-bold text-lg text-blue">DADOS ENTREGA</h3>
-
-          <FaEdit
-            className="text-gold cursor-pointer"
-            onClick={() => setIsModalEntregaRetiradaOpen(true)}
-          />
-
-          {isModalEntregaRetiradaOpen && (
-            <ModalEntregaRetirada onClose={closeModalEntregaRetirada} />
-          )}
-
+          <FaEdit className="text-gold cursor-pointer" onClick={() => setIsModalEntregaRetiradaOpen(true)} />
+          {isModalEntregaRetiradaOpen && <ModalEntregaRetirada onClose={() => setIsModalEntregaRetiradaOpen(false)} />}
         </div>
         <div className="grid grid-cols-2 gap-y-4 mb-4 text-blue">
-          <div>
-            <span className="font-semibold">SEU PEDIDO SERÁ:</span> Entrega
-          </div>
-          <div>
-            <span className="font-semibold">DATA:</span> 99/99
-          </div>
-          <div>
-            <span className="font-semibold">NOME:</span> Murilo Do Nascimento
-            Barros
-          </div>
-          <div>
-            <span className="font-semibold">TELEFONE:</span> (XX) X XXXX-XXXX
-          </div>
+          <div><span className="font-semibold">SEU PEDIDO SERÁ:</span> {entregaRetiradaData.tipo}</div>
+          <div><span className="font-semibold">DATA:</span> {entregaRetiradaData.data}</div>
+          <div><span className="font-semibold">NOME:</span> {entregaRetiradaData.nome}</div>
+          <div><span className="font-semibold">TELEFONE:</span> {entregaRetiradaData.telefone}</div>
         </div>
-        <div className="grid grid-cols-3 mb-4 text-blue">
-          <div>
-            <span className="font-semibold">CEP:</span> 00000-00
+
+        {entregaRetiradaData.tipo === "Entrega" ? (
+          <>
+            <div className="grid grid-cols-3 mb-4 text-blue">
+              <div><span className="font-semibold">CEP:</span> {entregaRetiradaData.cep}</div>
+              <div><span className="font-semibold">Estado:</span> {entregaRetiradaData.estado}</div>
+              <div><span className="font-semibold">Cidade:</span> {entregaRetiradaData.cidade}</div>
+            </div>
+            <div className="grid grid-cols-2 gap-y-4 text-blue">
+              <div><span className="font-semibold">Bairro:</span> {entregaRetiradaData.bairro}</div>
+              <div><span className="font-semibold">Rua:</span> {entregaRetiradaData.rua}</div>
+              <div><span className="font-semibold">Número:</span> {entregaRetiradaData.numero}</div>
+              <div><span className="font-semibold">Complemento:</span> {entregaRetiradaData.complemento}</div>
+            </div>
+          </>
+        ) : (
+          <div className="text-blue mt-2">
+            <span className="font-semibold">Horário para retirada:</span> {entregaRetiradaData.horario}
           </div>
-          <div>
-            <span className="font-semibold">Estado:</span> SP
-          </div>
-          <div>
-            <span className="font-semibold">Cidade:</span> São Paulo
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-y-4 text-blue">
-          <div>
-            <span className="font-semibold">Bairro:</span> Jardim Guairaca
-          </div>
-          <div>
-            <span className="font-semibold">Rua:</span> Rua Antônio Marques
-            Julião
-          </div>
-          <div>
-            <span className="font-semibold">Número:</span> 9999
-          </div>
-          <div>
-            <span className="font-semibold">Complemento:</span> Inserir seu
-            endereço
-          </div>
-        </div>
+        )}
       </div>
 
       <div className="flex justify-between items-center mt-6">
-        <div className="text-gradient font-bold text-lg">
-          VALOR ESTIMADO: R$ 999,99
-        </div>
+        <div className="text-gradient font-bold text-lg">VALOR ESTIMADO: R$ 999,99</div>
         <div>
           <Button
             text="Voltar"
@@ -212,22 +174,14 @@ const Step5 = () => {
             onClick={handleFinalize}
             bgColor="bg-gradient-to-l from-darkGoldButton to-goldButton"
           />
-
           {isModalFinalizarOpen && (
-            <ModalFinalizar onClose={closeModalFinalizar} />
+            <ModalFinalizar
+              onClose={() => setIsModalFinalizarOpen(false)}
+              onFinalize={handleFinalSubmit}
+            />
           )}
         </div>
       </div>
-
-      {/* {isModalOpen && (
-        <ModalBase title="Editar" onClose={closeModal}>
-          <p>Conteúdo do modal de edição aqui.</p>
-          <div className="flex justify-end mt-4">
-            <Button text="Cancelar" className="mr-2" onClick={closeModal} />
-            <Button text="Salvar" />
-          </div>
-        </ModalBase>
-      )} */}
     </div>
   );
 };
