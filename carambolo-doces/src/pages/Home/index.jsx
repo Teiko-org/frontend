@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Card from "../../components/Card";
@@ -6,8 +6,26 @@ import ArrowButton from "../../components/ButtonArrow";
 import Button from "../../components/Button";
 import BannerPrincipal from "../../components/BannerPrincipal";
 import BannerFornada from "../../components/BannerFornada";
+import { getBolosPorCategoria } from "../../service/boloService";
 
 function Home() {
+  const [bolosPorCategoria, setBolosPorCategoria] = useState([]);
+
+  useEffect(() => {
+    const fetchBolos = async () => {
+      const data = await getBolosPorCategoria();
+      // Agrupa por categoria
+      const agrupados = data.reduce((acc, bolo) => {
+        const categoria = bolo.categoria || 'Outros';
+        if (!acc[categoria]) acc[categoria] = [];
+        acc[categoria].push(bolo);
+        return acc;
+      }, {});
+      setBolosPorCategoria(agrupados);
+    };
+    fetchBolos();
+  }, []);
+
   return (
     <div className="bg-bgNativeHome">
       <Header />

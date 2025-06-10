@@ -1,8 +1,6 @@
 import { axiosApi } from '../provider/AxiosApi.js';
 
-const fornadaService = async (data) => {
-
-    console.log(data);
+export const insertNewFornada = async (data) => {
     try {
         const response = await axiosApi.post('/fornadas', {
             dataInicio: data.dataInicio,
@@ -19,4 +17,17 @@ const fornadaService = async (data) => {
 
 }
 
-export default fornadaService;
+export const listFornadas = async () => {
+    try {
+        const response = await axiosApi.get("/fornadas");
+        return response.data;
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export const getLastFornada = async () => {
+    const fornadas = await listFornadas();
+    const lastFornada = fornadas[fornadas.length - 1];
+    return lastFornada;
+}

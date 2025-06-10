@@ -3,11 +3,11 @@ import FornadaDatePicker from "../../components/FornadaDatePicker";
 import TableSelectProductsFornada from "../../components/TableSelectProductsFornada";
 import Button from "../../components/Button";
 import HeaderDashboard from "../../components/headerDashboard";
-import fornadaService from "../../service/fornadaService";
 import fornadaDaVezService from "../../service/fornadaDaVezService";
 import { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { insertNewFornada } from "../../service/fornadaService"
 
 function FornadaDashboard() {
   const navigate = useNavigate();
@@ -56,7 +56,7 @@ function FornadaDashboard() {
   }
 
     try {
-      const response = await fornadaService(fornada);
+      const response = insertNewFornada(fornada);
 
       registerFornadaDaVez(response.id);
     } catch (error) {
