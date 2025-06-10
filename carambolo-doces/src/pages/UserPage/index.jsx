@@ -53,7 +53,7 @@ function UserPage() {
   const handleEditSave = async () => {
     if (isEditing) {
       const userId = localStorage.getItem("userId");
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("JWT_TOKEN");
       
       try {
         const updatedData = {
@@ -103,7 +103,7 @@ function UserPage() {
 
   const handleChangePassword = async () => {
     const userId = localStorage.getItem("userId");
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("JWT_TOKEN");
     try {
       await changePassword(userId, senhaAtual, novaSenha, token);
       navigate("/");
@@ -113,7 +113,7 @@ function UserPage() {
 
   const handleDeleteUser = async () => {
     const userId = localStorage.getItem("userId");
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("JWT_TOKEN");
     try {
       await deleteUser(userId, token);
       navigate("/");
@@ -153,7 +153,8 @@ function UserPage() {
                   {isEditing ? (
                     <CampoComGradiente>
                       <PhoneNumberInput
-                        value={tempTelefone}
+                        key="phone-editing"
+                        value={tempTelefone || ""}
                         onChange={value => setTempTelefone(value)}
                       />
                     </CampoComGradiente>
@@ -161,7 +162,7 @@ function UserPage() {
                     <input
                       type="text"
                       className="w-full border-2 border-gray-300 rounded-xl px-4 py-2 pr-10 bg-gray-100 cursor-not-allowed"
-                      value={userData.contato}
+                      value={userData.contato || ""}
                       readOnly
                     />
                   )}

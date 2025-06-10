@@ -17,7 +17,7 @@ function LoginModal({ onClose }) {
       console.log("Login response:", response);
       
       localStorage.setItem("userId", response.userId || response.id);
-      localStorage.setItem("token", response.token);
+      localStorage.setItem("JWT_TOKEN", response.token);
       localStorage.setItem("IS_SIGNED", true);
 
       const userData = await getUserData(response.userId || response.id);
