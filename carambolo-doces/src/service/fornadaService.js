@@ -78,8 +78,7 @@ export const createPedidoFornada = async (pedido) => {
   }
 }; 
 
-export const fornadaService = async (data) => {
-    console.log(data);
+  export const insertNewFornada = async (data) => {
     try {
         const response = await axiosApi.post('/fornadas', {
             dataInicio: data.dataInicio,
@@ -94,5 +93,20 @@ export const fornadaService = async (data) => {
         console.error("Erro ao cadastrar Fornada:", error);
     }
 
+}
+
+export const listFornadas = async () => {
+    try {
+        const response = await axiosApi.get("/fornadas");
+        return response.data;
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export const getLastFornada = async () => {
+    const fornadas = await listFornadas();
+    const lastFornada = fornadas[fornadas.length - 1];
+    return lastFornada;
 }
 

@@ -88,9 +88,9 @@ function Header() {
         <a href="/fornada" className="hover:text-darkGold">
           FORNADA DA SEMANA
         </a>
-        <a href="#" className="hover:text-darkGold">
+        {/* <a href="#" className="hover:text-darkGold">
           DATAS ESPECIAIS
-        </a>
+        </a> */}
       </div>
 
       {isModalOpen && <LoginModal onClose={closeModal} />}

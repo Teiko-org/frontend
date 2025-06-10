@@ -73,6 +73,20 @@ const Step1 = () => {
     .filter(recheio => availableRecheios[massaSelecionada] && availableRecheios[massaSelecionada].includes(recheio))
     .map(recheio => ({ value: createSlug(recheio), label: recheio }));
 
+  useEffect(() => {
+    // Listener para preencher os campos do Step1 ao receber evento
+    const fillFromBolo = (e) => {
+      const bolo = e.detail;
+      // Preenche os campos de acordo com os dados do bolo
+      if (bolo.tamanho) setValue('tamanho', bolo.tamanho);
+      if (bolo.formato) setValue('formato', bolo.formato);
+      if (bolo.saborMassa) setValue('massa', bolo.saborMassa);
+      if (bolo.saborRecheio) setValue('recheio', bolo.saborRecheio);
+    };
+    window.addEventListener('fillStep1FromBolo', fillFromBolo);
+    return () => window.removeEventListener('fillStep1FromBolo', fillFromBolo);
+  }, [setValue]);
+
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="mb-8">

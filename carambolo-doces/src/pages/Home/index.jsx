@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Card from "../../components/Card";
@@ -6,17 +7,24 @@ import ArrowButton from "../../components/ButtonArrow";
 import Button from "../../components/Button";
 import BannerPrincipal from "../../components/BannerPrincipal";
 import BannerFornada from "../../components/BannerFornada";
-import { getFornada, getProdutosPorFornadaId } from "../../service/fornadaService";
+import { getBolosPorCategoria } from "../../service/boloService";
+import './cardsTransition.css';
 
 function Home() {
+  const [bolos, setBolos] = useState([]);
   const [produtosFornada, setProdutosFornada] = useState([]);
   const [fornada, setFornada] = useState(null);
   
   // ID da fornada padrão (futuramente será dinâmico)
   // Para tornar dinâmico: pode vir de contexto global, localStorage, etc.
   const FORNADA_ID_PADRAO = 1;
-
   useEffect(() => {
+    const fetchBolos = async () => {
+      const data = await getBolosPorCategoria();
+      setBolos(data);
+    };
+    fetchBolos();
+    
     const carregarDadosFornada = async () => {
       try {
         const fornadaAtual = await getFornada(FORNADA_ID_PADRAO);
@@ -32,6 +40,24 @@ function Home() {
 
     carregarDadosFornada();
   }, []);
+
+  // Paginação para todos os bolos (independente da categoria)
+  const [boloPage, setBoloPage] = useState(0);
+  const bolosPerPage = 3;
+  const totalBoloPages = Math.ceil(bolos.length / bolosPerPage);
+  const paginatedBolos = bolos.slice(
+    boloPage * bolosPerPage,
+    boloPage * bolosPerPage + bolosPerPage
+  );
+
+  const handleBoloPrev = () => {
+    setBoloPage((prev) => (prev > 0 ? prev - 1 : prev));
+  };
+  const handleBoloNext = () => {
+    setBoloPage((prev) => (prev < totalBoloPages - 1 ? prev + 1 : prev));
+  };
+
+
   return (
     <div className="bg-bgNativeHome">
       <Header />
@@ -45,13 +71,23 @@ function Home() {
           CARAMBOLOS PRÉ-DECORADOS
         </h2>
         <div className="flex justify-between items-center px-4">
-          <ArrowButton direction="left" />
+          <ArrowButton direction="left" onClick={handleBoloPrev} />
           <div className="flex space-x-4">
-            <Card type="Bolo" />
-            <Card type="Bolo" />
-            <Card type="Bolo" />
+            {paginatedBolos.length > 0 ? (
+              paginatedBolos.map((bolo) => (
+                <Card
+                  key={bolo.boloId}
+                  type="Bolo"
+                  nome={bolo.produto}
+                  preco={bolo.precoTotal}
+                  // imagem={...} // Se houver campo de imagem futuramente
+                />
+              ))
+            ) : (
+              <span className="text-blue">Nenhum carambolo encontrado.</span>
+            )}
           </div>
-          <ArrowButton direction="right" />
+          <ArrowButton direction="right" onClick={handleBoloNext} />
         </div>
         <div className="h-10"></div>
         <div className="flex justify-center">
@@ -66,7 +102,7 @@ function Home() {
       </section>
       <div className="h-24"></div>
       {/* Carambolos Mais Pedidos */}
-      <section className="pt-8 pb-16 bg-bgHome border-t border-b border-gold">
+      {/* <section className="pt-8 pb-16 bg-bgHome border-t border-b border-gold">
         <h2 className="text-center text-4xl font-medium mb-6">
           CARAMBOLOS MAIS PEDIDOS
         </h2>
@@ -79,7 +115,7 @@ function Home() {
           </div>
           <ArrowButton direction="right" />
         </div>
-      </section>
+      </section> */}
       <div className="h-24"></div>
       {/* Fornada da Semana */}
       <section className="pt-8 pb-16 bg-bgHome border-t border-gold">
