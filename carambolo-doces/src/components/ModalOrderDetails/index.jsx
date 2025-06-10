@@ -1,13 +1,18 @@
+import { useState } from "react";
 import OrderStatusChanger from "../orderStatusChanger";
 
 function formatPhone(phone) {
   if (!phone) return "Carregando...";
   const cleaned = phone.replace(/\D/g, "");
   if (cleaned.length === 11) {
-    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
+    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(
+      7
+    )}`;
   }
   if (cleaned.length === 10) {
-    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`;
+    return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(
+      6
+    )}`;
   }
   return phone;
 }
@@ -32,13 +37,16 @@ function formatCep(cep) {
 }
 
 export default function ModalOrderDetails(props) {
+  const [imgError, setImgError] = useState(false);
+
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex justify-center pt-10 pb-5">
       <div className="shadow-xl relative border bg-bgNativeHome border-[#d6a87c] w-[1000px] min-h-[150px] flex flex-col rounded-2xl">
         <header className="flex justify-between bg-gradient-blue border-2 border-gold px-10 py-7 rounded-t-2xl">
           <div className="pl-10">
             <h1 className="text-3xl font-bold text-gold">
-              Número do Pedido: {props.fornada == null
+              Número do Pedido:{" "}
+              {props.fornada == null
                 ? props?.order?.numeroPedido ?? "Carregando..."
                 : props.fornada}
             </h1>
@@ -60,7 +68,9 @@ export default function ModalOrderDetails(props) {
             <div>
               {props.fornada == null ? (
                 <div className="px-10 pt-5 pb-10 border-b border-[#FFC8B2]">
-                  <h3 className="font-bold text-2xl text-blue pb-5">Montagem</h3>
+                  <h3 className="font-bold text-2xl text-blue pb-5">
+                    Montagem
+                  </h3>
 
                   <div className="grid grid-cols-2 gap-y-5">
                     <div className="gap-2">
@@ -69,14 +79,14 @@ export default function ModalOrderDetails(props) {
                         {props?.order?.tamanho === "TAMANHO_5"
                           ? "5 centímetros"
                           : props?.order?.tamanho === "TAMANHO_7"
-                            ? "7 centímetros"
-                            : props?.order?.tamanho === "TAMANHO_12"
-                              ? "12 centímetros"
-                              : props?.order?.tamanho === "TAMANHO_15"
-                                ? "15 centímetros"
-                                : props?.order?.tamanho === "TAMANHO_17"
-                                  ? "17 centímetros"
-                                  : "Carregando..."}
+                          ? "7 centímetros"
+                          : props?.order?.tamanho === "TAMANHO_12"
+                          ? "12 centímetros"
+                          : props?.order?.tamanho === "TAMANHO_15"
+                          ? "15 centímetros"
+                          : props?.order?.tamanho === "TAMANHO_17"
+                          ? "17 centímetros"
+                          : "Carregando..."}
                       </span>
                     </div>
 
@@ -86,8 +96,8 @@ export default function ModalOrderDetails(props) {
                         {props?.order?.formato === "CORACAO"
                           ? "Coração"
                           : props?.order?.formato === "CIRCULO"
-                            ? "Círculo"
-                            : props?.order?.formato ?? "Carregando..."}
+                          ? "Círculo"
+                          : props?.order?.formato ?? "Carregando..."}
                       </span>
                     </div>
 
@@ -104,7 +114,9 @@ export default function ModalOrderDetails(props) {
                 </div>
               ) : (
                 <div className="px-10 pt-5 pb-10 border-b border-[#FFC8B2] flex flex-col">
-                  <h3 className="font-bold text-2xl text-blue  pb-5">Quantidade</h3>
+                  <h3 className="font-bold text-2xl text-blue  pb-5">
+                    Quantidade
+                  </h3>
                   {props?.order?.quantidade} unidades
                 </div>
               )}
@@ -114,24 +126,34 @@ export default function ModalOrderDetails(props) {
                   <h3 className="font-bold text-2xl text-blue">Decoração</h3>
                 </div>
                 <div className="flex flex-col">
-                  <span className="italic pb-8">
-                    {props?.order?.decoracao
-                      ? "props.order.imagem"
-                      : "Nenhuma imagem de referência adicionada"}
-                  </span>
+                  {props.fornada == null && (
+                    <span className="italic pb-8">
+                      {props?.order?.decoracao && !imgError ? (
+                        <img
+                          src={props?.order?.decoracao}
+                          onError={() => setImgError(true)}
+                          alt="Imagem de decoração do pedido"
+                        />
+                      ) : (
+                        "Nenhuma imagem de referência adicionada"
+                      )}
+                    </span>
+                  )}
 
                   <span className="text-blue font-semibold">Observações</span>
                   {props?.order?.observacoes
                     ? props.order.observacoes
                     : props.order.observacao
-                      ? props.order.observacao
-                      : "Carregando..."}
+                    ? props.order.observacao
+                    : "Carregando..."}
                 </div>
               </div>
 
               {props.fornada == null && (
                 <div className="px-10 pt-10 pb-10 border-b border-[#FFC8B2]">
-                  <h3 className="font-bold text-2xl text-blue pb-5">Adicionais</h3>
+                  <h3 className="font-bold text-2xl text-blue pb-5">
+                    Adicionais
+                  </h3>
                   <div className="flex gap-2">
                     {props?.order?.adicionais?.split(",").map((item, index) => (
                       <span
@@ -146,33 +168,35 @@ export default function ModalOrderDetails(props) {
               )}
 
               <div className="px-10 pt-10 pb-10">
-                <h3 className="font-bold text-2xl text-blue pb-5">Dados Entrega</h3>
+                <h3 className="font-bold text-2xl text-blue pb-5">
+                  Dados Entrega
+                </h3>
 
                 <div className="grid grid-cols-2 gap-y-4 mb-4">
                   <div>
-                    <span className="font-semibold text-blue">O pedido será:</span>{" "}
+                    <span className="font-semibold text-blue">
+                      O pedido será:
+                    </span>{" "}
                     {props?.order?.tipoEntrega === "ENTREGA"
                       ? "Entrega"
                       : props?.order?.tipoEntrega === "RETIRADA"
-                        ? "Retirada"
-                        : "Carregando..."}
+                      ? "Retirada"
+                      : "Carregando..."}
                   </div>
                   <div>
                     <span className="font-semibold text-blue">Data:</span>{" "}
                     {props?.order?.data
                       ? formatDate(props.order.data)
                       : props.order.dataPedido
-                        ? formatDate(props.order.dataPedido)
-                        : "Carregando..."}
+                      ? formatDate(props.order.dataPedido)
+                      : "Carregando..."}
                   </div>
                   {props?.order?.tipoEntrega === "RETIRADA" && (
-
                     <div>
                       <span className="font-semibold text-blue">Horário:</span>
                       {props?.order?.horarioRetirada}
                     </div>
                   )}
-
                 </div>
 
                 <div className="pt-5">
@@ -189,19 +213,22 @@ export default function ModalOrderDetails(props) {
                       {props?.order?.telefoneCliente
                         ? formatPhone(props.order.telefoneCliente)
                         : props?.order?.telefone
-                          ? formatPhone(props.order.telefone)
-                          : "Carregando..."}
+                        ? formatPhone(props.order.telefone)
+                        : "Carregando..."}
                     </div>
                   </div>
                 </div>
 
                 {props?.order?.tipoEntrega !== "RETIRADA" && (
                   <div className="pt-5">
-                    <h3 className="font-bold text-2xl text-blue pb-5">Endereço</h3>
+                    <h3 className="font-bold text-2xl text-blue pb-5">
+                      Endereço
+                    </h3>
                     <div className="grid grid-cols-3 mb-8">
                       <div>
                         <span className="font-semibold text-blue">CEP:</span>{" "}
-                        {formatCep(props?.order?.endereco?.cep) ?? "Carregando..."}
+                        {formatCep(props?.order?.endereco?.cep) ??
+                          "Carregando..."}
                       </div>
                       <div>
                         <span className="font-semibold text-blue">Estado:</span>{" "}
