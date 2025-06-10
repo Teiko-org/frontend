@@ -7,8 +7,13 @@ function Card({ available, type }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    if (type === "Bolo" || (type === "Fornada" && available)) {
+    if (type === "Bolo") {
       navigate('/pedido-bolo');
+    } else if (type === "Fornada" && available) {
+      navigate('/pedido-fornada');
+    }
+     else if(type === "Fornada" && !available) {
+      toast.error("Fornada esgotada");
     }
   };
 

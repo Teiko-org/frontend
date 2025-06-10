@@ -1,29 +1,24 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import Home from '../pages/Home/index';
 import UserPage from '../pages/UserPage/index';
 import AddressPage from '../pages/AddressPage/index';
 import Application from '../pages/CakeOrder/Application';
 import Carambolos from '../pages/Carambolos';
 import FornadaSemana from '../pages/Fornada';
-import ProductList from '../components/ProductList';
-import ModalFilterProduct from '../components/ModalFilterProduct';
-import Products from '../pages/Products';
-import FornadaDashboard from '../pages/FornadaDashboard';
-import TableSelectProductsFornada from '../components/TableSelectProductsFornada';
+import FornadaOrderPage from '../pages/FornadaOrderPage';
 
 const AppRoutes = () => {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<TableSelectProductsFornada />} />
-        <Route path="/pagina-usuario" element={<UserPage />} />
-        <Route path="/pagina-enderecos" element={<AddressPage />} />
-        <Route path="/pedido-bolo" element={<Application />} />
-        <Route path="/carambolos" element={<Carambolos/>} />
-        <Route path="/fornada" element={<FornadaSemana/>} />
-      </Routes>
-    </Router>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/pagina-usuario" element={<UserPage />} />
+      <Route path="/pagina-enderecos" element={<AddressPage />} />
+      <Route path="/pedido-bolo" element={<Application />} />
+      <Route path="/carambolos" element={<Carambolos/>} />
+      <Route path="/fornada" element={<FornadaSemana/>} />
+      <Route path="/pedido-fornada" element={<FornadaOrderPage/>} />
+    </Routes>
   );
 };
 
