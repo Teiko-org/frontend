@@ -9,7 +9,7 @@ import { FaDownload } from "react-icons/fa6";
 
 function OrderKanban() {
   const [orders, setOrders] = useState([]);
-  const [refresh, setRefresh] = useState(false); // novo estado
+  const [refresh, setRefresh] = useState(false);
 
   const getData = async () => {
     try {
@@ -23,9 +23,8 @@ function OrderKanban() {
 
   useEffect(() => {
     getData();
-  }, [refresh]); // agora depende de refresh
-
-  // Função para ser chamada quando status mudar
+  }, [refresh]); 
+  
   const handleStatusChange = () => setRefresh((prev) => !prev);
 
 const generateReport = async () => {

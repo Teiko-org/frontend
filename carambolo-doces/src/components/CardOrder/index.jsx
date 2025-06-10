@@ -37,9 +37,9 @@ function CardOrder(props) {
 
   function formatPhone(phone) {
     if (!phone) return "Carregando...";
-    // Remove tudo que não for número
+    
     const cleaned = phone.replace(/\D/g, "");
-    // Aplica a máscara
+    
     if (cleaned.length === 11) {
       return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
     }
