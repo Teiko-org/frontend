@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import AvailableBox from "../AvailableBox";
 import SoldOutBox from "../SoldOutBox";
+import { toast } from "react-toastify";
 
 function Card({ available, type, nome, preco, imagem, boloData, onClick }) {
   const navigate = useNavigate();
@@ -11,12 +12,44 @@ function Card({ available, type, nome, preco, imagem, boloData, onClick }) {
       onClick(boloData);
     } else if (type === "Bolo" || (type === "Fornada" && available)) {
       navigate('/pedido-bolo');
+    } else if (type === "Fornada" && available) {
+      navigate('/pedido-fornada', { state: { produto } });
+    } else if(type === "Fornada" && !available) {
+      toast.error("Fornada esgotada");
     }
   };
 
-  const imageSrc = imagem || (type === "Bolo"
-    ? "src/assets/image_card.png"
-    : "src/assets/image_fornada.png");
+  const getImageSrc = () => {
+    if (type === "Bolo") {
+      return "src/assets/image_card.png";
+    }
+    
+    if (produto && produto.imagens && produto.imagens.length > 0) {
+      return produto.imagens[0];
+    }
+    
+    return "src/assets/image_fornada.png";
+  };
+
+  const getProductName = () => {
+    if (type === "Bolo") {
+      return "Carambolo Vintage Aniversário";
+    }
+    
+    return produto ? produto.produto : "Brownie de Chocolate com Caramelo";
+  };
+
+  const getProductPrice = () => {
+    if (produto && produto.valor) {
+      return `R$ ${produto.valor.toFixed(2).replace('.', ',')}`;
+    }
+    
+    return "R$ XXX,XX";
+  };
+
+  const getQuantity = () => {
+    return produto ? produto.quantidade : 50;
+  };
 
   return (
     <div
@@ -30,6 +63,10 @@ function Card({ available, type, nome, preco, imagem, boloData, onClick }) {
             src={imageSrc}
             alt={nome || (type === "Bolo" ? "Bolo Vintage" : "Brownie Fornada")}
             className="w-[286px] h-[300px] object-cover rounded-tr-lg"
+            onError={(e) => {
+              // Se a imagem falhar ao carregar, usa uma imagem padrão
+              e.target.src = type === "Bolo" ? "src/assets/image_card.png" : "src/assets/image_fornada.png";
+            }}
           />
         </div>
         <div className="px-4 h-[76px] flex flex-col justify-between">
@@ -43,7 +80,7 @@ function Card({ available, type, nome, preco, imagem, boloData, onClick }) {
           </div>
         </div>
       </div>
-      {type === "Fornada" && (available ? <AvailableBox quantity={50} /> : <SoldOutBox />)}
+      {type === "Fornada" && (available ? <AvailableBox quantity={getQuantity()} /> : <SoldOutBox />)}
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import ModalBaseLogin from "../ModalBaseLogin";
 import Button from "../Button";
 import PhoneNumberInput from "../PhoneInput";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import { register as registerUser } from "../../service/userService";
 
@@ -18,11 +18,12 @@ function RegisterModal({ onClose, switchToLogin }) {
   } = useForm();
 
   const onSubmit = async (data) => {
-    await registerUser(data.name, data.password, data.phone)
-      .then(() => switchToLogin())
-      .catch((error) => {
-        console.error("Erro ao registrar:", error);
-      });
+    try {
+      await registerUser(data.name, data.password, data.phone);
+      switchToLogin();
+    } catch (error) {
+      // Error handling is done in userService
+    }
   };
 
   const handleErrors = () => {
@@ -99,7 +100,6 @@ function RegisterModal({ onClose, switchToLogin }) {
       <p className="text-center text-base font-normal text-white">
         Já possui uma conta? <span onClick={switchToLogin} className="text-gradient font-bold cursor-pointer">Entrar</span>
       </p>
-      <ToastContainer />
     </ModalBaseLogin>
   );
 }

@@ -3,32 +3,82 @@ import Footer from "../../components/Footer";
 import Button from "../../components/Button";
 import InputOption from "../../components/InputOption";
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import CampoComGradiente from "../../components/gradientField";
 import PhoneNumberInput from "../../components/PhoneInput";
-import CustomDatePicker from "../../components/DatePicker";
+import CustomDatePicker from "../../components/DatePicker-2";
 import Select from "../../components/Select";
+import { axiosApi } from "../../provider/AxiosApi";
 import axios from "axios";
 import { IoIosInformationCircle } from "react-icons/io";
+import { listUserAddresses } from "../../service/addressService";
+import { toast } from "react-toastify";
 
 function FornadaOrderPage() {
+    const location = useLocation();
+    const navigate = useNavigate();
+    
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    const produtoSelecionado = location.state?.produto;
+
+    useEffect(() => {
+        if (!produtoSelecionado) {
+            toast.error("Nenhum produto selecionado!");
+            navigate("/fornada");
+        }
+    }, [produtoSelecionado, navigate]);
 
     const doceFornada = {
-        'nome': "Brownie Recheado",
-        'valorUnitario': 12.00
+        'nome': produtoSelecionado?.produto || "Brownie Recheado",
+        'valorUnitario': produtoSelecionado?.valor || 12.00,
+        'fornadaDaVezId': produtoSelecionado?.fornadaDaVezId
     }
 
-    const [amount, setAmount] = useState();
+    const [amount, setAmount] = useState(1);
 
     const [deliveryOption, setDeliveryOption] = useState("Entrega");
+
+    const [userAddresses, setUserAddresses] = useState([]);
+    const [selectedAddressId, setSelectedAddressId] = useState("");
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     const [cep, setCep] = useState("");
     const [cidade, setCidade] = useState("");
     const [bairro, setBairro] = useState("");
     const [rua, setRua] = useState("");
 
+    const [nome, setNome] = useState("");
+    const [telefone, setTelefone] = useState("");
+    const [numero, setNumero] = useState("");
+    const [complemento, setComplemento] = useState("");
+    const [referencia, setReferencia] = useState("");
+    const [dataEntrega, setDataEntrega] = useState("");
+    const [horario, setHorario] = useState("");
+    const [observacoes, setObservacoes] = useState("");
+
+    useEffect(() => {
+        const checkUserAndLoadAddresses = async () => {
+            const userId = localStorage.getItem("userId");
+            const isSignedIn = localStorage.getItem("IS_SIGNED");
+            
+            if (userId && isSignedIn) {
+                setIsLoggedIn(true);
+                try {
+                    const addresses = await listUserAddresses(userId);
+                    setUserAddresses(addresses);
+                } catch (error) {
+                    console.error("Erro ao carregar endereços do usuário:", error);
+                }
+            }
+        };
+
+        checkUserAndLoadAddresses();
+    }, []);
+
     useEffect(() => {
         if (cep.length === 8) {
-            searchAddresByCep(cep);
+            searchAddressByCep(cep);
         }
     }, [cep]);
 
@@ -41,19 +91,23 @@ function FornadaOrderPage() {
     };
 
     const handleCepChange = (e) => {
+        if (selectedAddressId && selectedAddressId !== "novo") {
+            return;
+        }
+
         const formattedValue = formatCep(e.target.value);
         setCep(formattedValue);
 
         const cepWithoutMask = formattedValue.replace(/\D/g, "");
 
         if (cepWithoutMask.length === 8) {
-            searchAddresByCep(formattedValue);
+            searchAddressByCep(formattedValue);
         } else {
-            cleanAddressFields();
+            clearAddressFields();
         }
     };
 
-    const searchAddresByCep = async (typedCep) => {
+    const searchAddressByCep = async (typedCep) => {
         try {
             const cepOnlyNumbers = typedCep.replace(/\D/g, "");
 
@@ -61,6 +115,7 @@ function FornadaOrderPage() {
                 return;
             }
 
+            toast.info("🔍 Buscando CEP...");
             const response = await axios.get(
                 `https://viacep.com.br/ws/${cepOnlyNumbers}/json/`
             );
@@ -69,20 +124,183 @@ function FornadaOrderPage() {
                 setCidade(response.data.localidade || "");
                 setBairro(response.data.bairro || "");
                 setRua(response.data.logradouro || "");
+                toast.success("✅ CEP encontrado!");
             } else {
                 console.error("CEP não encontrado.");
-                cleanAddressFields();
+                clearAddressFields();
+                toast.error("❌ CEP não encontrado!");
             }
         } catch (error) {
             console.error("Erro ao buscar o CEP:", error);
-            cleanAddressFields();
+            clearAddressFields();
+            toast.error("❌ Erro ao buscar CEP. Verifique a conexão!");
         }
     };
 
-    const cleanAddressFields = () => {
+    const clearAddressFields = () => {
         setCidade("");
         setBairro("");
         setRua("");
+    };
+
+    const handleAddressSelection = (addressId) => {
+        setSelectedAddressId(addressId);
+        
+        if (addressId === "novo") {
+            clearAddressFields();
+            setCep("");
+            setNumero("");
+            setComplemento("");
+            setReferencia("");
+        } else if (addressId) {
+            const selectedAddress = userAddresses.find(addr => addr.id === parseInt(addressId));
+            if (selectedAddress) {
+                setCep(selectedAddress.cep);
+                setCidade(selectedAddress.cidade);
+                setBairro(selectedAddress.bairro);
+                setRua(selectedAddress.logradouro);
+                setNumero(selectedAddress.numero);
+                setComplemento(selectedAddress.complemento || "");
+                setReferencia(selectedAddress.referencia || "");
+            }
+        }
+    };
+
+    const registerAddress = async (endereco) => {
+        const response = await axiosApi.post("/enderecos", endereco);
+        return response.data.id;
+    };
+
+    const registerFornadaOrder = async (pedido) => {
+        const response = await axiosApi.post("/fornadas/pedidos", pedido);
+        return response.data.id;
+    };
+
+    const registerFornadaOrderSummary = async (pedidoFornadaId, dataEntrega, horario) => {
+        const body = {
+            pedidoFornadaId,
+            dataEntrega: dataEntrega && horario ? `${dataEntrega}T${horario}:00` : null
+        };
+        const response = await axiosApi.post("/resumo-pedido", body);
+        return response.data;
+    };
+
+    const sendOrder = async () => {
+        if (!dataEntrega) {
+            toast.warn("Por favor, selecione a data de entrega!");
+            return;
+        }
+        if (!nome) {
+            toast.warn("Por favor, preencha seu nome!");
+            return;
+        }
+        if (!telefone) {
+            toast.warn("Por favor, preencha o telefone!");
+            return;
+        }
+        if (deliveryOption === "Entrega" && !cep) {
+            toast.warn("Por favor, preencha o CEP para entrega!");
+            return;
+        }
+        if (deliveryOption === "Entrega" && (!cidade || !bairro || !rua || !numero)) {
+            toast.warn("Por favor, preencha todos os campos obrigatórios do endereço!");
+            return;
+        }
+        if (deliveryOption === "Retirada" && !horario) {
+            toast.warn("Por favor, selecione o horário da retirada!");
+            return;
+        }
+        if (amount < 1 || amount > 12) {
+            toast.warn("A quantidade deve ser entre 1 e 12 unidades!");
+            return;
+        }
+        
+        setIsSubmitting(true);
+        toast.info("Processando seu pedido...");
+        
+        try {
+            let enderecoId = null;
+
+            if (deliveryOption === "Entrega") {
+                if (selectedAddressId && selectedAddressId !== "novo") {
+                    // Usa endereço existente
+                    enderecoId = parseInt(selectedAddressId);
+                } else {
+                    // Cria novo endereço
+                    const userId = localStorage.getItem("userId");
+                    const endereco = {
+                        nome: "Endereço de Entrega",
+                        cep: cep.replace("-", ""),
+                        estado: "SP",
+                        cidade,
+                        bairro,
+                        logradouro: rua,
+                        numero,
+                        complemento,
+                        referencia,
+                        usuario: userId ? parseInt(userId) : null
+                    };
+                    enderecoId = await registerAddress(endereco);
+                }
+            }
+
+            const pedido = {
+                fornadaDaVezId: doceFornada.fornadaDaVezId,
+                usuarioId: null, 
+                quantidade: Number(amount),
+                dataPrevisaoEntrega: dataEntrega, 
+                tipoEntrega: deliveryOption.toUpperCase(), 
+                nomeCliente: nome,
+                telefoneCliente: telefone,
+                observacoes: observacoes,
+                enderecoId: enderecoId,
+                horarioRetirada: horario
+            };
+
+            if (deliveryOption === "Entrega") {
+                pedido.enderecoId = enderecoId;
+            }
+
+            if (deliveryOption === "Retirada") {
+                pedido.horarioRetirada = horario;
+            }
+
+            console.log("Pedido enviado:", pedido); 
+
+            const pedidoId = await registerFornadaOrder(pedido);
+            const resumo = await registerFornadaOrderSummary(pedidoId, dataEntrega, horario);
+            console.log("Mensagem do resumo:", resumo.mensagem);
+
+            const numeroWhatsApp = "11964849864";
+            const mensagem = resumo.mensagem;
+            const linkWhatsApp = `https://wa.me/55${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`;
+
+            toast.success("Pedido realizado com sucesso!");
+            
+            setTimeout(() => {
+                window.open(linkWhatsApp, "_blank");
+            }, 1000);
+
+        } catch (error) {
+            console.error("Erro ao realizar pedido:", error);
+            
+            // Verifica o tipo de erro para dar feedback adequado
+            if (error.response?.status === 422 && error.response?.data?.message?.includes("Estoque insuficiente")) {
+                toast.error(error.response.data.message);
+            } else if (error.response?.status === 422) {
+                toast.error(error.response.data.message);
+            } else if (error.response?.status === 404) {
+                toast.error("Produto não encontrado!");
+            } else if (error.response?.data?.message) {
+                toast.error(error.response.data.message);
+            } else if (error.message) {
+                toast.error(error.message);
+            } else {
+                toast.error("Erro ao realizar pedido! Tente novamente.");
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -98,7 +316,7 @@ function FornadaOrderPage() {
                 </div>
 
                 <div className="w-1/2 py-10">
-                    <h3 className="text-blue text-lg">Frase específica para gerar um pouco de interação com o usuário</h3>
+                    <h3 className="text-blue text-lg">Complete os dados abaixo para finalizar seu pedido e receber tudo fresquinho!</h3>
 
                     <div className="flex flex-col gap-3 border-b border-[#FFC8B2] py-5">
                         <h2 className="font-semibold tracking-wider text-xl text-blue">QUANTIDADE</h2>
@@ -107,10 +325,17 @@ function FornadaOrderPage() {
                             type="number"
                             maxLength={2}
                             min="1" max="12"
-                            defaultValue="1"
-
-                            onChange={e => setAmount(e.target.value)}
-
+                            value={amount}
+                            onChange={e => {
+                                const newAmount = parseInt(e.target.value) || 1;
+                                if (newAmount > 12) {
+                                    setAmount(12);
+                                } else if (newAmount < 1) {
+                                    setAmount(1);
+                                } else {
+                                    setAmount(newAmount);
+                                }
+                            }}
                             className="w-[10%] border-2 border-gold rounded-xl px-3 py-2"
                         />
                     </div>
@@ -139,6 +364,8 @@ function FornadaOrderPage() {
                                 <input
                                     placeholder="Inserir o seu nome"
                                     className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                                    value={nome}
+                                    onChange={e => setNome(e.target.value)}
                                 />
                             </div>
                             <div className="col-span-4">
@@ -147,23 +374,58 @@ function FornadaOrderPage() {
                                     <PhoneNumberInput
                                         placeholder="(XX) X XXXX-XXXX"
                                         className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                                        value={telefone}
+                                        onChange={value => setTelefone(value)}
                                     />
                                 </CampoComGradiente>
                             </div>
                             <div className="col-span-2">
-                                <CustomDatePicker label="Data" placeholder="DD/MM" />
+                                <CustomDatePicker
+                                    label="Data"
+                                    placeholder="DD/MM"
+                                    value={dataEntrega}
+                                    onChange={value => {
+                                        let formatted = value;
+                                        if (value instanceof Date) {
+                                            formatted = value.toISOString().split("T")[0];
+                                        }
+                                        setDataEntrega(formatted);
+                                    }}
+                                />
                             </div>
 
                             {deliveryOption === "Entrega" && (
                                 <>
+                                    {isLoggedIn && userAddresses.length > 0 && (
+                                        <div className="col-span-12 mb-4">
+                                            <label className="block text-blue font-semibold mb-1">
+                                                Escolher Endereço
+                                            </label>
+                                            <select
+                                                className="w-full border-2 border-gold rounded-lg px-4 py-2"
+                                                value={selectedAddressId}
+                                                onChange={(e) => handleAddressSelection(e.target.value)}
+                                            >
+                                                <option value="">Selecione um endereço ou digite um novo</option>
+                                                {userAddresses.map((address) => (
+                                                    <option key={address.id} value={address.id}>
+                                                        {address.nome} - {address.logradouro}, {address.numero} - {address.bairro}
+                                                    </option>
+                                                ))}
+                                                <option value="novo">+ Inserir novo endereço</option>
+                                            </select>
+                                        </div>
+                                    )}
+                                    
                                     <div className="col-span-3">
                                         <label className="block text-blue font-semibold mb-1">CEP</label>
                                         <input
                                             placeholder="00000-000"
-                                            className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                                            className={`border-2 border-gold rounded-lg px-4 py-2 w-full ${selectedAddressId && selectedAddressId !== "novo" ? 'bg-gray-100' : ''}`}
                                             value={cep}
                                             maxLength={9}
                                             onChange={handleCepChange}
+                                            readOnly={selectedAddressId && selectedAddressId !== "novo"}
                                         />
                                         <span className="text-xs text-blue mt-1">
                                             Não sabe o CEP?{" "}
@@ -190,9 +452,10 @@ function FornadaOrderPage() {
                                             Cidade
                                         </label>
                                         <input
-                                            className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                                            className={`border-2 border-gold rounded-lg px-4 py-2 w-full ${selectedAddressId && selectedAddressId !== "novo" ? 'bg-gray-100' : ''}`}
                                             value={cidade}
                                             onChange={(e) => setCidade(e.target.value)}
+                                            readOnly={selectedAddressId && selectedAddressId !== "novo"}
                                         />
                                     </div>
                                     <div className="col-span-3">
@@ -200,9 +463,10 @@ function FornadaOrderPage() {
                                             Bairro
                                         </label>
                                         <input
-                                            className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                                            className={`border-2 border-gold rounded-lg px-4 py-2 w-full ${selectedAddressId && selectedAddressId !== "novo" ? 'bg-gray-100' : ''}`}
                                             value={bairro}
                                             onChange={(e) => setBairro(e.target.value)}
+                                            readOnly={selectedAddressId && selectedAddressId !== "novo"}
                                         />
                                     </div>
 
@@ -212,23 +476,34 @@ function FornadaOrderPage() {
                                         </label>
                                         <input
                                             placeholder="Inserir seu endereço"
-                                            className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                                            className={`border-2 border-gold rounded-lg px-4 py-2 w-full ${selectedAddressId && selectedAddressId !== "novo" ? 'bg-gray-100' : ''}`}
                                             value={rua}
                                             onChange={(e) => setRua(e.target.value)}
+                                            readOnly={selectedAddressId && selectedAddressId !== "novo"}
                                         />
                                     </div>
                                     <div className="col-span-3">
                                         <label className="block text-blue font-semibold mb-1">
                                             Número
                                         </label>
-                                        <input className="border-2 border-gold rounded-lg px-4 py-2 w-full" />
+                                        <input 
+                                            className={`border-2 border-gold rounded-lg px-4 py-2 w-full ${selectedAddressId && selectedAddressId !== "novo" ? 'bg-gray-100' : ''}`} 
+                                            value={numero} 
+                                            onChange={e => setNumero(e.target.value)}
+                                            readOnly={selectedAddressId && selectedAddressId !== "novo"}
+                                        />
                                     </div>
 
                                     <div className="col-span-8">
                                         <label className="block text-blue font-semibold mb-1">
                                             Complemento
                                         </label>
-                                        <input className="border-2 border-gold rounded-lg px-4 py-2 w-full" />
+                                        <input 
+                                            className={`border-2 border-gold rounded-lg px-4 py-2 w-full ${selectedAddressId && selectedAddressId !== "novo" ? 'bg-gray-100' : ''}`} 
+                                            value={complemento} 
+                                            onChange={e => setComplemento(e.target.value)}
+                                            readOnly={selectedAddressId && selectedAddressId !== "novo"}
+                                        />
                                     </div>
                                 </>
                             )}
@@ -244,6 +519,8 @@ function FornadaOrderPage() {
                                             { value: "19:00", label: "19:00" },
                                         ]}
                                         placeholder={""}
+                                        value={horario}
+                                        onChange={e => setHorario(e.target.value)}
                                     />
                                 </div>
                             )}
@@ -258,6 +535,8 @@ function FornadaOrderPage() {
                         <textarea
                             className="border-2 border-gold rounded-lg px-4 py-2 w-full mt-2 h-32"
                             placeholder="Descreva abaixo como você quer o seu Carambolo"
+                            value={observacoes}
+                            onChange={e => setObservacoes(e.target.value)}
                         ></textarea>
                     </div>
 
@@ -267,14 +546,15 @@ function FornadaOrderPage() {
                             <span className="flex items-center gap-1 text-[#665853] text-sm"><IoIosInformationCircle className="text-red" /> Esse valor não inclui o valor do frete</span>
                         </div>
                         <Button
-                            text="Adicionar ao Carrinho"
+                            text={isSubmitting ? "Processando..." : "Finalizar Pedido"}
+                            onClick={sendOrder}
+                            disabled={isSubmitting}
+                            bgColor={isSubmitting ? "bg-gray-400" : "bg-gradient-to-l from-gold to-darkGold"}
                         />
                     </div>
 
                 </div>
-
             </div>
-
             <Footer />
         </div>
     );

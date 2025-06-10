@@ -1,5 +1,5 @@
 export const getToken = () => {
-  return localStorage.getItem('TOKEN_JWT');
+  return localStorage.getItem('JWT_TOKEN');
 };
 
 export const isLoggedIn = () => {
@@ -7,6 +7,6 @@ export const isLoggedIn = () => {
 };
 
 export const logout = () => {
-  localStorage.removeItem('TOKEN_JWT');
+  localStorage.removeItem('JWT_TOKEN');
   localStorage.removeItem('IS_SIGNED');
 };

@@ -4,7 +4,7 @@ import TableSelectProductsFornada from "../../components/TableSelectProductsForn
 import Button from "../../components/Button";
 import HeaderDashboard from "../../components/headerDashboard";
 import HeaderDashboard from "../../components/HeaderDashboard";
-import fornadaService from "../../service/fornadaService";
+import {fornadaService} from "../../service/fornadaService";
 import fornadaDaVezService from "../../service/fornadaDaVezService";
 import { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";

@@ -57,6 +57,7 @@ const BannerFornada = () => {
           <h2 className="text-xl font-bold mb-2 text-pink">Fornada</h2>
           <p>Aproveite a nossa Fornada com doces exclusivos!</p>
           <p>Disponível por tempo limitado até {dataFim ? new Date(dataFim).toLocaleDateString() : '--/--/----'}</p>
+
         </div>
         <div className="text-white text-2xl flex gap-x-8">
           <span>{timeLeft.days || '0'}D</span>
@@ -71,6 +72,5 @@ const BannerFornada = () => {
     </section>
   );
 };
-
 
 export default BannerFornada;
