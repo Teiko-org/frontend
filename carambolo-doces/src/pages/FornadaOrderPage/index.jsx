@@ -3,27 +3,42 @@ import Footer from "../../components/Footer";
 import Button from "../../components/Button";
 import InputOption from "../../components/InputOption";
 import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import CampoComGradiente from "../../components/gradientField";
 import PhoneNumberInput from "../../components/PhoneInput";
-import CustomDatePicker from "../../components/DatePicker";
+import CustomDatePicker from "../../components/DatePicker-2";
 import Select from "../../components/Select";
 import { axiosApi } from "../../provider/AxiosApi";
 import axios from "axios";
 import { IoIosInformationCircle } from "react-icons/io";
 import { listUserAddresses } from "../../service/addressService";
+import { toast } from "react-toastify";
 
 function FornadaOrderPage() {
+    const location = useLocation();
+    const navigate = useNavigate();
+    
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    const produtoSelecionado = location.state?.produto;
+
+    useEffect(() => {
+        if (!produtoSelecionado) {
+            toast.error("Nenhum produto selecionado!");
+            navigate("/fornada");
+        }
+    }, [produtoSelecionado, navigate]);
 
     const doceFornada = {
-        'nome': "Brownie Recheado",
-        'valorUnitario': 12.00
+        'nome': produtoSelecionado?.produto || "Brownie Recheado",
+        'valorUnitario': produtoSelecionado?.valor || 12.00,
+        'fornadaDaVezId': produtoSelecionado?.fornadaDaVezId
     }
 
     const [amount, setAmount] = useState(1);
 
     const [deliveryOption, setDeliveryOption] = useState("Entrega");
 
-    // Estados para endereços
     const [userAddresses, setUserAddresses] = useState([]);
     const [selectedAddressId, setSelectedAddressId] = useState("");
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -42,7 +57,6 @@ function FornadaOrderPage() {
     const [horario, setHorario] = useState("");
     const [observacoes, setObservacoes] = useState("");
 
-    // Carrega endereços do usuário se estiver logado
     useEffect(() => {
         const checkUserAndLoadAddresses = async () => {
             const userId = localStorage.getItem("userId");
@@ -77,7 +91,6 @@ function FornadaOrderPage() {
     };
 
     const handleCepChange = (e) => {
-        // Não permite alteração se um endereço existente estiver selecionado
         if (selectedAddressId && selectedAddressId !== "novo") {
             return;
         }
@@ -102,6 +115,7 @@ function FornadaOrderPage() {
                 return;
             }
 
+            toast.info("🔍 Buscando CEP...");
             const response = await axios.get(
                 `https://viacep.com.br/ws/${cepOnlyNumbers}/json/`
             );
@@ -110,13 +124,16 @@ function FornadaOrderPage() {
                 setCidade(response.data.localidade || "");
                 setBairro(response.data.bairro || "");
                 setRua(response.data.logradouro || "");
+                toast.success("✅ CEP encontrado!");
             } else {
                 console.error("CEP não encontrado.");
                 clearAddressFields();
+                toast.error("❌ CEP não encontrado!");
             }
         } catch (error) {
             console.error("Erro ao buscar o CEP:", error);
             clearAddressFields();
+            toast.error("❌ Erro ao buscar CEP. Verifique a conexão!");
         }
     };
 
@@ -130,14 +147,12 @@ function FornadaOrderPage() {
         setSelectedAddressId(addressId);
         
         if (addressId === "novo") {
-            // Limpa os campos para permitir inserir novo endereço
             clearAddressFields();
             setCep("");
             setNumero("");
             setComplemento("");
             setReferencia("");
         } else if (addressId) {
-            // Preenche com o endereço selecionado
             const selectedAddress = userAddresses.find(addr => addr.id === parseInt(addressId));
             if (selectedAddress) {
                 setCep(selectedAddress.cep);
@@ -172,25 +187,37 @@ function FornadaOrderPage() {
 
     const sendOrder = async () => {
         if (!dataEntrega) {
-            alert("Por favor, selecione a data de entrega.");
+            toast.warn("Por favor, selecione a data de entrega!");
+            return;
+        }
+        if (!nome) {
+            toast.warn("Por favor, preencha seu nome!");
             return;
         }
         if (!telefone) {
-            alert("Por favor, preencha o telefone.");
+            toast.warn("Por favor, preencha o telefone!");
             return;
         }
         if (deliveryOption === "Entrega" && !cep) {
-            alert("Por favor, preencha o CEP para entrega.");
+            toast.warn("Por favor, preencha o CEP para entrega!");
             return;
         }
         if (deliveryOption === "Entrega" && (!cidade || !bairro || !rua || !numero)) {
-            alert("Por favor, preencha todos os campos obrigatórios do endereço (cidade, bairro, endereço e número).");
+            toast.warn("Por favor, preencha todos os campos obrigatórios do endereço!");
             return;
         }
         if (deliveryOption === "Retirada" && !horario) {
-            alert("Por favor, selecione o horário da retirada.");
+            toast.warn("Por favor, selecione o horário da retirada!");
             return;
         }
+        if (amount < 1 || amount > 12) {
+            toast.warn("A quantidade deve ser entre 1 e 12 unidades!");
+            return;
+        }
+        
+        setIsSubmitting(true);
+        toast.info("Processando seu pedido...");
+        
         try {
             let enderecoId = null;
 
@@ -218,7 +245,7 @@ function FornadaOrderPage() {
             }
 
             const pedido = {
-                fornadaDaVezId: 1,
+                fornadaDaVezId: doceFornada.fornadaDaVezId,
                 usuarioId: null, 
                 quantidade: Number(amount),
                 dataPrevisaoEntrega: dataEntrega, 
@@ -248,12 +275,31 @@ function FornadaOrderPage() {
             const mensagem = resumo.mensagem;
             const linkWhatsApp = `https://wa.me/55${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`;
 
-            window.open(linkWhatsApp, "_blank");
+            toast.success("Pedido realizado com sucesso!");
+            
+            setTimeout(() => {
+                window.open(linkWhatsApp, "_blank");
+            }, 1000);
 
-            alert("Pedido realizado com sucesso!");
         } catch (error) {
-            alert("Erro ao realizar pedido!");
-            console.error(error);
+            console.error("Erro ao realizar pedido:", error);
+            
+            // Verifica o tipo de erro para dar feedback adequado
+            if (error.response?.status === 422 && error.response?.data?.message?.includes("Estoque insuficiente")) {
+                toast.error(error.response.data.message);
+            } else if (error.response?.status === 422) {
+                toast.error(error.response.data.message);
+            } else if (error.response?.status === 404) {
+                toast.error("Produto não encontrado!");
+            } else if (error.response?.data?.message) {
+                toast.error(error.response.data.message);
+            } else if (error.message) {
+                toast.error(error.message);
+            } else {
+                toast.error("Erro ao realizar pedido! Tente novamente.");
+            }
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -270,7 +316,7 @@ function FornadaOrderPage() {
                 </div>
 
                 <div className="w-1/2 py-10">
-                    <h3 className="text-blue text-lg">Frase específica para gerar um pouco de interação com o usuário</h3>
+                    <h3 className="text-blue text-lg">Complete os dados abaixo para finalizar seu pedido e receber tudo fresquinho!</h3>
 
                     <div className="flex flex-col gap-3 border-b border-[#FFC8B2] py-5">
                         <h2 className="font-semibold tracking-wider text-xl text-blue">QUANTIDADE</h2>
@@ -280,7 +326,16 @@ function FornadaOrderPage() {
                             maxLength={2}
                             min="1" max="12"
                             value={amount}
-                            onChange={e => setAmount(e.target.value)}
+                            onChange={e => {
+                                const newAmount = parseInt(e.target.value) || 1;
+                                if (newAmount > 12) {
+                                    setAmount(12);
+                                } else if (newAmount < 1) {
+                                    setAmount(1);
+                                } else {
+                                    setAmount(newAmount);
+                                }
+                            }}
                             className="w-[10%] border-2 border-gold rounded-xl px-3 py-2"
                         />
                     </div>
@@ -491,8 +546,10 @@ function FornadaOrderPage() {
                             <span className="flex items-center gap-1 text-[#665853] text-sm"><IoIosInformationCircle className="text-red" /> Esse valor não inclui o valor do frete</span>
                         </div>
                         <Button
-                            text="Finalizar Pedido"
+                            text={isSubmitting ? "Processando..." : "Finalizar Pedido"}
                             onClick={sendOrder}
+                            disabled={isSubmitting}
+                            bgColor={isSubmitting ? "bg-gray-400" : "bg-gradient-to-l from-gold to-darkGold"}
                         />
                     </div>
 
