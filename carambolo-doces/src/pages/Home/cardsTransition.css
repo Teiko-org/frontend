@@ -1,0 +1,18 @@
+.card-fade-enter {
+  opacity: 0;
+  transform: translateY(30px) scale(0.98);
+}
+.card-fade-enter-active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: opacity 300ms, transform 300ms;
+}
+.card-fade-exit {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+.card-fade-exit-active {
+  opacity: 0;
+  transform: translateY(-30px) scale(0.98);
+  transition: opacity 300ms, transform 300ms;
+}

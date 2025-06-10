@@ -3,22 +3,24 @@ import { useNavigate } from "react-router-dom";
 import AvailableBox from "../AvailableBox";
 import SoldOutBox from "../SoldOutBox";
 
-function Card({ available, type }) {
+function Card({ available, type, nome, preco, imagem, boloData, onClick }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    if (type === "Bolo" || (type === "Fornada" && available)) {
+    if (onClick) {
+      onClick(boloData);
+    } else if (type === "Bolo" || (type === "Fornada" && available)) {
       navigate('/pedido-bolo');
     }
   };
 
-  const imageSrc = type === "Bolo"
+  const imageSrc = imagem || (type === "Bolo"
     ? "src/assets/image_card.png"
-    : "src/assets/image_fornada.png";
+    : "src/assets/image_fornada.png");
 
   return (
     <div
-      className={`relative w-[280px] h-[410px] ${type === "Fornada" && !available ? 'opacity-75 cursor-not-allowed' : 'cursor-pointer'}`}
+      className={`relative w-[280px] h-[410px] ${type === "Fornada" && !available ? 'opacity-75 cursor-not-allowed' : 'cursor-pointer'} transition-transform duration-200 hover:scale-105`}
       onClick={handleClick}
     >
       <div className="absolute top-2 left-2 w-full h-full border-2 border-goldCard rounded-tr-2xl"></div>
@@ -26,18 +28,18 @@ function Card({ available, type }) {
         <div className="px-3 pt-3 pb-2 flex justify-center items-center">
           <img
             src={imageSrc}
-            alt={type === "Bolo" ? "Bolo Vintage" : "Brownie Fornada"}
+            alt={nome || (type === "Bolo" ? "Bolo Vintage" : "Brownie Fornada")}
             className="w-[286px] h-[300px] object-cover rounded-tr-lg"
           />
         </div>
         <div className="px-4 h-[76px] flex flex-col justify-between">
           <div className="font-medium text-blue text-lg">
-            {type === "Bolo"
+            {nome || (type === "Bolo"
               ? "Carambolo Vintage Aniversário"
-              : "Brownie de Chocolate com Caramelo"}
+              : "Brownie de Chocolate com Caramelo")}
           </div>
           <div className="font-semibold text-blue text-xl">
-            A partir de R$ XXX,XX
+            {preco ? `A partir de R$ ${preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'A partir de R$ XXX,XX'}
           </div>
         </div>
       </div>

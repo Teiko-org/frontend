@@ -9,6 +9,7 @@ const BannerFornada = () => {
   useEffect(() => {
     const fetchLastFornada = async () => {
       const lastFornada = await getLastFornada();
+      console.log(lastFornada)
       if (lastFornada && lastFornada.dataFim) {
         setDataFim(lastFornada.dataFim);
       }
