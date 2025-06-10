@@ -8,9 +8,8 @@ function ModalConfirmationLogOff({ onClose }) {
 
   const logOff = () => {
     localStorage.removeItem("IS_SIGNED");
-    localStorage.removeItem("TOKEN_JWT");
     localStorage.removeItem("userId");
-    localStorage.removeItem("token");
+    localStorage.removeItem("JWT_TOKEN");
     localStorage.removeItem("userData");
     
     window.dispatchEvent(new Event("storage"));

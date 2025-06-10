@@ -78,9 +78,7 @@ export const createPedidoFornada = async (pedido) => {
   }
 }; 
 
-
 export const fornadaService = async (data) => {
-
     console.log(data);
     try {
         const response = await axiosApi.post('/fornadas', {
