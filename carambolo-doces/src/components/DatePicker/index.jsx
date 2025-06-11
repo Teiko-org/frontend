@@ -15,12 +15,10 @@ const CustomDatePicker = React.forwardRef(({ label, placeholder, value, onChange
 
   const formatDateForBackend = (date) => {
     if (date instanceof Date && !isNaN(date)) {
-      return date.toLocaleDateString('pt-BR', {
-        weekday: 'long',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      });
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     }
     return '';
   };
@@ -30,6 +28,8 @@ const CustomDatePicker = React.forwardRef(({ label, placeholder, value, onChange
     if (date instanceof Date && !isNaN(date.valueOf())) {
       const formattedDate = formatDateForBackend(date);
       onChange(formattedDate);
+    } else if (date === null) {
+      onChange('');
     }
   };
 

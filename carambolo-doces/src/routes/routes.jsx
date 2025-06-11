@@ -8,6 +8,7 @@ import Carambolos from '../pages/Carambolos';
 import FornadaSemana from '../pages/Fornada';
 import FornadaOrderPage from '../pages/FornadaOrderPage';
 import FornadaDashboard from '../pages/FornadaDashboard';
+import ModalCadastroProduto from '../components/ModalCadastroProduto';
 import Products from '../pages/Products/index'
 
 const AppRoutes = () => {
@@ -20,6 +21,8 @@ const AppRoutes = () => {
       <Route path="/carambolos" element={<Carambolos/>} />
       <Route path="/fornada" element={<FornadaSemana/>} />
       <Route path="/pedido-fornada" element={<FornadaOrderPage/>} />
+      <Route path="/modal-cadastro-produto" element={<ModalCadastroProduto/>} />
+      <Route path="/fornada-dashboard" element={<FornadaDashboard/>} />
       <Route path="/produtos" element={<Products />} />
     </Routes>
   );

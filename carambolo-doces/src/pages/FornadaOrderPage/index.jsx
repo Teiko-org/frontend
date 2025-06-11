@@ -6,12 +6,13 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import CampoComGradiente from "../../components/gradientField";
 import PhoneNumberInput from "../../components/PhoneInput";
-import CustomDatePicker from "../../components/DatePicker-2";
+
 import Select from "../../components/Select";
 import { axiosApi } from "../../provider/AxiosApi";
 import axios from "axios";
 import { IoIosInformationCircle } from "react-icons/io";
 import { listUserAddresses } from "../../service/addressService";
+import { getProdutoFornadaById } from "../../service/fornadaService";
 import { toast } from "react-toastify";
 
 function FornadaOrderPage() {
@@ -19,6 +20,8 @@ function FornadaOrderPage() {
     const navigate = useNavigate();
     
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [quantidadeDisponivel, setQuantidadeDisponivel] = useState(0);
+    const [carregandoEstoque, setCarregandoEstoque] = useState(true);
     
     const produtoSelecionado = location.state?.produto;
 
@@ -73,8 +76,34 @@ function FornadaOrderPage() {
             }
         };
 
+        const buscarQuantidadeDisponivel = async () => {
+            if (produtoSelecionado?.fornadaDaVezId) {
+                try {
+                    setCarregandoEstoque(true);
+                    const produtoAtualizado = await getProdutoFornadaById(produtoSelecionado.fornadaDaVezId);
+                    const quantidadeDisp = produtoAtualizado.quantidade || 0;
+                    setQuantidadeDisponivel(quantidadeDisp);
+                    
+                    // Se a quantidade inicial for maior que a disponível, ajusta
+                    if (amount > quantidadeDisp && quantidadeDisp > 0) {
+                        setAmount(quantidadeDisp);
+                    }
+                } catch (error) {
+                    console.error("Erro ao buscar quantidade disponível:", error);
+                    toast.error("Erro ao verificar estoque do produto");
+                    setQuantidadeDisponivel(0);
+                    setAmount(1);
+                } finally {
+                    setCarregandoEstoque(false);
+                }
+            } else {
+                setCarregandoEstoque(false);
+            }
+        };
+
         checkUserAndLoadAddresses();
-    }, []);
+        buscarQuantidadeDisponivel();
+    }, [produtoSelecionado]);
 
     useEffect(() => {
         if (cep.length === 8) {
@@ -210,8 +239,18 @@ function FornadaOrderPage() {
             toast.warn("Por favor, selecione o horário da retirada!");
             return;
         }
-        if (amount < 1 || amount > 12) {
-            toast.warn("A quantidade deve ser entre 1 e 12 unidades!");
+        if (amount < 1) {
+            toast.warn("A quantidade deve ser no mínimo 1 unidade!");
+            return;
+        }
+        
+        if (quantidadeDisponivel === 0) {
+            toast.error("Este produto está esgotado!");
+            return;
+        }
+        
+        if (amount > quantidadeDisponivel) {
+            toast.warn(`Quantidade indisponível! Máximo disponível: ${quantidadeDisponivel} unidades`);
             return;
         }
         
@@ -219,6 +258,17 @@ function FornadaOrderPage() {
         toast.info("Processando seu pedido...");
         
         try {
+            // Verifica novamente o estoque antes de confirmar o pedido
+            const produtoAtualizado = await getProdutoFornadaById(produtoSelecionado.fornadaDaVezId);
+            if (produtoAtualizado.quantidade < amount) {
+                toast.error(`Estoque insuficiente! Disponível agora: ${produtoAtualizado.quantidade} unidades`);
+                setQuantidadeDisponivel(produtoAtualizado.quantidade);
+                if (produtoAtualizado.quantidade > 0) {
+                    setAmount(Math.min(amount, produtoAtualizado.quantidade));
+                }
+                setIsSubmitting(false);
+                return;
+            }
             let enderecoId = null;
 
             if (deliveryOption === "Entrega") {
@@ -320,24 +370,46 @@ function FornadaOrderPage() {
 
                     <div className="flex flex-col gap-3 border-b border-[#FFC8B2] py-5">
                         <h2 className="font-semibold tracking-wider text-xl text-blue">QUANTIDADE</h2>
-                        <span className="text-blue text-sm">Insira abaixo quantos Brownies Recheados você gostaria de pedir</span>
-                        <input
-                            type="number"
-                            maxLength={2}
-                            min="1" max="12"
-                            value={amount}
-                            onChange={e => {
-                                const newAmount = parseInt(e.target.value) || 1;
-                                if (newAmount > 12) {
-                                    setAmount(12);
-                                } else if (newAmount < 1) {
-                                    setAmount(1);
-                                } else {
-                                    setAmount(newAmount);
-                                }
-                            }}
-                            className="w-[10%] border-2 border-gold rounded-xl px-3 py-2"
-                        />
+                        <span className="text-blue text-sm">
+                            Insira abaixo quantos {doceFornada.nome} você gostaria de pedir
+                            {carregandoEstoque ? (
+                                <span className="text-gold ml-2">• Verificando estoque...</span>
+                            ) : quantidadeDisponivel > 0 ? (
+                                <span className="text-green-600 ml-2">• {quantidadeDisponivel} disponíveis</span>
+                            ) : (
+                                <span className="text-red-600 ml-2">• Produto esgotado</span>
+                            )}
+                        </span>
+                        <div className="flex items-center gap-4">
+                            <input
+                                type="number"
+                                min="1" 
+                                max={quantidadeDisponivel || 1}
+                                disabled={carregandoEstoque || quantidadeDisponivel === 0}
+                                value={amount}
+                                onChange={e => {
+                                    const newAmount = parseInt(e.target.value) || 1;
+                                    if (newAmount > quantidadeDisponivel) {
+                                        setAmount(quantidadeDisponivel);
+                                        toast.warn(`Máximo disponível: ${quantidadeDisponivel} unidades`);
+                                    } else if (newAmount < 1) {
+                                        setAmount(1);
+                                    } else {
+                                        setAmount(newAmount);
+                                    }
+                                }}
+                                className={`w-[10%] border-2 border-gold rounded-xl px-3 py-2 ${
+                                    carregandoEstoque || quantidadeDisponivel === 0 
+                                        ? 'bg-gray-100 cursor-not-allowed' 
+                                        : ''
+                                }`}
+                            />
+                            {quantidadeDisponivel === 0 && !carregandoEstoque && (
+                                <span className="text-red-600 text-sm font-medium">
+                                    Este produto está esgotado
+                                </span>
+                            )}
+                        </div>
                     </div>
 
                     <div className="border-b border-[#FFC8B2] py-5">
@@ -380,17 +452,13 @@ function FornadaOrderPage() {
                                 </CampoComGradiente>
                             </div>
                             <div className="col-span-2">
-                                <CustomDatePicker
-                                    label="Data"
-                                    placeholder="DD/MM"
+                                <label className="block text-blue font-semibold mb-1">Data</label>
+                                <input
+                                    type="date"
+                                    className="w-full border-2 border-gold rounded-lg px-4 py-2"
                                     value={dataEntrega}
-                                    onChange={value => {
-                                        let formatted = value;
-                                        if (value instanceof Date) {
-                                            formatted = value.toISOString().split("T")[0];
-                                        }
-                                        setDataEntrega(formatted);
-                                    }}
+                                    onChange={(e) => setDataEntrega(e.target.value)}
+                                    min={new Date().toISOString().split("T")[0]}
                                 />
                             </div>
 
@@ -546,10 +614,19 @@ function FornadaOrderPage() {
                             <span className="flex items-center gap-1 text-[#665853] text-sm"><IoIosInformationCircle className="text-red" /> Esse valor não inclui o valor do frete</span>
                         </div>
                         <Button
-                            text={isSubmitting ? "Processando..." : "Finalizar Pedido"}
+                            text={
+                                isSubmitting ? "Processando..." : 
+                                carregandoEstoque ? "Carregando..." :
+                                quantidadeDisponivel === 0 ? "Produto Esgotado" : 
+                                "Finalizar Pedido"
+                            }
                             onClick={sendOrder}
-                            disabled={isSubmitting}
-                            bgColor={isSubmitting ? "bg-gray-400" : "bg-gradient-to-l from-gold to-darkGold"}
+                            disabled={isSubmitting || carregandoEstoque || quantidadeDisponivel === 0}
+                            bgColor={
+                                isSubmitting || carregandoEstoque || quantidadeDisponivel === 0 
+                                    ? "bg-gray-400" 
+                                    : "bg-gradient-to-l from-gold to-darkGold"
+                            }
                         />
                     </div>
 

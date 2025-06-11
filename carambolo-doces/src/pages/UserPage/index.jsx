@@ -27,6 +27,15 @@ function UserPage() {
   const [novaSenha, setNovaSenha] = useState("");
   const navigate = useNavigate();
 
+  // Função para obter a data de hoje no formato YYYY-MM-DD
+  const getToday = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   useEffect(() => {
     const loadUserData = async () => {
       const userId = localStorage.getItem("userId");
@@ -176,6 +185,7 @@ function UserPage() {
                     value={isEditing ? tempDataNascimento : userData.dataNascimento}
                     onChange={(e) => setTempDataNascimento(e.target.value)}
                     readOnly={!isEditing}
+                    max={getToday()}
                   />
                 </div>
               </div>

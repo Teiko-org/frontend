@@ -1,5 +1,5 @@
 import BarraLateralDashboard from "../../components/BarraLateralDashboard";
-import FornadaDatePicker from "../../components/FornadaDatePicker";
+import CustomDatePicker from "../../components/DatePicker-3";
 import TableSelectProductsFornada from "../../components/TableSelectProductsFornada";
 import Button from "../../components/Button";
 import HeaderDashboard from "../../components/headerDashboard";
@@ -7,6 +7,7 @@ import {fornadaService} from "../../service/fornadaService";
 import fornadaDaVezService from "../../service/fornadaDaVezService";
 import { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import { insertNewFornada } from "../../service/fornadaService"
 
@@ -23,23 +24,15 @@ function FornadaDashboard() {
       ...prev,
       [field]: value,
     }));
+    
   };
-
-  function formatDate(date) {
-    const formattedDate = new Date(date);
-
-    const yyyy = formattedDate.getFullYear();
-    const mm = String(formattedDate.getMonth() + 1).padStart(2, "0");
-    const dd = String(formattedDate.getDate()).padStart(2, "0");
-
-    return `${yyyy}-${mm}-${dd}`;
-  }
 
   const registerFornada = async () => {
     if (!fornada.dataInicio || !fornada.dataFim) {
       toast("Preencha as duas datas!", { type: "error" });
       return;
     }
+    
     const dataInicio = new Date(fornada.dataInicio);
     const dataFim = new Date(fornada.dataFim);
 
@@ -57,11 +50,17 @@ function FornadaDashboard() {
   }
 
     try {
-      const response = insertNewFornada(fornada);
-
-      registerFornadaDaVez(response.id);
+      toast.info("Cadastrando fornada...");
+      const response = await insertNewFornada(fornada);
+      
+      if (response && response.id) {
+        await registerFornadaDaVez(response.id);
+      } else {
+        toast.error("Erro ao cadastrar fornada!");
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Erro ao cadastrar fornada:", error);
+      toast.error("Erro ao cadastrar fornada! Tente novamente.");
     }
   };
 
@@ -77,23 +76,34 @@ function FornadaDashboard() {
   const registerFornadaDaVez = async (idFornada) => {
     try {
       const selectedProductsJson = JSON.parse(
-        localStorage.getItem("selectedProducts")
+        localStorage.getItem("selectedProducts") || "[]"
       );
 
+      if (!selectedProductsJson.length) {
+        toast.error("Nenhum produto selecionado!");
+        return;
+      }
+
+      toast.info("Adicionando produtos à fornada...");
+
       const responses = await Promise.all(
-        selectedProductsJson.map((produto) => {
-          return (
-            fornadaDaVezService({
-              fornadaId: idFornada,
-              produtoFornadaId: produto.id,
-              quantidade: produto.quantidade,
-            }),
-            notify()
-          );
-        })
+        selectedProductsJson.map((produto) => 
+          fornadaDaVezService({
+            fornadaId: idFornada,
+            produtoFornadaId: produto.id,
+            quantidade: produto.quantidade,
+          })
+        )
       );
+
+      if (responses.every(response => response)) {
+        notify();
+      } else {
+        toast.error("Erro ao adicionar alguns produtos!");
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Erro ao registrar produtos da fornada:", error);
+      toast.error("Erro ao adicionar produtos à fornada!");
     }
   };
 
@@ -107,28 +117,46 @@ function FornadaDashboard() {
         </header>
 
         <div className="flex flex-col justify-evenly items-center gap-24">
-          <FornadaDatePicker
-            dataInicio={
-              fornada.dataInicio ? new Date(fornada.dataInicio) : null
-            }
-            dataFim={fornada.dataFim ? new Date(fornada.dataFim) : null}
-            onChangeInicio={(date) =>
-              handleDateChange("dataInicio", formatDate(date))
-            }
-            onChangeFim={(date) => {
-              handleDateChange("dataFim", formatDate(date));
-            }}
-          />
+          <div className="flex flex-col justify-center items-center w-[470px] h-[170px] border-2 border-gold rounded-2xl bg-bgHome gap-5 p-10">
+            <h3 className="font-bold text-blue">Iniciar Nova Fornada</h3>
+            
+            <div className="flex justify-center gap-20">
+              <CustomDatePicker
+                label="De:"
+                value={fornada.dataInicio}
+                onChange={(date) => handleDateChange("dataInicio", date)}
+                placeholder="Data Início"
+              />
+              <CustomDatePicker
+                label="Até:"
+                value={fornada.dataFim}
+                onChange={(date) => handleDateChange("dataFim", date)}
+                placeholder="Data Fim"
+              />
+            </div>
+          </div>
           <div className="flex flex-col w-full items-center gap-5">
             <TableSelectProductsFornada />
             <Button
               text={"INICIAR FORNADA"}
               onClick={() => registerFornada()}
             />
-            <ToastContainer />
           </div>
         </div>
       </div>
+      
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </div>
   );
 }

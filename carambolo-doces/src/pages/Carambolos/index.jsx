@@ -4,7 +4,7 @@ import Footer from "../../components/Footer";
 import Card from "../../components/Card";
 import ArrowButton from "../../components/ButtonArrow";
 import Button from "../../components/Button";
-import { getBolosPorCategoria } from "../../service/boloService";
+import { getBolosComImagens } from "../../service/boloService";
 
 function Carambolos() {
   const [bolosPorCategoria, setBolosPorCategoria] = React.useState({});
@@ -14,7 +14,7 @@ function Carambolos() {
   React.useEffect(() => {
     const fetchBolos = async () => {
       try {
-        const data = await getBolosPorCategoria();
+        const data = await getBolosComImagens();
         const agrupados = data.reduce((acc, bolo) => {
           const categoria = bolo.categoria || 'Outros';
           if (!acc[categoria]) acc[categoria] = [];
@@ -124,6 +124,7 @@ const renderSection = (title, bolos, page, onArrowClick) => {
                 type="Bolo"
                 nome={bolo.produto}
                 preco={bolo.precoTotal}
+                boloData={bolo}
               />
             ))
           ) : (
