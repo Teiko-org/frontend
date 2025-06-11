@@ -33,9 +33,10 @@ function FornadaOrderPage() {
     }, [produtoSelecionado, navigate]);
 
     const doceFornada = {
-        'nome': produtoSelecionado?.produto || "Brownie Recheado",
-        'valorUnitario': produtoSelecionado?.valor || 12.00,
-        'fornadaDaVezId': produtoSelecionado?.fornadaDaVezId
+        nome: produtoSelecionado?.produto || "Brownie Recheado",
+        valorUnitario: produtoSelecionado?.valor || 12.00,
+        fornadaDaVezId: produtoSelecionado?.fornadaDaVezId,
+        imagens: produtoSelecionado?.imagens || []
     }
 
     const [amount, setAmount] = useState(1);
@@ -361,7 +362,17 @@ function FornadaOrderPage() {
 
                 <div className="flex flex-col items-center px-20">
                     <h1 className="font-bold text-blue text-3xl py-6">{doceFornada.nome}</h1>
-                    <img src="src/assets/imagemBrownie.png" alt="" />
+                    <img
+                        src={
+                            doceFornada.imagens && doceFornada.imagens.length > 0
+                                ? (typeof doceFornada.imagens[0] === 'object' && doceFornada.imagens[0].url
+                                    ? doceFornada.imagens[0].url
+                                    : doceFornada.imagens[0])
+                                : "src/assets/imagemBrownie.png"
+                        }
+                        alt={doceFornada.nome}
+                        className="w-[320px] h-[320px] object-cover rounded-lg border-2 border-goldCard mb-2"
+                    />
                     <span><span className="text-gradient font-bold text-lg">VALOR UNITÁRIO:</span> R$ {doceFornada.valorUnitario.toFixed(2)}</span>
                 </div>
 

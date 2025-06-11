@@ -379,13 +379,12 @@ export default function ModalCadastroProduto() {
 
 return (
     <>
-        <button
-            type="button"
+        <Button
+            className="w-[310px] h-[2.5rem] mb-5 mr-6" 
+            text={"ADICIONAR NOVO PRODUTO +"} 
             onClick={() => setIsOpen(true)}
-            className="bg-[#d6a87c] text-white px-4 py-2 rounded hover:bg-[#c49664]"
         >
-            Abrir Modal
-        </button>
+        </Button>
 
         {isModalOpen && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">

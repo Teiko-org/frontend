@@ -79,6 +79,7 @@ export default function ProductList() {
     }
 
     const handleVisibility = (id, category) => {
+        console.log("PRODUTOS AAAAAAAAAA: " + products)
         const productToChange = products.filter((product) => product.id == id && product.categoria == category);
 
         if (productToChange[0].isAtivo == true) {
@@ -147,7 +148,6 @@ export default function ProductList() {
                     }
                 </div>
             </div>
-
             <Paper sx={{ width: '100%', maxHeight: '100%', overflow: 'hidden', border: 'none', boxShadow: 'none' }} >
                 <TableContainer sx={{ maxHeight: 440 }} className='bg-[#FFE7DD]'>
                     <Table stickyHeader aria-label="sticky table">
