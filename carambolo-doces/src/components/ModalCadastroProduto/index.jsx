@@ -132,7 +132,7 @@ export default function ModalCadastroProduto() {
     }, [categoria]);
 
 
-    const cadastrarDecoracao = async (e) => {
+    const cadastrarDecoracao = async (e, naoFecharModal = false) => {
         e?.preventDefault?.();
 
         console.log("nomeDecoracao:", nomeDecoracao);
@@ -150,9 +150,7 @@ export default function ModalCadastroProduto() {
         try {
             const token = localStorage.getItem('JWT_TOKEN');
             let config = {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
+                headers: {}
             };
             
             // Primeiro tenta com autenticação se houver token
@@ -171,8 +169,8 @@ export default function ModalCadastroProduto() {
                     setFile(null);
                     setFilePreview(null);
                     
-                    // Se categoria é "Decoracao", fechar modal
-                    if (categoria === "Decoracao") {
+                    // Se categoria é "Decoracao" e não foi explicitamente pedido para não fechar, fechar modal
+                    if (categoria === "Decoracao" && !naoFecharModal) {
                         setIsOpen(false);
                     }
                     
@@ -196,8 +194,8 @@ export default function ModalCadastroProduto() {
             setFile(null);
             setFilePreview(null);
             
-            // Se categoria é "Decoracao", fechar modal
-            if (categoria === "Decoracao") {
+            // Se categoria é "Decoracao" e não foi explicitamente pedido para não fechar, fechar modal
+            if (categoria === "Decoracao" && !naoFecharModal) {
                 setIsOpen(false);
             }
             
@@ -214,17 +212,31 @@ export default function ModalCadastroProduto() {
     };
 
     const cadastrarProduto = async (decoracaoId) => {
+        // Se foi passado decoracaoId (nova decoração cadastrada), usa ele
+        // Senão, usa a decoração selecionada no select
+        const decoracaoFinal = decoracaoId || (decoracao ? Number(decoracao) : null);
+        
+        // Debug dos valores individuais
+        console.log("Valores individuais:");
+        console.log("recheioPedido:", recheioPedido);
+        console.log("massa:", massa);
+        console.log("cobertura:", cobertura);
+        console.log("formato:", formato);
+        console.log("tamanho:", tamanho);
+        console.log("decoracaoFinal:", decoracaoFinal);
+        console.log("categoriaBolo:", categoriaBolo);
+        
         const data = {
-            nome: produto,
-            preco: valor,
-            categoria: categoriaBolo,
-            massaId: massa ? Number(massa) : null,
-            recheioPedidoId: recheioPedido ? Number(recheioPedido) : null,
-            coberturaId: cobertura ? Number(cobertura) : null,
-            decoracaoId: decoracaoId ? Number(decoracaoId) : null,
-            formato,
-            tamanho,
+            recheioPedidoId: Number(recheioPedido),
+            massaId: Number(massa),
+            coberturaId: Number(cobertura),
+            decoracaoId: decoracaoFinal,
+            formato: formato, // Deve ser "CIRCULO" ou "CORACAO"
+            tamanho: tamanho, // Deve ser "TAMANHO_5", "TAMANHO_7", etc.
+            categoria: categoriaBolo
         };
+
+        console.log("Dados sendo enviados para cadastro do bolo:", data);
 
         try {
             const token = localStorage.getItem('JWT_TOKEN');
@@ -262,16 +274,49 @@ export default function ModalCadastroProduto() {
     // Função wrapper para o submit do Carambolo
     const handleSubmitCarambolo = async (e) => {
         e.preventDefault();
+        
+        // Validações obrigatórias
+        if (!massa) {
+            alert("Por favor, selecione uma massa!");
+            return;
+        }
+        if (!recheioPedido) {
+            alert("Por favor, selecione um recheio!");
+            return;
+        }
+        if (!cobertura) {
+            alert("Por favor, selecione uma cobertura!");
+            return;
+        }
+        if (!formato) {
+            alert("Por favor, selecione um formato!");
+            return;
+        }
+        if (!tamanho) {
+            alert("Por favor, selecione um tamanho!");
+            return;
+        }
+        
         try {
-            const decoracaoId = await cadastrarDecoracao();
+            let decoracaoIdParaUsar = null;
             
-            // Selecionar automaticamente a decoração recém-cadastrada
-            if (decoracaoId) {
-                setDecoracao(decoracaoId.toString());
+            // Se preencheu nome da decoração, cadastra nova decoração
+            if (nomeDecoracao && nomeDecoracao.trim() !== '') {
+                decoracaoIdParaUsar = await cadastrarDecoracao(null, true); // true = não fechar modal
+                console.log("Nova decoração cadastrada com ID:", decoracaoIdParaUsar);
+                
+                // Selecionar automaticamente a decoração recém-cadastrada
+                if (decoracaoIdParaUsar) {
+                    setDecoracao(decoracaoIdParaUsar.toString());
+                }
+            } else {
+                // Senão, usa a decoração selecionada no select (se houver)
+                decoracaoIdParaUsar = decoracao ? Number(decoracao) : null;
+                console.log("Usando decoração selecionada no select:", decoracaoIdParaUsar);
             }
             
-            await cadastrarProduto(decoracaoId);
-            alert("Produto e decoração cadastrados com sucesso!");
+            await cadastrarProduto(decoracaoIdParaUsar);
+            alert("Produto cadastrado com sucesso!");
             setIsOpen(false);
         } catch (error) {
             // Os alerts já são chamados nas funções acima
