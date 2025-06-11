@@ -148,21 +148,21 @@ export const createPedidoFornada = async (pedido) => {
 }; 
 
 export const insertNewFornada = async (data) => {
-  console.log(data);
-  try {
-    const response = await axiosApi.post('/fornadas', {
-      dataInicio: data.dataInicio,
-      dataFim: data.dataFim
-    },
-      {
-        headers: { Authorization: (`Bearer ${localStorage.getItem('JWT_TOKEN')}`) }
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Erro ao cadastrar Fornada:", error);
+    console.log(data);
+    try {
+        const response = await axiosApi.post('/fornadas', {
+            dataInicio: data.dataInicio,
+            dataFim: data.dataFim
+        },
+            {
+                headers: { Authorization: (`Bearer ${localStorage.getItem('JWT_TOKEN')}`) }
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Erro ao cadastrar Fornada:", error);
     throw error;
-  }
+    }
 };
 
 export const fornadaService = insertNewFornada;

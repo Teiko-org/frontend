@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import CampoComGradiente from "../../components/gradientField";
 import PhoneNumberInput from "../../components/PhoneInput";
-import CustomDatePicker from "../../components/DatePicker-2";
+
 import Select from "../../components/Select";
 import { axiosApi } from "../../provider/AxiosApi";
 import axios from "axios";
@@ -380,17 +380,13 @@ function FornadaOrderPage() {
                                 </CampoComGradiente>
                             </div>
                             <div className="col-span-2">
-                                <CustomDatePicker
-                                    label="Data"
-                                    placeholder="DD/MM"
+                                <label className="block text-blue font-semibold mb-1">Data</label>
+                                <input
+                                    type="date"
+                                    className="w-full border-2 border-gold rounded-lg px-4 py-2"
                                     value={dataEntrega}
-                                    onChange={value => {
-                                        let formatted = value;
-                                        if (value instanceof Date) {
-                                            formatted = value.toISOString().split("T")[0];
-                                        }
-                                        setDataEntrega(formatted);
-                                    }}
+                                    onChange={(e) => setDataEntrega(e.target.value)}
+                                    min={new Date().toISOString().split("T")[0]}
                                 />
                             </div>
 

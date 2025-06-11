@@ -86,9 +86,9 @@ function Home() {
               ))
             ) : (
               <>
-                <Card type="Bolo" />
-                <Card type="Bolo" />
-                <Card type="Bolo" />
+            <Card type="Bolo" />
+            <Card type="Bolo" />
+            <Card type="Bolo" />
               </>
             )}
           </div>
