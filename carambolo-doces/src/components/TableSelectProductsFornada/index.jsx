@@ -34,13 +34,16 @@ export default function TableSelectProductsFornada() {
     try {
       const response = await productsFornadasService();
       console.log(response);
-      setProducts(response);
+      // Garante que sempre temos um array, mesmo que vazio
+      setProducts(Array.isArray(response) ? response : []);
     } catch (error) {
       console.log(error);
+      // Em caso de erro, define como array vazio
+      setProducts([]);
     }
   };
 
-  const filteredProducts = products.filter((product) => {
+  const filteredProducts = (products || []).filter((product) => {
     const matchSearch = product.produto
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
@@ -75,35 +78,55 @@ export default function TableSelectProductsFornada() {
   };
 
   return (
-    <div className="flex flex-col w-[90%] h-[450px] border-rounded-lg border-2 border-gold bg-bgHome">
-      <header className="flex flex-row justify-between border-rounded-lg px-20 items-center bg-gradient-blue h-[4.6875rem] w-full">
+    <div className="flex flex-col w-[90%] h-[500px] border-rounded-lg border-2 border-gold bg-bgHome">
+      <header className="flex flex-row justify-between border-rounded-lg px-20 items-center bg-gradient-blue h-[4.6875rem] w-full flex-shrink-0">
         <h1 className="text-gold text-[1.5rem]">Selecionar Produtos</h1>
 
-        <div className="flex w-96 px-2 items-center justify-center bg-white rounded-lg">
+        <div className="flex w-96 px-3 py-2 items-center justify-between bg-white rounded-lg border border-gray-300">
           <input
             type="text"
             placeholder="Procurar por produto"
-            className="h-[38px] w-full pl-2"
+            className="h-[34px] w-full pl-2 pr-2 text-gray-800 bg-transparent border-none outline-none focus:outline-none"
             onChange={(e) => setSearchTerm(e.target.value)}
+            value={searchTerm}
           />
-          <CiSearch className="text-3xl text-gold font-bold" />
+          <CiSearch className="text-2xl text-gold font-bold flex-shrink-0" />
         </div>
       </header>
 
-      <Paper
-        className="rounded-lg"
-        sx={{
-          width: "100%",
-          maxHeight: "100%",
-          overflow: "hidden",
-          border: "none",
-          boxShadow: "none",
-        }}
-      >
-        <TableContainer
-          sx={{ maxHeight: 440, minWidth: 10, overflow: "hidden" }}
-          className="bg-bgHome p-2 rounded-lg"
+      <div className="flex-1 overflow-hidden">
+        <Paper
+          className="rounded-lg h-full"
+          sx={{
+            width: "100%",
+            height: "100%",
+            overflow: "hidden",
+            border: "none",
+            boxShadow: "none",
+          }}
         >
+          <TableContainer
+            sx={{ 
+              height: "100%", 
+              maxHeight: "100%", 
+              overflow: "auto",
+              '&::-webkit-scrollbar': {
+                width: '8px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: '#f1f1f1',
+                borderRadius: '4px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: '#C8A882',
+                borderRadius: '4px',
+              },
+              '&::-webkit-scrollbar-thumb:hover': {
+                background: '#B8956F',
+              },
+            }}
+            className="bg-bgHome p-2 rounded-lg"
+          >
           <Table stickyHeader aria-label="sticky table">
             <TableHead>
               <TableRow>
@@ -113,12 +136,15 @@ export default function TableSelectProductsFornada() {
                     align={column.align}
                     style={{ minWidth: column.minWidth }}
                     sx={{
-                      backgroundColor: "transparent",
+                      backgroundColor: "#f8f9fa",
                       fontWeight: "bold",
                       boxShadow: "none",
-                      borderBottom: "none",
-                      paddingTop: "0.5rem",
-                      paddingBottom: "0.5rem",
+                      borderBottom: "1px solid #C8A882",
+                      paddingTop: "0.75rem",
+                      paddingBottom: "0.75rem",
+                      position: "sticky",
+                      top: 0,
+                      zIndex: 100,
                     }}
                   >
                     {column.label}
@@ -275,6 +301,7 @@ export default function TableSelectProductsFornada() {
           </Table>
         </TableContainer>
       </Paper>
+      </div>
     </div>
   );
 }

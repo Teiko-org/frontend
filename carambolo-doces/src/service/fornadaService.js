@@ -137,6 +137,106 @@ export const getFornadaAtiva = async () => {
   }
 };
 
+export const getProdutoFornadaById = async (fornadaDaVezId) => {
+  try {
+    const response = await axiosApi.get(`/fornadas/da-vez/${fornadaDaVezId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao buscar produto da fornada:', error);
+    throw error;
+  }
+};
+
+export const getProdutosFornadaComImagens = async (fornadaId) => {
+  try {
+    console.log('🔍 [DEBUG] Buscando produtos da fornada ID:', fornadaId);
+    
+    // Primeiro busca os produtos da fornada
+    const produtosFornada = await getProdutosPorFornadaId(fornadaId);
+    console.log('🔍 [DEBUG] Produtos da fornada encontrados:', produtosFornada.length);
+    console.log('🔍 [DEBUG] Lista de produtos:', produtosFornada.map(p => ({ id: p.id, nome: p.produto })));
+    
+    // Para cada produto, busca também os dados completos com imagens da listagem geral
+    const produtosComImagens = await Promise.all(
+      produtosFornada.map(async (produto) => {
+        try {
+          console.log(`🔍 [DEBUG] Processando produto ${produto.id} - ${produto.produto}`);
+          
+          // Busca dados do produto na listagem geral que inclui imagens
+          const token = localStorage.getItem('JWT_TOKEN');
+          let response;
+          
+          // Primeiro tenta com autenticação se houver token
+          if (token && token.trim() !== '') {
+            try {
+              response = await axiosApi.get('/fornadas/produto-fornada', {
+                headers: {
+                  Authorization: `Bearer ${token}`
+                }
+              });
+            } catch (authError) {
+              console.warn("Erro com autenticação, tentando sem token:", authError);
+              response = await axiosApi.get('/fornadas/produto-fornada');
+            }
+          } else {
+            response = await axiosApi.get('/fornadas/produto-fornada');
+          }
+          
+          console.log(`🔍 [DEBUG] Busca geral retornou ${response.data.length} produtos`);
+          const produtoDetalhado = response.data.find(p => p.id === produto.id);
+          console.log(`🔍 [DEBUG] Produto ${produto.id} encontrado na listagem geral:`, !!produtoDetalhado);
+          
+          if (produtoDetalhado) {
+            console.log(`🔍 [DEBUG] Produto ${produto.id} tem ${produtoDetalhado.imagens?.length || 0} imagens`);
+            if (produtoDetalhado.imagens && produtoDetalhado.imagens.length > 0) {
+              console.log(`🔍 [DEBUG] Primeira imagem do produto ${produto.id}:`, produtoDetalhado.imagens[0]);
+            }
+            
+            const resultado = {
+              ...produto,
+              imagens: produtoDetalhado.imagens || []
+            };
+            
+            console.log(`🔍 [DEBUG] Resultado final para produto ${produto.id}:`, {
+              id: resultado.id,
+              nome: resultado.produto,
+              imagensCount: resultado.imagens?.length || 0,
+              primeiraImagem: resultado.imagens?.[0]
+            });
+            
+            return resultado;
+          }
+          
+          console.log(`🔍 [DEBUG] Produto ${produto.id} NÃO encontrado na listagem geral`);
+          return {
+            ...produto,
+            imagens: []
+          };
+        } catch (error) {
+          console.warn(`🔍 [DEBUG] Erro ao buscar imagens do produto ${produto.id}:`, error);
+          return {
+            ...produto,
+            imagens: []
+          };
+        }
+      })
+    );
+    
+    console.log('🔍 [DEBUG] Resultado final de getProdutosFornadaComImagens:');
+    produtosComImagens.forEach(p => {
+      console.log(`  - ${p.produto} (ID ${p.id}): ${p.imagens?.length || 0} imagens`);
+      if (p.imagens && p.imagens.length > 0) {
+        console.log(`    Primeira imagem: ${p.imagens[0]}`);
+      }
+    });
+    
+    return produtosComImagens;
+  } catch (error) {
+    console.error('🔍 [DEBUG] Erro ao buscar produtos da fornada com imagens:', error);
+    throw error;
+  }
+};
+
 export const createPedidoFornada = async (pedido) => {
   try {
     const response = await axiosApi.post('/fornadas/pedidos', pedido);
@@ -150,18 +250,32 @@ export const createPedidoFornada = async (pedido) => {
 export const insertNewFornada = async (data) => {
     console.log(data);
     try {
-        const response = await axiosApi.post('/fornadas', {
+        const token = localStorage.getItem('JWT_TOKEN');
+        const payload = {
             dataInicio: data.dataInicio,
             dataFim: data.dataFim
-        },
-            {
-                headers: { Authorization: (`Bearer ${localStorage.getItem('JWT_TOKEN')}`) }
+        };
+        
+        // Primeiro tenta com autenticação se houver token
+        if (token && token.trim() !== '') {
+            try {
+                const response = await axiosApi.post('/fornadas', payload, {
+                    headers: { 
+                        Authorization: `Bearer ${token}` 
+                    }
+                });
+                return response.data;
+            } catch (authError) {
+                console.warn("Erro com autenticação, tentando sem token:", authError);
             }
-        );
+        }
+        
+        // Se não há token ou deu erro de auth, tenta sem autenticação
+        const response = await axiosApi.post('/fornadas', payload);
         return response.data;
     } catch (error) {
         console.error("Erro ao cadastrar Fornada:", error);
-    throw error;
+        throw error;
     }
 };
 
