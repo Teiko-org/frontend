@@ -8,36 +8,67 @@ import { getBolosPorCategoria } from "../../service/boloService";
 
 function Carambolos() {
   const [bolosPorCategoria, setBolosPorCategoria] = React.useState({});
-  // Estado para controlar a página de cada categoria
   const [pageByCategory, setPageByCategory] = React.useState({});
-  const CARDS_PER_PAGE = 3;
+  const CARDS_PER_PAGE = 4;
 
   React.useEffect(() => {
     const fetchBolos = async () => {
-      const data = await getBolosPorCategoria();
-      // Agrupa por categoria
-      const agrupados = data.reduce((acc, bolo) => {
-        const categoria = bolo.categoria || 'Outros';
-        if (!acc[categoria]) acc[categoria] = [];
-        acc[categoria].push(bolo);
-        return acc;
-      }, {});
-      setBolosPorCategoria(agrupados);
-      // Inicializa a página de cada categoria em 0
-      const initialPages = {};
-      Object.keys(agrupados).forEach(cat => { initialPages[cat] = 0; });
-      setPageByCategory(initialPages);
+      try {
+        const data = await getBolosPorCategoria();
+        const agrupados = data.reduce((acc, bolo) => {
+          const categoria = bolo.categoria || 'Outros';
+          if (!acc[categoria]) acc[categoria] = [];
+          acc[categoria].push(bolo);
+          return acc;
+        }, {});
+        
+        if (Object.keys(agrupados).length === 0) {
+          const categoriasDefault = [
+            'CARAMBOLOS MAIS PEDIDOS',
+            'CARAMBOLOS VINTAGE', 
+            'CARAMBOLOS BIRTHDAY',
+            'CARAMBOLOS ESTAMPADOS',
+            'MONTE O SEU CARAMBOLO'
+          ];
+          categoriasDefault.forEach(cat => {
+            agrupados[cat] = [];
+          });
+        }
+        
+        setBolosPorCategoria(agrupados);
+        const initialPages = {};
+        Object.keys(agrupados).forEach(cat => { initialPages[cat] = 0; });
+        setPageByCategory(initialPages);
+      } catch (error) {
+        console.error("Erro ao carregar bolos:", error);
+        const categoriasDefault = [
+          'CARAMBOLOS MAIS PEDIDOS',
+          'CARAMBOLOS VINTAGE', 
+          'CARAMBOLOS BIRTHDAY',
+          'CARAMBOLOS ESTAMPADOS',
+          'MONTE O SEU CARAMBOLO'
+        ];
+        const agrupados = {};
+        categoriasDefault.forEach(cat => {
+          agrupados[cat] = [];
+        });
+        setBolosPorCategoria(agrupados);
+        
+        const initialPages = {};
+        categoriasDefault.forEach(cat => { initialPages[cat] = 0; });
+        setPageByCategory(initialPages);
+      }
     };
     fetchBolos();
   }, []);
 
-  // Handlers para navegação
   const handlePrev = (categoria) => {
     setPageByCategory(prev => ({
       ...prev,
       [categoria]: Math.max(0, prev[categoria] - 1)
     }));
   };
+
   const handleNext = (categoria, bolosLength) => {
     setPageByCategory(prev => ({
       ...prev,
@@ -57,7 +88,7 @@ function Carambolos() {
         </h2>
         {Object.keys(bolosPorCategoria).map((categoria) =>
           renderSection(
-            bolosPorCategoria[categoria][0]?.categoria || categoria,
+            categoria,
             bolosPorCategoria[categoria],
             pageByCategory[categoria] || 0,
             (dir) => dir === 'left' ? handlePrev(categoria) : handleNext(categoria, bolosPorCategoria[categoria].length)
@@ -69,17 +100,22 @@ function Carambolos() {
   );
 }
 
-// Adapta renderSection para receber página e handler
 const renderSection = (title, bolos, page, onArrowClick) => {
-  const CARDS_PER_PAGE = 3;
+  const CARDS_PER_PAGE = 4;
   const startIdx = page * CARDS_PER_PAGE;
   const endIdx = startIdx + CARDS_PER_PAGE;
   const paginatedBolos = bolos.slice(startIdx, endIdx);
+  
   return (
-    <section className="pb-16 bg-bgHome border-t border-b border-gold mt-24" key={title}>
+    <>
+      <section className="pb-16 bg-bgHome border-t border-b border-gold" key={title}>
       <h2 className="text-center text-3xl font-medium mb-6 mt-6">{title}</h2>
       <div className="flex justify-between items-center px-4">
-        <ArrowButton direction="left" onClick={() => onArrowClick('left')} disabled={page === 0} />
+        <ArrowButton 
+          direction="left" 
+          onClick={() => onArrowClick('left')} 
+          disabled={page === 0} 
+        />
         <div className="flex space-x-12">
           {paginatedBolos && paginatedBolos.length > 0 ? (
             paginatedBolos.map((bolo) => (
@@ -88,16 +124,26 @@ const renderSection = (title, bolos, page, onArrowClick) => {
                 type="Bolo"
                 nome={bolo.produto}
                 preco={bolo.precoTotal}
-                // imagem={...} // Se houver campo de imagem futuramente
               />
             ))
           ) : (
-            <span className="text-blue">Nenhum carambolo encontrado.</span>
+            <>
+              <Card type="Bolo" />
+              <Card type="Bolo" />
+              <Card type="Bolo" />
+              <Card type="Bolo" />
+            </>
           )}
         </div>
-        <ArrowButton direction="right" onClick={() => onArrowClick('right')} disabled={endIdx >= bolos.length} />
+        <ArrowButton 
+          direction="right" 
+          onClick={() => onArrowClick('right')} 
+          disabled={endIdx >= bolos.length} 
+        />
       </div>
     </section>
+    <div className="h-24"></div>
+    </>
   );
 };
 

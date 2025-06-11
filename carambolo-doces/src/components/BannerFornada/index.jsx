@@ -1,31 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { getLastFornada } from '../../service/fornadaService';
 
-const BannerFornada = () => {
-  const [dataFim, setDataFim] = useState(null);
-  const [timeLeft, setTimeLeft] = useState({});
 
-  // Busca a última fornada e salva a dataFim
+const BannerFornada = ({ fornada }) => {
+  const [fornadaData, setFornadaData] = useState(fornada);
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
   useEffect(() => {
-    const fetchLastFornada = async () => {
-      const lastFornada = await getLastFornada();
-      console.log(lastFornada)
-      if (lastFornada && lastFornada.dataFim) {
-        setDataFim(lastFornada.dataFim);
-      }
-    };
-    fetchLastFornada();
-  }, []);
+    if (!fornada) {
+      const fetchLastFornada = async () => {
+        try {
+          const lastFornada = await getLastFornada();
+          if (lastFornada && lastFornada.dataFim) {
+            setFornadaData(lastFornada);
+          }
+        } catch (error) {
+          console.error('Erro ao buscar última fornada:', error);
+        }
+      };
+      fetchLastFornada();
+    } else {
+      setFornadaData(fornada);
+    }
+  }, [fornada]);
 
-  // Calcula o tempo restante sempre que dataFim mudar
   useEffect(() => {
-    if (!dataFim) return;
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [fornadaData]);
 
-    const calculateTimeLeft = () => {
-      const endDate = new Date(dataFim);
-      const now = new Date();
-      const difference = endDate - now;
-      let timeLeft = {};
+  function calculateTimeLeft() {
+    const endDate = fornadaData 
+      ? new Date(fornadaData.dataFim + "T23:59:59")
+      : new Date("2025-05-02T00:00:00");
+      
+    const difference = +endDate - +new Date();
+    let timeLeft = {};
 
       if (difference > 0) {
         timeLeft = {
@@ -41,14 +53,14 @@ const BannerFornada = () => {
       return timeLeft;
     };
 
-    setTimeLeft(calculateTimeLeft());
-
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [dataFim]);
+  const formatEndDate = () => {
+    if (!fornadaData || !fornadaData.dataFim) {
+      return "02/05/2025";
+    }
+    
+    const date = new Date(fornadaData.dataFim);
+    return date.toLocaleDateString('pt-BR');
+  };
 
   return (
     <section className="relative h-[150px] w-full bg-cover bg-center m-auto items-end" style={{ backgroundImage: 'url(src/assets/img_banner_fornada.png)' }}>

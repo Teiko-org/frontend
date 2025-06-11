@@ -4,13 +4,13 @@ import AvailableBox from "../AvailableBox";
 import SoldOutBox from "../SoldOutBox";
 import { toast } from "react-toastify";
 
-function Card({ available, type, nome, preco, imagem, boloData, onClick }) {
+function Card({ available, type, produto, nome, preco, imagem, boloData, onClick }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
     if (onClick) {
       onClick(boloData);
-    } else if (type === "Bolo" || (type === "Fornada" && available)) {
+    } else if (type === "Bolo") {
       navigate('/pedido-bolo');
     } else if (type === "Fornada" && available) {
       navigate('/pedido-fornada', { state: { produto } });
@@ -20,6 +20,10 @@ function Card({ available, type, nome, preco, imagem, boloData, onClick }) {
   };
 
   const getImageSrc = () => {
+    if (imagem) {
+      return imagem;
+    }
+    
     if (type === "Bolo") {
       return "src/assets/image_card.png";
     }
@@ -32,6 +36,10 @@ function Card({ available, type, nome, preco, imagem, boloData, onClick }) {
   };
 
   const getProductName = () => {
+    if (nome) {
+      return nome;
+    }
+    
     if (type === "Bolo") {
       return "Carambolo Vintage Aniversário";
     }
@@ -40,6 +48,10 @@ function Card({ available, type, nome, preco, imagem, boloData, onClick }) {
   };
 
   const getProductPrice = () => {
+    if (preco) {
+      return `R$ ${preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    }
+    
     if (produto && produto.valor) {
       return `R$ ${produto.valor.toFixed(2).replace('.', ',')}`;
     }
@@ -60,8 +72,8 @@ function Card({ available, type, nome, preco, imagem, boloData, onClick }) {
       <div className={`relative ${type === "Fornada" && !available ? 'opacity-75' : ''} bg-white shadow-lg border-2 border-gold rounded-tr-2xl w-full h-full`}>
         <div className="px-3 pt-3 pb-2 flex justify-center items-center">
           <img
-            src={imageSrc}
-            alt={nome || (type === "Bolo" ? "Bolo Vintage" : "Brownie Fornada")}
+            src={getImageSrc()}
+            alt={getProductName()}
             className="w-[286px] h-[300px] object-cover rounded-tr-lg"
             onError={(e) => {
               // Se a imagem falhar ao carregar, usa uma imagem padrão
@@ -71,12 +83,10 @@ function Card({ available, type, nome, preco, imagem, boloData, onClick }) {
         </div>
         <div className="px-4 h-[76px] flex flex-col justify-between">
           <div className="font-medium text-blue text-lg">
-            {nome || (type === "Bolo"
-              ? "Carambolo Vintage Aniversário"
-              : "Brownie de Chocolate com Caramelo")}
+            {getProductName()}
           </div>
           <div className="font-semibold text-blue text-xl">
-            {preco ? `A partir de R$ ${preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'A partir de R$ XXX,XX'}
+            A partir de {getProductPrice()}
           </div>
         </div>
       </div>

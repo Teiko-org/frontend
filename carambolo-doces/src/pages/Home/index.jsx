@@ -7,6 +7,7 @@ import ArrowButton from "../../components/ButtonArrow";
 import Button from "../../components/Button";
 import BannerPrincipal from "../../components/BannerPrincipal";
 import BannerFornada from "../../components/BannerFornada";
+import { getFornada, getProdutosPorFornadaId } from "../../service/fornadaService";
 import { getBolosPorCategoria } from "../../service/boloService";
 import './cardsTransition.css';
 
@@ -15,15 +16,33 @@ function Home() {
   const [produtosFornada, setProdutosFornada] = useState([]);
   const [fornada, setFornada] = useState(null);
   
-  // ID da fornada padrão (futuramente será dinâmico)
-  // Para tornar dinâmico: pode vir de contexto global, localStorage, etc.
   const FORNADA_ID_PADRAO = 1;
+
+  const [boloPage, setBoloPage] = useState(0);
+  const bolosPerPage = 3;
+  const totalBoloPages = Math.ceil(bolos.length / bolosPerPage);
+  const paginatedBolos = bolos.slice(
+    boloPage * bolosPerPage,
+    boloPage * bolosPerPage + bolosPerPage
+  );
+
+  const handleBoloPrev = () => {
+    setBoloPage((prev) => (prev > 0 ? prev - 1 : prev));
+  };
+  
+  const handleBoloNext = () => {
+    setBoloPage((prev) => (prev < totalBoloPages - 1 ? prev + 1 : prev));
+  };
+
   useEffect(() => {
     const fetchBolos = async () => {
-      const data = await getBolosPorCategoria();
-      setBolos(data);
+      try {
+        const data = await getBolosPorCategoria();
+        setBolos(data);
+      } catch (error) {
+        console.error("Erro ao carregar bolos:", error);
+      }
     };
-    fetchBolos();
     
     const carregarDadosFornada = async () => {
       try {
@@ -38,25 +57,9 @@ function Home() {
       }
     };
 
+    fetchBolos();
     carregarDadosFornada();
   }, []);
-
-  // Paginação para todos os bolos (independente da categoria)
-  const [boloPage, setBoloPage] = useState(0);
-  const bolosPerPage = 3;
-  const totalBoloPages = Math.ceil(bolos.length / bolosPerPage);
-  const paginatedBolos = bolos.slice(
-    boloPage * bolosPerPage,
-    boloPage * bolosPerPage + bolosPerPage
-  );
-
-  const handleBoloPrev = () => {
-    setBoloPage((prev) => (prev > 0 ? prev - 1 : prev));
-  };
-  const handleBoloNext = () => {
-    setBoloPage((prev) => (prev < totalBoloPages - 1 ? prev + 1 : prev));
-  };
-
 
   return (
     <div className="bg-bgNativeHome">
@@ -80,11 +83,14 @@ function Home() {
                   type="Bolo"
                   nome={bolo.produto}
                   preco={bolo.precoTotal}
-                  // imagem={...} // Se houver campo de imagem futuramente
                 />
               ))
             ) : (
-              <span className="text-blue">Nenhum carambolo encontrado.</span>
+              <>
+                <Card type="Bolo" />
+                <Card type="Bolo" />
+                <Card type="Bolo" />
+              </>
             )}
           </div>
           <ArrowButton direction="right" onClick={handleBoloNext} />
@@ -135,7 +141,6 @@ function Home() {
                 />
               ))
             ) : (
-              // Cards padrão se não houver dados
               <>
             <Card type="Fornada" available={true} />
             <Card type="Fornada" available={false} />
