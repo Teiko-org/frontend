@@ -10,7 +10,6 @@ import FornadaOrderPage from '../pages/FornadaOrderPage';
 import FornadaDashboard from '../pages/FornadaDashboard';
 import ModalCadastroProduto from '../components/ModalCadastroProduto';
 import Products from '../pages/Products/index'
-import Products from '../pages/Products/index';
 import OrderKanban from '../pages/OrderKanban/index';
 
 const AppRoutes = () => {
