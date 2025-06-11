@@ -4,6 +4,9 @@ import { toast } from 'react-toastify';
 export const login = async (phone, password) => {
   try {
     const response = await axiosApi.post('/usuarios/login', { contato: phone, senha: password });
+    if(response.data.admin != null) {
+      localStorage.setItem("IS_ADMIN", true);
+    }
     return response.data;
   } catch (error) {
     handleAuthError(error, phone);
