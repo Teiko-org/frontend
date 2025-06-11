@@ -14,6 +14,7 @@ import { ConfirmToast } from 'react-confirm-toast';
 import Button from '../Button';
 import { CiFilter } from "react-icons/ci";
 import ModalFilterProduct from '../ModalFilterProduct';
+import ModalEdicaoProduto from '../ModalEdicaoProduto';
 import { findAllBolo, findAllFornada, handleDeleteBolo, handleVisibilityBolo, handleVisibilityProdutoFornada } from '../../service/productService';
 import { LuSearch } from "react-icons/lu";
 
@@ -34,6 +35,8 @@ export default function ProductList() {
     const [products, setProducts] = React.useState([]);
     const [searchTerm, setSearchTerm] = React.useState('');
     const [isFilterModalOpen, setFilterModalOpen] = React.useState(false);
+    const [produtoSelecionado, setProdutoSelecionado] = React.useState(null);
+    const [isModalEdicaoOpen, setModalEdicaoOpen] = React.useState(false);
 
     // LÓGICA PARA DELEÇÃO DE PRODUTOS - TODO -> ADD LIXEIRA
     // const [idToDelete, setIdToDelete] = React.useState(null);
@@ -229,7 +232,7 @@ export default function ProductList() {
                                             return (
                                                 <TableCell key={column.id} align={column.align} className='rounded-e-full items-center' sx={{ boxShadow: "none", borderBottom: "none", padding: 0, paddingRight: '1.25rem' }}>
                                                     <div className='flex justify-end'>
-                                                        <FaRegEdit className='text-[#A47032] text-[1.625rem]' />
+                                                        <FaRegEdit className='text-[#A47032] text-[1.625rem] cursor-pointer' onClick={() => { setProdutoSelecionado(row); setModalEdicaoOpen(true); }} />
                                                     </div>
                                                 </TableCell>
                                             );
@@ -275,6 +278,12 @@ export default function ProductList() {
                     className='z-10'
                 />
             )} */}
+            <ModalEdicaoProduto
+                isOpen={isModalEdicaoOpen}
+                onClose={() => setModalEdicaoOpen(false)}
+                produto={produtoSelecionado}
+                onProdutoEditado={getData}
+            />
         </div>
     );
 }

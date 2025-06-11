@@ -15,7 +15,6 @@ function OrderKanban() {
     try {
       const data = await orderSummary();
       setOrders(data);
-      console.log("OLHA A DATA AQUI AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" , data);
     } catch (err) {
       console.log(err);
     }

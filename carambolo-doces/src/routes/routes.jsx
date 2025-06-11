@@ -8,6 +8,7 @@ import Carambolos from '../pages/Carambolos';
 import FornadaSemana from '../pages/Fornada';
 import FornadaOrderPage from '../pages/FornadaOrderPage';
 import FornadaDashboard from '../pages/FornadaDashboard';
+import Products from '../pages/Products/index'
 
 const AppRoutes = () => {
   return (
@@ -19,6 +20,7 @@ const AppRoutes = () => {
       <Route path="/carambolos" element={<Carambolos/>} />
       <Route path="/fornada" element={<FornadaSemana/>} />
       <Route path="/pedido-fornada" element={<FornadaOrderPage/>} />
+      <Route path="/produtos" element={<Products />} />
     </Routes>
   );
 };
