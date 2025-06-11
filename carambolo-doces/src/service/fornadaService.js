@@ -64,11 +64,75 @@ export const getFornadaAtual = async () => {
 export const getLastFornada = async () => {
   try {
     const fornadas = await listFornadas();
-    if (fornadas.length === 0) return null;
-    const lastFornada = fornadas[fornadas.length - 1];
+    
+    if (fornadas.length === 0) {
+      return null;
+    }
+    
+    // Ordena por data FIM decrescente para pegar a com dataFim mais recente
+    const lastFornada = fornadas.sort((a, b) => 
+      new Date(b.dataFim) - new Date(a.dataFim)  // Mudado de dataInicio para dataFim
+    )[0];
+    
     return lastFornada;
   } catch (error) {
     console.error('Erro ao buscar última fornada:', error);
+    throw error;
+  }
+};
+
+export const getFornadaAtiva = async () => {
+  try {
+    const fornadas = await listFornadas();
+    
+    if (fornadas.length === 0) return null;
+    
+    const hoje = new Date();
+    
+    // Primeiro, filtra fornadas que ainda não expiraram (dataFim >= hoje)
+    const fornadasNaoExpiradas = fornadas.filter(fornada => {
+      const dataFim = new Date(fornada.dataFim);
+      dataFim.setHours(23, 59, 59, 999); // Fim do dia
+      return dataFim >= hoje;
+    });
+    
+    if (fornadasNaoExpiradas.length === 0) {
+      // Se todas expiraram, pega a que expirou mais recentemente (maior dataFim)
+      const lastFornada = fornadas.sort((a, b) => 
+        new Date(b.dataFim) - new Date(a.dataFim)  // Ordena por dataFim decrescente
+      )[0];
+      
+      return lastFornada;
+    }
+    
+    // Das não expiradas, pega a que está ativa agora (hoje entre dataInicio e dataFim)
+    const fornadasAtivas = fornadasNaoExpiradas.filter(fornada => {
+      const dataInicio = new Date(fornada.dataInicio);
+      const dataFim = new Date(fornada.dataFim);
+      dataInicio.setHours(0, 0, 0, 0);   // Início do dia
+      dataFim.setHours(23, 59, 59, 999); // Fim do dia
+      
+      const estaAtiva = hoje >= dataInicio && hoje <= dataFim;
+      return estaAtiva;
+    });
+    
+    if (fornadasAtivas.length > 0) {
+      // Se há fornadas ativas, pega a com dataFim mais distante (que vai durar mais)
+      const fornadaAtiva = fornadasAtivas.sort((a, b) => 
+        new Date(b.dataFim) - new Date(a.dataFim)
+      )[0];
+      
+      return fornadaAtiva;
+    } else {
+      // Se nenhuma está ativa, pega a próxima a começar (menor dataInicio no futuro)
+      const proximaFornada = fornadasNaoExpiradas.sort((a, b) => 
+        new Date(a.dataInicio) - new Date(b.dataInicio)
+      )[0];
+      
+      return proximaFornada;
+    }
+  } catch (error) {
+    console.error('Erro ao buscar fornada ativa:', error);
     throw error;
   }
 };

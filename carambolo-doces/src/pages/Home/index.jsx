@@ -7,7 +7,7 @@ import ArrowButton from "../../components/ButtonArrow";
 import Button from "../../components/Button";
 import BannerPrincipal from "../../components/BannerPrincipal";
 import BannerFornada from "../../components/BannerFornada";
-import { getFornada, getProdutosPorFornadaId } from "../../service/fornadaService";
+import { getFornadaAtiva, getProdutosPorFornadaId } from "../../service/fornadaService";
 import { getBolosPorCategoria } from "../../service/boloService";
 import './cardsTransition.css';
 
@@ -16,8 +16,6 @@ function Home() {
   const [produtosFornada, setProdutosFornada] = useState([]);
   const [fornada, setFornada] = useState(null);
   
-  const FORNADA_ID_PADRAO = 1;
-
   const [boloPage, setBoloPage] = useState(0);
   const bolosPerPage = 3;
   const totalBoloPages = Math.ceil(bolos.length / bolosPerPage);
@@ -46,10 +44,11 @@ function Home() {
     
     const carregarDadosFornada = async () => {
       try {
-        const fornadaAtual = await getFornada(FORNADA_ID_PADRAO);
+        const fornadaAtual = await getFornadaAtiva();
+        
         if (fornadaAtual) {
           setFornada(fornadaAtual);
-          const produtos = await getProdutosPorFornadaId(FORNADA_ID_PADRAO);
+          const produtos = await getProdutosPorFornadaId(fornadaAtual.id);
           setProdutosFornada(produtos.slice(0, 4)); // Limita a 4 produtos na home
         }
       } catch (error) {

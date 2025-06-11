@@ -3,7 +3,6 @@ import FornadaDatePicker from "../../components/FornadaDatePicker";
 import TableSelectProductsFornada from "../../components/TableSelectProductsFornada";
 import Button from "../../components/Button";
 import HeaderDashboard from "../../components/headerDashboard";
-import HeaderDashboard from "../../components/HeaderDashboard";
 import {fornadaService} from "../../service/fornadaService";
 import fornadaDaVezService from "../../service/fornadaDaVezService";
 import { useState } from "react";

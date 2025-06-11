@@ -3,35 +3,30 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Card from "../../components/Card";
 import BannerFornada from "../../components/BannerFornada";
-import { getFornada, getProdutosPorFornadaId } from "../../service/fornadaService";
+import { getFornadaAtiva, getProdutosPorFornadaId } from "../../service/fornadaService";
 import { toast } from "react-toastify";
 
 function FornadaSemana() {
   const [produtos, setProdutos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fornada, setFornada] = useState(null);
-  
-  // ID da fornada padrão (futuramente será dinâmico)
-  // Para tornar dinâmico: pode vir de parâmetros da URL, contexto global, 
-  // localStorage, ou uma seleção do usuário
-  const FORNADA_ID_PADRAO = 1;
 
   useEffect(() => {
     const carregarProdutosFornada = async () => {
       try {
         setLoading(true);
         
-        const fornadaAtual = await getFornada(FORNADA_ID_PADRAO);
+        const fornadaAtual = await getFornadaAtiva();
         
         if (!fornadaAtual) {
-          toast.error("Fornada não encontrada");
+          toast.error("Nenhuma fornada encontrada");
           setLoading(false);
           return;
         }
         
         setFornada(fornadaAtual);
         
-        const produtosFornada = await getProdutosPorFornadaId(FORNADA_ID_PADRAO);
+        const produtosFornada = await getProdutosPorFornadaId(fornadaAtual.id);
         
         setProdutos(produtosFornada);
         
@@ -79,7 +74,7 @@ function FornadaSemana() {
         
         {produtos.length === 0 ? (
           <div className="text-center">
-            <p className="text-blue text-lg">Nenhum produto disponível na fornada ID {FORNADA_ID_PADRAO}.</p>
+            <p className="text-blue text-lg">Nenhum produto disponível nesta fornada.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-12 px-24">
