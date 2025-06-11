@@ -20,16 +20,11 @@ function FornadaDashboard() {
   });
 
   const handleDateChange = (field, value) => {
-    // O DatePicker-3 já retorna o formato correto (YYYY-MM-DD)
     setFornada((prev) => ({
       ...prev,
       [field]: value,
     }));
     
-    // Toast de confirmação para testar
-    if (value) {
-      toast.success(`${field === 'dataInicio' ? 'Data de início' : 'Data final'} selecionada: ${value}`);
-    }
   };
 
   const registerFornada = async () => {
@@ -101,7 +96,6 @@ function FornadaDashboard() {
         )
       );
 
-      // Se todos os produtos foram adicionados com sucesso
       if (responses.every(response => response)) {
         notify();
       } else {
@@ -151,7 +145,6 @@ function FornadaDashboard() {
         </div>
       </div>
       
-      {/* ToastContainer posicionado globalmente */}
       <ToastContainer
         position="top-right"
         autoClose={3000}
