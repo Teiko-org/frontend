@@ -1,18 +1,38 @@
 import React, { useState, useEffect } from 'react';
+import { getLastFornada } from '../../service/fornadaService';
 
 const BannerFornada = ({ fornada }) => {
+  const [fornadaData, setFornadaData] = useState(fornada);
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+  useEffect(() => {
+    if (!fornada) {
+      const fetchLastFornada = async () => {
+        try {
+          const lastFornada = await getLastFornada();
+          if (lastFornada && lastFornada.dataFim) {
+            setFornadaData(lastFornada);
+          }
+        } catch (error) {
+          console.error('Erro ao buscar última fornada:', error);
+        }
+      };
+      fetchLastFornada();
+    } else {
+      setFornadaData(fornada);
+    }
+  }, [fornada]);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft(calculateTimeLeft());
     }, 1000);
     return () => clearInterval(timer);
-  }, [fornada]);
+  }, [fornadaData]);
 
   function calculateTimeLeft() {
-    const endDate = fornada 
-      ? new Date(fornada.dataFim + "T23:59:59")
+    const endDate = fornadaData 
+      ? new Date(fornadaData.dataFim + "T23:59:59")
       : new Date("2025-05-02T00:00:00");
       
     const difference = +endDate - +new Date();
@@ -31,11 +51,11 @@ const BannerFornada = ({ fornada }) => {
   }
 
   const formatEndDate = () => {
-    if (!fornada || !fornada.dataFim) {
+    if (!fornadaData || !fornadaData.dataFim) {
       return "02/05/2025";
     }
     
-    const date = new Date(fornada.dataFim);
+    const date = new Date(fornadaData.dataFim);
     return date.toLocaleDateString('pt-BR');
   };
 

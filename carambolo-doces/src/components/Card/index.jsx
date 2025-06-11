@@ -4,11 +4,13 @@ import AvailableBox from "../AvailableBox";
 import SoldOutBox from "../SoldOutBox";
 import { toast } from "react-toastify";
 
-function Card({ available, type, produto }) {
+function Card({ available, type, produto, nome, preco, imagem, boloData, onClick }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    if (type === "Bolo") {
+    if (onClick) {
+      onClick(boloData);
+    } else if (type === "Bolo") {
       navigate('/pedido-bolo');
     } else if (type === "Fornada" && available) {
       navigate('/pedido-fornada', { state: { produto } });
@@ -18,6 +20,10 @@ function Card({ available, type, produto }) {
   };
 
   const getImageSrc = () => {
+    if (imagem) {
+      return imagem;
+    }
+    
     if (type === "Bolo") {
       return "src/assets/image_card.png";
     }
@@ -30,6 +36,10 @@ function Card({ available, type, produto }) {
   };
 
   const getProductName = () => {
+    if (nome) {
+      return nome;
+    }
+    
     if (type === "Bolo") {
       return "Carambolo Vintage Aniversário";
     }
@@ -38,6 +48,10 @@ function Card({ available, type, produto }) {
   };
 
   const getProductPrice = () => {
+    if (preco) {
+      return `R$ ${preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    }
+    
     if (produto && produto.valor) {
       return `R$ ${produto.valor.toFixed(2).replace('.', ',')}`;
     }
@@ -51,7 +65,7 @@ function Card({ available, type, produto }) {
 
   return (
     <div
-      className={`relative w-[280px] h-[410px] ${type === "Fornada" && !available ? 'opacity-75 cursor-not-allowed' : 'cursor-pointer'}`}
+      className={`relative w-[280px] h-[410px] ${type === "Fornada" && !available ? 'opacity-75 cursor-not-allowed' : 'cursor-pointer'} transition-transform duration-200 hover:scale-105`}
       onClick={handleClick}
     >
       <div className="absolute top-2 left-2 w-full h-full border-2 border-goldCard rounded-tr-2xl"></div>

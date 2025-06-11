@@ -1,6 +1,5 @@
 import { axiosApi } from '../provider/AxiosApi';
 
-// Listar todas as fornadas
 export const listFornadas = async () => {
   try {
     const response = await axiosApi.get('/fornadas');
@@ -11,7 +10,6 @@ export const listFornadas = async () => {
   }
 };
 
-// Buscar fornada por ID
 export const getFornada = async (id) => {
   try {
     const response = await axiosApi.get(`/fornadas/${id}`);
@@ -22,7 +20,6 @@ export const getFornada = async (id) => {
   }
 };
 
-// Buscar produtos da fornada da vez por período
 export const getProdutosFornadaDaVez = async (dataInicio, dataFim) => {
   try {
     const response = await axiosApi.get('/fornadas/da-vez/produtos', {
@@ -38,7 +35,6 @@ export const getProdutosFornadaDaVez = async (dataInicio, dataFim) => {
   }
 };
 
-// Buscar produtos da fornada da vez por ID específico da fornada
 export const getProdutosPorFornadaId = async (fornadaId) => {
   try {
     const response = await axiosApi.get(`/fornadas/da-vez/produtos/${fornadaId}`);
@@ -49,13 +45,11 @@ export const getProdutosPorFornadaId = async (fornadaId) => {
   }
 };
 
-// Buscar fornada ativa atual (último período)
 export const getFornadaAtual = async () => {
   try {
     const fornadas = await listFornadas();
     if (fornadas.length === 0) return null;
     
-    // Ordena por data de início descrescente para pegar a mais recente
     const fornadaAtual = fornadas.sort((a, b) => 
       new Date(b.dataInicio) - new Date(a.dataInicio)
     )[0];
@@ -67,7 +61,18 @@ export const getFornadaAtual = async () => {
   }
 };
 
-// Criar pedido de fornada
+export const getLastFornada = async () => {
+  try {
+    const fornadas = await listFornadas();
+    if (fornadas.length === 0) return null;
+    const lastFornada = fornadas[fornadas.length - 1];
+    return lastFornada;
+  } catch (error) {
+    console.error('Erro ao buscar última fornada:', error);
+    throw error;
+  }
+};
+
 export const createPedidoFornada = async (pedido) => {
   try {
     const response = await axiosApi.post('/fornadas/pedidos', pedido);
@@ -78,21 +83,23 @@ export const createPedidoFornada = async (pedido) => {
   }
 }; 
 
-export const fornadaService = async (data) => {
-    console.log(data);
-    try {
-        const response = await axiosApi.post('/fornadas', {
-            dataInicio: data.dataInicio,
-            dataFim: data.dataFim
-        },
-            {
-                headers: { Authorization: (`Bearer ${localStorage.getItem('JWT_TOKEN')}`) }
-            }
-        );
-        return response.data;
-    } catch (error) {
-        console.error("Erro ao cadastrar Fornada:", error);
-    }
+export const insertNewFornada = async (data) => {
+  console.log(data);
+  try {
+    const response = await axiosApi.post('/fornadas', {
+      dataInicio: data.dataInicio,
+      dataFim: data.dataFim
+    },
+      {
+        headers: { Authorization: (`Bearer ${localStorage.getItem('JWT_TOKEN')}`) }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao cadastrar Fornada:", error);
+    throw error;
+  }
+};
 
-}
+export const fornadaService = insertNewFornada;
 
