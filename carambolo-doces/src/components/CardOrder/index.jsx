@@ -50,7 +50,7 @@ function CardOrder(props) {
   }
 
   return (
-    <div className="flex flex-col justify-center gap-1 p-3 w-[280px] h-[120px] border border-gold rounded-md bg-bgNativeHome">
+    <div className="flex flex-col justify-center gap-1 p-3 w-[270px] h-[120px] border border-gold rounded-md bg-bgNativeHome">
       <header className="font-semibold">
         {detalhesPedido?.nomeCliente ?? "Carregando..."}
       </header>

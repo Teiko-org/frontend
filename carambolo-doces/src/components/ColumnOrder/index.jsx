@@ -8,7 +8,7 @@ function ColumnOrder(props) {
           {props.title}
         </div>
         <div className="bg-gradient-blue p-1 w-fit h-fit border border-gold rounded-md rounded-tl-none">
-          <div className="flex flex-col items-center gap-y-5 p-2 w-[300px] h-[680px]  overflow-x-hidden border border-gold rounded-md bg-bgHome">
+          <div className="flex flex-col items-center gap-y-5 p-2 w-[280px] h-[480px]  overflow-x-hidden border border-gold rounded-md bg-bgHome">
 
             {(props.orderFilter || []).map((order) => (
               <CardOrder

@@ -4,6 +4,7 @@ import { BsBag } from "react-icons/bs";
 import { RiFileEditLine } from "react-icons/ri";
 import { BiLogOut } from "react-icons/bi";
 import { Link, useNavigate } from "react-router-dom";
+import { FaHome } from "react-icons/fa";
 
 const BarraLateralDashboard = () => {
 
@@ -31,6 +32,16 @@ const BarraLateralDashboard = () => {
 
                 <nav className="flex-1">
                     <ul className="text-gold">
+                        <li>
+                            <Link to="/">
+                                <div className='flex items-center
+                                    pl-5 py-2 gap-2 ml-3 rounded-l-full
+                                    hover:bg-bgNativeHome hover:text-darkBlue
+                                    transition-colors duration-400 ease-in-out'>
+                                    <FaHome /> Página Inicial
+                                </div>
+                            </Link>
+                        </li>
                         <li>
                             {/* <a href="/dashboard-kanban-pedidos">
                                 <div className='flex items-center

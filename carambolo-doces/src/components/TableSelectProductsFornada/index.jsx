@@ -78,15 +78,15 @@ export default function TableSelectProductsFornada() {
   };
 
   return (
-    <div className="flex flex-col w-[90%] h-[500px] border-rounded-lg border-2 border-gold bg-bgHome">
-      <header className="flex flex-row justify-between border-rounded-lg px-20 items-center bg-gradient-blue h-[4.6875rem] w-full flex-shrink-0">
+    <div className="flex flex-col w-[90%] h-[350px] border-rounded-lg border-2 border-gold bg-bgHome">
+      <header className="flex flex-row justify-between border-rounded-lg px-20 items-center bg-gradient-blue h-[3.6875rem] w-full flex-shrink-0">
         <h1 className="text-gold text-[1.5rem]">Selecionar Produtos</h1>
 
         <div className="flex w-96 px-3 py-2 items-center justify-between bg-white rounded-lg border border-gray-300">
           <input
             type="text"
             placeholder="Procurar por produto"
-            className="h-[34px] w-full pl-2 pr-2 text-gray-800 bg-transparent border-none outline-none focus:outline-none"
+            className="h-[24px] w-full pl-2 pr-2 text-gray-800 bg-transparent border-none outline-none focus:outline-none"
             onChange={(e) => setSearchTerm(e.target.value)}
             value={searchTerm}
           />
