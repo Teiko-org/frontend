@@ -8,6 +8,8 @@ import Carambolos from '../pages/Carambolos';
 import FornadaSemana from '../pages/Fornada';
 import FornadaOrderPage from '../pages/FornadaOrderPage';
 import FornadaDashboard from '../pages/FornadaDashboard';
+import ModalCadastroProduto from '../components/ModalCadastroProduto';
+import Products from '../pages/Products/index'
 import Products from '../pages/Products/index';
 import OrderKanban from '../pages/OrderKanban/index';
 
@@ -24,6 +26,7 @@ const AppRoutes = () => {
       <Route path="/dashboard-kanban-pedidos" element={<OrderKanban />} />
       <Route path="/produtos" element={<Products />} />
       <Route path="/fornada-dashboard" element={<FornadaDashboard/>} />
+      <Route path="/produtos" element={<Products />} />
     </Routes>
   );
 };

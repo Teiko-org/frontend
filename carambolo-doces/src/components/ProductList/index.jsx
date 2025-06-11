@@ -14,6 +14,7 @@ import { ConfirmToast } from 'react-confirm-toast';
 import Button from '../Button';
 import { CiFilter } from "react-icons/ci";
 import ModalFilterProduct from '../ModalFilterProduct';
+import ModalEdicaoProduto from '../ModalEdicaoProduto';
 import { findAllBolo, findAllFornada, handleDeleteBolo, handleVisibilityBolo, handleVisibilityProdutoFornada } from '../../service/productService';
 import { LuSearch } from "react-icons/lu";
 
@@ -22,7 +23,7 @@ const columns = [
     { id: 'produto', label: 'PRODUTO', minWidth: 100, align: 'left' },
     { id: 'categoria', label: 'CATEGORIA', minWidth: 100, align: 'left' },
     { id: 'preco', label: 'PREÇO', minWidth: 100, align: 'left' },
-    { id: 'quantidade', label: 'QUANTIDADE', minWidth: 100, align: 'left' },
+    // { id: 'quantidade', label: 'QUANTIDADE', minWidth: 100, align: 'left' },
     { id: 'status', label: 'STATUS', minWidth: 100, align: 'center' },
     { id: 'edit', label: '', minWidth: 100 },
 
@@ -34,6 +35,8 @@ export default function ProductList() {
     const [products, setProducts] = React.useState([]);
     const [searchTerm, setSearchTerm] = React.useState('');
     const [isFilterModalOpen, setFilterModalOpen] = React.useState(false);
+    const [produtoSelecionado, setProdutoSelecionado] = React.useState(null);
+    const [isModalEdicaoOpen, setModalEdicaoOpen] = React.useState(false);
 
     // LÓGICA PARA DELEÇÃO DE PRODUTOS - TODO -> ADD LIXEIRA
     // const [idToDelete, setIdToDelete] = React.useState(null);
@@ -49,11 +52,17 @@ export default function ProductList() {
         try {
             console.log('Buscando produtos...');
             const fornadas = await findAllFornada();
-            const bolos = await findAllBolo();
+            const bolos = await findAllBolo(); // <-- Corrigido aqui!
             console.log('Bolos retornados:', bolos);
 
             const responseProducts = [...(fornadas || []), ...(bolos || [])];
-            setProducts(responseProducts);
+
+            // Remove duplicados por id
+            const uniqueProducts = responseProducts.filter(
+                (item, index, self) => index === self.findIndex((p) => p.id === item.id && p.categoria === item.categoria)
+            );
+
+            setProducts(uniqueProducts);
         } catch (error) {
             console.log(error);
         }
@@ -61,7 +70,7 @@ export default function ProductList() {
 
     //LÓGICA PARA DELEÇÃO DE PRODUTOS - TODO -> ADD LIXEIRA
     const handleDeleteRow = async (id) => {
-        if (categoryToDelete.toLowerCase().includes("carambolo")) {
+        if ((categoryToDelete ?? '').toLowerCase().includes("carambolo")) {
             handleDeleteBolo(id);
         }
         await getData();
@@ -78,7 +87,7 @@ export default function ProductList() {
             productToChange[0].isAtivo = true
         }
 
-        if (productToChange[0].categoria.toLowerCase().includes("carambolo")) {
+        if ((productToChange[0].categoria ?? '').toLowerCase().includes("carambolo")) {
             handleVisibilityBolo(productToChange, id);
         } else {
             handleVisibilityProdutoFornada(productToChange, id)
@@ -95,7 +104,7 @@ export default function ProductList() {
         const qtdAte = parseInt(localStorage.getItem('QTD_ATE')) || Infinity;
         const statusFilter = localStorage.getItem('STATUS');
 
-        const categoryToSearch = product.categoria?.toLowerCase?.() || '';
+        const categoryToSearch = (product.categoria ?? '').toLowerCase();
 
         const matchCategory = !categoryFilter || categoryFilter === '--' || product.categoria === categoryFilter;
         const matchPrice = product.valor >= priceDe && product.valor <= priceAte;
@@ -111,7 +120,7 @@ export default function ProductList() {
             matchStatus = isBolo || (isFornada && product.quantidade <= 0);
         }
 
-        const matchSearch = product.produto.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchSearch = (product.produto ?? '').toLowerCase().includes(searchTerm.toLowerCase());
 
         return matchCategory && matchPrice && matchQuantity && matchStatus && matchSearch;
     });
@@ -197,24 +206,23 @@ export default function ProductList() {
                                         if (column.id == 'preco') {
                                             return (
                                                 <TableCell key={column.id} align={column.align} sx={{ boxShadow: "none", borderBottom: "none", padding: 0 }}>
-                                                    <span>{"R$: " + row.valor.toFixed(2)}</span>
+                                                    <span>{"R$ " + row.valor.toFixed(2)}</span>
                                                 </TableCell>
                                             )
                                         }
 
-                                        if (column.id === 'quantidade') {
-                                            if (row.categoria.includes("carambolo")) {
-                                                return <TableCell key={column.id} align={column.align} sx={{ boxShadow: "none", borderBottom: "none", padding: 0 }}>-</TableCell>;
-                                            } else {
-                                                return <TableCell key={column.id} align={column.align} sx={{ boxShadow: "none", borderBottom: "none", padding: 0 }}>{row.quantidade}</TableCell>
-                                            }
-                                        }
+                                        // if (column.id === 'quantidade') {
+                                        //     if (row.categoria.includes("carambolo")) {
+                                        //         return <TableCell key={column.id} align={column.align} sx={{ boxShadow: "none", borderBottom: "none", padding: 0 }}>-</TableCell>;
+                                        //     } else {
+                                        //         return <TableCell key={column.id} align={column.align} sx={{ boxShadow: "none", borderBottom: "none", padding: 0 }}>{row.quantidade}</TableCell>
+                                        //     }
+                                        // }
 
                                         if (column.id === 'status') {
-                                            if (row.categoria.includes("carambolo")) {
+                                            if ((row.categoria ?? '').toLowerCase().includes("carambolo")) {
                                                 return <TableCell key={column.id} align={column.align} sx={{ boxShadow: "none", borderBottom: "none", padding: 0 }}>-</TableCell>;
                                             }
-
                                             return (
                                                 <TableCell key={column.id} align={column.align} sx={{ boxShadow: "none", borderBottom: "none", padding: 0 }}>
                                                     <div className='flex flex-row justify-center items-center gap-2'>
@@ -229,7 +237,7 @@ export default function ProductList() {
                                             return (
                                                 <TableCell key={column.id} align={column.align} className='rounded-e-full items-center' sx={{ boxShadow: "none", borderBottom: "none", padding: 0, paddingRight: '1.25rem' }}>
                                                     <div className='flex justify-end'>
-                                                        <FaRegEdit className='text-[#A47032] text-[1.625rem]' />
+                                                        <FaRegEdit className='text-[#A47032] text-[1.625rem] cursor-pointer' onClick={() => { setProdutoSelecionado(row); setModalEdicaoOpen(true); }} />
                                                     </div>
                                                 </TableCell>
                                             );
@@ -275,6 +283,12 @@ export default function ProductList() {
                     className='z-10'
                 />
             )} */}
+            <ModalEdicaoProduto
+                isOpen={isModalEdicaoOpen}
+                onClose={() => setModalEdicaoOpen(false)}
+                produto={produtoSelecionado}
+                onProdutoEditado={getData}
+            />
         </div>
     );
 }
