@@ -68,7 +68,7 @@ function Carambolos() {
       [categoria]: Math.max(0, prev[categoria] - 1)
     }));
   };
-  
+
   const handleNext = (categoria, bolosLength) => {
     setPageByCategory(prev => ({
       ...prev,
@@ -82,7 +82,6 @@ function Carambolos() {
   return (
     <div className="bg-bgNativeHome">
       <Header />
-
       <section className="pt-8 bg-bgNativeHome border-t border-b border-gold">
         <h2 className="text-start text-4xl font-bold mb-6 ml-24">
           CARAMBOLOS PRÉ-DECORADOS
@@ -96,7 +95,6 @@ function Carambolos() {
           )
         )}
       </section>
-
       <Footer />
     </div>
   );

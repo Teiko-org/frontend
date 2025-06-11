@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getLastFornada } from '../../service/fornadaService';
 
+
 const BannerFornada = ({ fornada }) => {
   const [fornadaData, setFornadaData] = useState(fornada);
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
@@ -38,17 +39,19 @@ const BannerFornada = ({ fornada }) => {
     const difference = +endDate - +new Date();
     let timeLeft = {};
 
-    if (difference > 0) {
-      timeLeft = {
-        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((difference / 1000 / 60) % 60),
-        seconds: Math.floor((difference / 1000) % 60),
-      };
-    }
+      if (difference > 0) {
+        timeLeft = {
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
+        };
+      } else {
+        timeLeft = { days: 0, hours: 0, minutes: 0, seconds: 0 };
+      }
 
-    return timeLeft;
-  }
+      return timeLeft;
+    };
 
   const formatEndDate = () => {
     if (!fornadaData || !fornadaData.dataFim) {
@@ -65,7 +68,8 @@ const BannerFornada = ({ fornada }) => {
         <div className="text-white flex flex-col w-1/2 mx-auto">
           <h2 className="text-xl font-bold mb-2 text-pink">Fornada</h2>
           <p>Aproveite a nossa Fornada com doces exclusivos!</p>
-          <p>Disponível por tempo limitado até {formatEndDate()}</p>
+          <p>Disponível por tempo limitado até {dataFim ? new Date(dataFim).toLocaleDateString() : '--/--/----'}</p>
+
         </div>
         <div className="text-white text-2xl flex gap-x-8">
           <span>{timeLeft.days || '0'}D</span>
