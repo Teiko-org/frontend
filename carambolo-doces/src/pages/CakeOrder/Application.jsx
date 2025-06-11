@@ -13,7 +13,6 @@ import cakeImage1 from '../../assets/image_cake.png';
 import cakeImage2 from '../../assets/image_cake.png';
 import cakeImage3 from '../../assets/image_cake.png';
 
-// Declare slides aqui
 const slides = [
   { id: 1, image: cakeImage1, title: 'Slide 1' },
   { id: 2, image: cakeImage2, title: 'Slide 2' },

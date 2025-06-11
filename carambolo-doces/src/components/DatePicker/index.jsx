@@ -14,14 +14,14 @@ const CustomDatePicker = React.forwardRef(({ label, placeholder, value, onChange
   });
 
   const formatDateForBackend = (date) => {
-    if (date instanceof Date && !isNaN(date)) {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    }
-    return '';
-  };
+  if (date instanceof Date && !isNaN(date)) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}/${month}/${day}`;
+  }
+  return '';
+};
 
   const handleDateChange = (date) => {
     setStartDate(date);
@@ -47,7 +47,7 @@ const CustomDatePicker = React.forwardRef(({ label, placeholder, value, onChange
   };
 
   return (
-    <div className="mb-4">
+    <div className="">
       {label && <label className="block text-blue font-semibold mb-1">{label}</label>}
       <div className="relative w-full">
         <DatePicker
