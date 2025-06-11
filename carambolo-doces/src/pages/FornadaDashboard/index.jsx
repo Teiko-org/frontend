@@ -25,9 +25,6 @@ function FornadaDashboard() {
       [field]: value,
     }));
     
-    if (value) {
-      toast.success(`${field === 'dataInicio' ? 'Data de início' : 'Data final'} selecionada: ${value}`);
-    }
   };
 
   const registerFornada = async () => {
