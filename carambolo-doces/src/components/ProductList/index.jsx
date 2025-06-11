@@ -158,7 +158,7 @@ export default function ProductList() {
                                         key={column.id}
                                         align={column.align}
                                         style={{ minWidth: column.minWidth, height: '50px' }}
-                                        sx={{ backgroundColor: "transparent", fontWeight: "bold", boxShadow: "none", borderBottom: "none", paddingTop: "0.5rem", paddingBottom: "0.5rem", padding: 0}}
+                                        sx={{ backgroundColor: "#FFE7DD", fontWeight: "bold", boxShadow: "none", borderBottom: "none", paddingTop: "0.5rem", paddingBottom: "0.5rem", padding: 0}}
                                     >
                                         {column.label}
                                     </TableCell>

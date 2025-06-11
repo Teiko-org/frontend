@@ -3,7 +3,7 @@ import CustomDatePicker from "../../components/DatePicker-3";
 import TableSelectProductsFornada from "../../components/TableSelectProductsFornada";
 import Button from "../../components/Button";
 import HeaderDashboard from "../../components/headerDashboard";
-import {fornadaService} from "../../service/fornadaService";
+import { fornadaService } from "../../service/fornadaService";
 import fornadaDaVezService from "../../service/fornadaDaVezService";
 import { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
@@ -24,7 +24,7 @@ function FornadaDashboard() {
       ...prev,
       [field]: value,
     }));
-    
+
   };
 
   const registerFornada = async () => {
@@ -32,7 +32,7 @@ function FornadaDashboard() {
       toast("Preencha as duas datas!", { type: "error" });
       return;
     }
-    
+
     const dataInicio = new Date(fornada.dataInicio);
     const dataFim = new Date(fornada.dataFim);
 
@@ -45,14 +45,14 @@ function FornadaDashboard() {
 
     const selectedProducts = JSON.parse(localStorage.getItem("selectedProducts") || "[]");
     if (!selectedProducts.length) {
-    toast("Selecione pelo menos um produto!", { type: "error" });
-    return;
-  }
+      toast("Selecione pelo menos um produto!", { type: "error" });
+      return;
+    }
 
     try {
       toast.info("Cadastrando fornada...");
       const response = await insertNewFornada(fornada);
-      
+
       if (response && response.id) {
         await registerFornadaDaVez(response.id);
       } else {
@@ -87,7 +87,7 @@ function FornadaDashboard() {
       toast.info("Adicionando produtos à fornada...");
 
       const responses = await Promise.all(
-        selectedProductsJson.map((produto) => 
+        selectedProductsJson.map((produto) =>
           fornadaDaVezService({
             fornadaId: idFornada,
             produtoFornadaId: produto.id,
@@ -111,16 +111,16 @@ function FornadaDashboard() {
     <div className="flex bg-bgNativeHome">
       <BarraLateralDashboard />
 
-      <div className="w-full">
-        <header className="pb-5">
+      <div className="w-full pl-56">
+        <header className="pb-5 w-full">
           <HeaderDashboard title={"Fornada"} />
         </header>
 
-        <div className="flex flex-col justify-evenly items-center gap-24">
+        <div className="flex flex-col justify-evenly items-center gap-10">
           <div className="flex flex-col justify-center items-center w-[470px] h-[170px] border-2 border-gold rounded-2xl bg-bgHome gap-5 p-10">
             <h3 className="font-bold text-blue">Iniciar Nova Fornada</h3>
-            
-            <div className="flex justify-center gap-20">
+
+            <div className="flex justify-center gap-10">
               <CustomDatePicker
                 label="De:"
                 value={fornada.dataInicio}
@@ -144,7 +144,7 @@ function FornadaDashboard() {
           </div>
         </div>
       </div>
-      
+
       <ToastContainer
         position="top-right"
         autoClose={3000}
