@@ -24,13 +24,36 @@ export default function ModalMontagem({
   const tamanhos = ["11cm", "13cm", "15cm", "17cm"];
   const formatos = ["Redondo", "Coração"];
 
+  const availableRecheios = {
+    cacau: ["Zanza (Ganache meio-amargo e redução de frutas vermelhas)", "Marilia (Brigadeiro meio-amargo)", "Hugo (Brigadeiro meio-amargo e Brigadeiro de ninho)", "Bia Benego (Cocada cremosa de coco queimado)", "Gislaine (Brigadeiro meio-amargo e redução de morango)", "Nancy (Cocada cremosa e compota de abacaxi)", "Priscila (Ganache, caramelo salgado e amendoim tostado)", "Sara (Brigadeiro de maracujá e Ganache meio-amargo)", "João Donato (Ganache meio-amargo e cupuaçu)"],
+    cacau_expresso: ["Devil's Cake (Ganache meio-amargo)"],
+    baunilha: ["Brunna (Brigadeiro de limão siciliano)", "Duda (Brigadeiro de Doce de leite)", "Giovanna (Brigadeiro de Pistache)", "Juliana (Creme 4 leites e redução de frutas vermelhas)", "Ana (Brigadeiro de limão siciliano e redução de frutas vermelhas)", "Stefan (Brigadeiro de pistache e Brigadeiro de limão siciliano)", "Dora (Brigadeiro de ninho e redução de frutas vermelhas)", "Tiramissu (Creamcheese frosting e nuvem de cacau)"],
+    red_velvet: ["Creamcheese Frosting"]
+  };
+
+  const massas = [
+    { value: "cacau", label: "Cacau" },
+    { value: "cacau_expresso", label: "Cacau Expresso" },
+    { value: "baunilha", label: "Baunilha" },
+    { value: "red_velvet", label: "Red Velvet" }
+  ];
+
+  const recheiosOptions = Object.keys(availableRecheios).flatMap((key) => availableRecheios[key]);
+  
+  const filteredRecheios = (massa) => {
+    if (availableRecheios[massaSelecionada]) {
+      return availableRecheios[massa];
+    }
+    return [];
+  };
+
   const handleSave = () => {
-    // onSave({
-    //   size: tamanhoSelecionado,
-    //   shape: formatoSelecionado,
-    //   mass: massaSelecionada,
-    //   filling: recheioSelecionado,
-    // });
+    onSave({
+      size: tamanhoSelecionado,
+      shape: formatoSelecionado,
+      mass: massaSelecionada,
+      filling: recheioSelecionado,
+    });
     setIsModalOpen(true);
   };
 
@@ -98,9 +121,12 @@ export default function ModalMontagem({
             value={massaSelecionada}
             onChange={(e) => setMassaSelecionada(e.target.value)}
           >
-            <option>Selecione a massa</option>
-            <option value="Chocolate">Chocolate</option>
-            <option value="Baunilha">Baunilha</option>
+            <option value="">Selecione a massa</option>
+            {massas.map((massa) => (
+              <option key={massa.value} value={massa.value}>
+                {massa.label}
+              </option>
+            ))}
           </select>
           <div className="pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2">
             <svg
@@ -134,9 +160,12 @@ export default function ModalMontagem({
             value={recheioSelecionado}
             onChange={(e) => setRecheioSelecionado(e.target.value)}
           >
-            <option>Selecione o Recheio</option>
-            <option value="Morango">Morango</option>
-            <option value="Doce de Leite">Doce de Leite</option>
+            <option value="">Selecione o Recheio</option>
+            {filteredRecheios(massaSelecionada).map((recheio, index) => (
+              <option key={index} value={recheio}>
+                {recheio}
+              </option>
+            ))}
           </select>
           <div className="pointer-events-none absolute right-2 top-1/2 transform -translate-y-1/2">
             <svg

@@ -1,16 +1,84 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { FormContext } from "../../contexts/FormContext";
 import { useFormContext, Controller } from "react-hook-form";
 import Button from "../../components/Button";
 import Select from "../../components/Select";
+import { axiosApi } from "../../provider/AxiosApi";
+
+const formatLabel = (text) => {
+  return text
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
 
 const Step1 = () => {
   const { nextStep, appendFormData } = useContext(FormContext);
-  const { control, handleSubmit, setValue, getValues, watch, formState: { errors } } = useFormContext();
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    getValues,
+    clearErrors,
+    watch,
+    formState: { errors },
+  } = useFormContext();
+
+  const [massaOptions, setMassaOptions] = useState([]);
+  const [recheioOptions, setRecheioOptions] = useState([]);
+
+  useEffect(() => {
+    const fetchMassas = async () => {
+      try {
+        const response = await axiosApi.get("/bolos/massa");
+        setMassaOptions(
+          response.data.map((massa) => ({
+            id: massa.id,
+            value: massa.sabor,
+            label: formatLabel(massa.sabor),
+          }))
+        );
+      } catch (error) {
+        console.error("Erro ao buscar massas:", error);
+      }
+    };
+
+    const fetchRecheios = async () => {
+      try {
+        const response = await axiosApi.get("/bolos/recheio-unitario");
+        setRecheioOptions(
+          response.data.map((recheio) => ({
+            id: recheio.id,
+            value: recheio.sabor,
+            label: recheio.descricao,
+          }))
+        );
+      } catch (error) {
+        console.error("Erro ao buscar recheios:", error);
+      }
+    };
+
+    fetchMassas();
+    fetchRecheios();
+  }, []);
 
   const onSubmit = (data) => {
-    console.log('Step 1 data:', data);
-    appendFormData(data);
+    const massaSelecionada = massaOptions.find(
+      (massa) => massa.value === data.massa
+    );
+    const recheioSelecionado = recheioOptions.find(
+      (recheio) => recheio.value === data.recheio
+    );
+
+    const postData = {
+      tamanho: data.tamanho,
+      formato: data.formato,
+      massaId: massaSelecionada ? massaSelecionada.id : null,
+      recheioId: recheioSelecionado ? recheioSelecionado.id : null,
+    };
+
+    console.log("Dados para POST:", postData);
+    appendFormData(postData, "dadosMontagem");
     nextStep();
   };
 
@@ -20,63 +88,60 @@ const Step1 = () => {
   const handleButtonClick = (field, value) => (event) => {
     event.preventDefault();
     setValue(field, value);
-  };
-
-  const createSlug = (text) => {
-    return text
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/ç/g, 'c')
-      .replace(/[^a-zA-Z0-9]+/g, '-') 
-      .replace(/(^-|-$)/g, '')
-      .toLowerCase();
+    clearErrors(field);
   };
 
   const availableRecheios = {
-    cacau: ['Zanza (Ganache meio-amargo e redução de frutas vermelhas)', 'Marilia (Brigadeiro meio-amargo)', 'Hugo (Brigadeiro meio-amargo e Brigadeiro de ninho)', 'Bia Benego (Cocada cremosa de coco queimado)', 'Gislaine (Brigadeiro meio-amargo e redução de morango)', 'Nancy (Cocada cremosa e compota de abacaxi)', 'Priscila (Ganache, caramelo salgado e amendoim tostado)', 'Sara (Brigadeiro de maracujá e Ganache meio-amargo)', 'João Donato (Ganache meio-amargo e cupuaçu)'],
-    cacau_expresso: ['Devil\'s Cake (Ganache meio-amargo)',],
-    baunilha: ['Brunna (Brigadeiro de limão siciliano)', 'Duda (Brigadeiro de Doce de leite)', 'Giovanna (Brigadeiro de Pistache)', 'Juliana (Creme 4 leites e redução de frutas vermelhas)', 'Ana (Brigadeiro de limão siciliano e redução de frutas vermelhas)', 'Stefan (Brigadeiro de pistache e Brigadeiro de limão siciliano)', 'Dora (Brigadeiro de ninho e redução de frutas vermelhas)', 'Tiramissu (Creamcheese frosting e nuvem de cacau)'],
-    red_velvet: ['Creamcheese Frosting']
+    cacau: [
+      "Zanza (Ganache meio-amargo e redução de frutas vermelhas)",
+      "Marilia (Brigadeiro meio-amargo)",
+      "Hugo (Brigadeiro meio-amargo e Brigadeiro de ninho)",
+      "Bia Benego (Cocada cremosa de coco queimado)",
+      "Gislaine (Brigadeiro meio-amargo e redução de morango)",
+      "Nancy (Cocada cremosa e compota de abacaxi)",
+      "Priscila (Ganache, caramelo salgado e amendoim tostado)",
+      "Sara (Brigadeiro de maracujá e Ganache meio-amargo)",
+      "João Donato (Ganache meio-amargo e cupuaçu)",
+    ],
+    cacau_expresso: ["Devil's Cake (Ganache meio-amargo)"],
+    baunilha: [
+      "Brunna (Brigadeiro de limão siciliano)",
+      "Duda (Brigadeiro de Doce de leite)",
+      "Giovanna (Brigadeiro de Pistache)",
+      "Juliana (Creme 4 leites e redução de frutas vermelhas)",
+      "Ana (Brigadeiro de limão siciliano e redução de frutas vermelhas)",
+      "Stefan (Brigadeiro de pistache e Brigadeiro de limão siciliano)",
+      "Dora (Brigadeiro de ninho e redução de frutas vermelhas)",
+      "Tiramissu (Creamcheese frosting e nuvem de cacau)",
+    ],
+    red_velvet: ["Creamcheese Frosting"],
   };
 
-  const massaSelecionada = watch('massa', '');
+  const massaSelecionada = watch("massa", "");
 
   useEffect(() => {
     if (!massaSelecionada) {
-      setValue('recheio', '');
+      setValue("recheio", "");
     }
   }, [massaSelecionada, setValue]);
 
-  const recheiosOptions = [
-    'Creamcheese Frosting', 
-    'Devil\'s Cake (Ganache meio-amargo)', 
-    'Zanza (Ganache meio-amargo e redução de frutas vermelhas)',
-    'Brunna (Brigadeiro de limão siciliano)', 
-    'Marilia (Brigadeiro meio-amargo)', 
-    'Hugo (Brigadeiro meio-amargo e Brigadeiro de ninho)', 
-    'Bia Benego (Cocada cremosa de coco queimado)', 
-    'Duda (Brigadeiro de Doce de leite)', 
-    'Giovanna (Brigadeiro de Pistache)', 
-    'Juliana (Creme 4 leites e redução de frutas vermelhas)', 
-    'Ana (Brigadeiro de limão siciliano e redução de frutas vermelhas)', 
-    'Stefan (Brigadeiro de pistache e Brigadeiro de limão siciliano)', 
-    'Dora (Brigadeiro de ninho e redução de frutas vermelhas)', 
-    'Gislaine (Brigadeiro meio-amargo e redução de morango)', 
-    'Nancy (Cocada cremosa e compota de abacaxi)', 
-    'Priscila (Ganache, caramelo salgado e amendoim tostado)', 
-    'Sara (Brigadeiro de maracujá e Ganache meio-amargo)', 
-    'Tiramissu (Creamcheese frosting e nuvem de cacau)', 
-    'João Donato (Ganache meio-amargo e cupuaçu)'
-  ];
-
-  const filteredRecheios = recheiosOptions
-    .filter(recheio => availableRecheios[massaSelecionada] && availableRecheios[massaSelecionada].includes(recheio))
-    .map(recheio => ({ value: createSlug(recheio), label: recheio }));
+  const filteredRecheios = recheioOptions
+    .filter(
+      (recheio) =>
+        availableRecheios[massaSelecionada] &&
+        availableRecheios[massaSelecionada].includes(recheio.label)
+    )
+    .map((recheio) => ({
+      value: recheio.value,
+      label: recheio.label,
+    }));
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="mb-8">
-        <h2 className="font-semibold tracking-wider text-lg text-blue">TAMANHO</h2>
+        <h2 className="font-semibold tracking-wider text-lg text-blue">
+          TAMANHO
+        </h2>
         <div className="flex flex-wrap mt-2 gap-2">
           {sizes.map((size) => (
             <Controller
@@ -88,25 +153,28 @@ const Step1 = () => {
                 <Button
                   type="button"
                   text={size}
-                  onClick={handleButtonClick('tamanho', size)}
-                  bgColor={getValues('tamanho') === size ? "bg-gradient-to-l from-darkGoldButton to-goldButton" : "bg-white"}
+                  onClick={handleButtonClick("tamanho", size)}
+                  bgColor={
+                    getValues("tamanho") === size
+                      ? "bg-gradient-to-l from-darkGoldButton to-goldButton"
+                      : "bg-white"
+                  }
                 />
               )}
             />
           ))}
         </div>
-        {/* Mantendo a estrutura alinhada sem alterações */}
-        <div style={{ height: '6px' }}>
+        <div style={{ height: "6px" }}>
           {errors.tamanho && (
-            <span className="text-red text-sm">
-              {errors.tamanho.message}
-            </span>
+            <span className="text-red text-sm">{errors.tamanho.message}</span>
           )}
         </div>
       </div>
 
       <div className="mb-8">
-        <h2 className="font-semibold tracking-wider text-lg text-blue">FORMATO</h2>
+        <h2 className="font-semibold tracking-wider text-lg text-blue">
+          FORMATO
+        </h2>
         <div className="flex mt-2 gap-2">
           {formats.map((format) => (
             <Controller
@@ -118,18 +186,20 @@ const Step1 = () => {
                 <Button
                   type="button"
                   text={format}
-                  onClick={handleButtonClick('formato', format)}
-                  bgColor={getValues('formato') === format ? "bg-gradient-to-l from-darkGoldButton to-goldButton" : "bg-white"}
+                  onClick={handleButtonClick("formato", format)}
+                  bgColor={
+                    getValues("formato") === format
+                      ? "bg-gradient-to-l from-darkGoldButton to-goldButton"
+                      : "bg-white"
+                  }
                 />
               )}
             />
           ))}
         </div>
-        <div style={{ height: '6px' }}>
+        <div style={{ height: "6px" }}>
           {errors.formato && (
-            <span className="text-red text-sm">
-              {errors.formato.message}
-            </span>
+            <span className="text-red text-sm">{errors.formato.message}</span>
           )}
         </div>
       </div>
@@ -141,30 +211,22 @@ const Step1 = () => {
           defaultValue=""
           rules={{ required: "Massa é obrigatória" }}
           render={({ field }) => (
-            <Select 
+            <Select
               {...field}
               label="MASSA"
-              options={[
-                { value: 'cacau', label: 'Cacau' },
-                { value: 'cacau_expresso', label: 'Cacau Expresso' },
-                { value: 'baunilha', label: 'Baunilha' },
-                { value: 'red_velvet', label: 'Red Velvet' }
-              ]}
+              options={massaOptions}
               placeholder="Selecione a massa"
               width="25%"
             />
           )}
         />
-        {/* Usaremos o estilo flexível para manter a altura */}
-        <div style={{ height: '6px' }}>
+        <div style={{ height: "6px" }}>
           {errors.massa && (
-            <span className="text-red text-sm">
-              {errors.massa.message}
-            </span>
+            <span className="text-red text-sm">{errors.massa.message}</span>
           )}
         </div>
       </div>
-      
+
       <div className="mb-12">
         <Controller
           name="recheio"
@@ -172,7 +234,7 @@ const Step1 = () => {
           defaultValue=""
           rules={{ required: "Recheio é obrigatório" }}
           render={({ field }) => (
-            <Select 
+            <Select
               {...field}
               label="RECHEIO"
               options={filteredRecheios}
@@ -181,17 +243,17 @@ const Step1 = () => {
             />
           )}
         />
-        <div style={{ height: '4px' }}>
+        <div style={{ height: "4px" }}>
           {errors.recheio && (
-            <span className="text-red text-sm">
-              {errors.recheio.message}
-            </span>
+            <span className="text-red text-sm">{errors.recheio.message}</span>
           )}
         </div>
       </div>
 
       <div className="flex justify-between items-center mt-">
-        <div className="text-gradient font-bold text-lg">VALOR ESTIMADO: R$ 999,99</div>
+        <div className="text-gradient font-bold text-lg">
+          VALOR ESTIMADO: R$ 999,99
+        </div>
         <Button
           text="Continuar"
           className="px-6 py-1"

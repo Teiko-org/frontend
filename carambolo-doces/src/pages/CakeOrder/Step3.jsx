@@ -5,8 +5,9 @@ import Button from "../../components/Button";
 import InputOption from "../../components/InputOption";
 
 const Step3 = () => {
-  const { nextStep, prevStep, appendFormData } = useContext(FormContext);
-  const { control, handleSubmit } = useFormContext();
+  const { nextStep, prevStep, appendFormData, formData } =
+    useContext(FormContext);
+  const { control, handleSubmit, getValues } = useFormContext();
 
   const handleNext = (data) => {
     const { adicionais } = data;
@@ -15,9 +16,18 @@ const Step3 = () => {
       .filter(([_, v]) => v)
       .map(([k]) => k.toUpperCase());
 
-    appendFormData({ adicionais: selecionados.join(",") });
+    const observacoesAnteriores = getValues("observacoes") || "";
+    const observacoesAtualizadas = `${observacoesAnteriores} Adicionais: ${selecionados.join(
+      ", "
+    )}`;
 
-    console.log("Step 3 data:", data);
+    appendFormData({ observacoes: observacoesAtualizadas }, "dadosMontagem");
+
+    console.log("Step 3 ", {
+      ...formData,
+      observacoes: observacoesAtualizadas,
+    });
+    console.log(data);
     nextStep();
   };
 
@@ -26,7 +36,12 @@ const Step3 = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit(handleNext)}>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        handleSubmit(handleNext)(e);
+      }}
+    >
       <div className="mb-4">
         <h2 className="font-semibold tracking-wider text-lg text-blue">
           ADICIONAIS

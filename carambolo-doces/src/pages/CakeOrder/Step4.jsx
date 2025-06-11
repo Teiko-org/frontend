@@ -11,20 +11,27 @@ import { searchAddressByCep } from "../../service/viaCepService";
 
 const Step4 = () => {
   const { nextStep, prevStep, appendFormData } = useContext(FormContext);
-  const { control, handleSubmit, setValue, watch } = useFormContext();
+  const {
+    control,
+    handleSubmit,
+    setValue,
+    clearErrors,
+    watch,
+    formState: { errors },
+  } = useFormContext();
 
   const onSubmit = (data) => {
-  const plainData = {
-    ...data,
-    data: data.data ? data.data.toString() : '',
-    horario: data.horario || '',
-    telefone: data.telefone || '',
-  };
+    const plainData = {
+      ...data,
+      data: data.data ? data.data.toString() : "",
+      horario: data.horario || "",
+      telefone: data.telefone || "",
+    };
 
-  appendFormData(plainData);
-  console.log("Step 4 data:", plainData);
-  nextStep();
-};
+    appendFormData(plainData, "dadosEntrega");
+    console.log("Step 4 data:", plainData);
+    nextStep();
+  };
 
   const handlePrev = () => {
     prevStep();
@@ -45,6 +52,7 @@ const Step4 = () => {
       setValue("numero", "");
       setValue("complemento", "");
     }
+    setValue("estado", "SP");
   }, [deliveryOption, setValue]);
 
   useEffect(() => {
@@ -56,6 +64,7 @@ const Step4 = () => {
   const handleCepChange = (value) => {
     const formattedValue = formatCep(value);
     setValue("cep", formattedValue);
+    clearErrors("cep");
 
     if (formattedValue.replace("-", "").length === 8) {
       fetchAddressByCep(formattedValue);
@@ -67,16 +76,26 @@ const Step4 = () => {
   const fetchAddressByCep = async (typedCep) => {
     await searchAddressByCep(
       typedCep.replace("-", ""),
-      (val) => setValue("estado", val),
-      (val) => setValue("cidade", val),
-      (val) => setValue("bairro", val),
-      (val) => setValue("rua", val),
+      () => {
+        setValue("estado", "SP");
+      },
+      (val) => {
+        setValue("cidade", val);
+        clearErrors("cidade");
+      },
+      (val) => {
+        setValue("bairro", val);
+        clearErrors("bairro");
+      },
+      (val) => {
+        setValue("rua", val);
+        clearErrors("rua");
+      },
       cleanAddressFields
     );
   };
 
   const cleanAddressFields = () => {
-    setValue("estado", "");
     setValue("cidade", "");
     setValue("bairro", "");
     setValue("rua", "");
@@ -112,6 +131,7 @@ const Step4 = () => {
                   onChange={() => {
                     field.onChange(option);
                     setValue("horario", null);
+                    clearErrors("deliveryOption");
                   }}
                 />
               )}
@@ -127,15 +147,25 @@ const Step4 = () => {
             name="nome"
             control={control}
             defaultValue=""
+            rules={{ required: "Nome é obrigatório" }}
             render={({ field }) => (
               <input
                 {...field}
                 placeholder="Inserir o seu nome"
                 className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                onChange={(e) => {
+                  field.onChange(e);
+                  clearErrors("nome");
+                }}
                 onKeyPress={preventEnterSubmit}
               />
             )}
           />
+          <div style={{ height: "14px" }}>
+            {errors.nome && (
+              <span className="text-red text-xs">{errors.nome.message}</span>
+            )}
+          </div>
         </div>
         <div className="col-span-4">
           <label className="block text-blue font-semibold mb-1">Telefone</label>
@@ -144,32 +174,53 @@ const Step4 = () => {
               name="telefone"
               control={control}
               defaultValue=""
+              rules={{ required: "Telefone é obrigatório" }}
               render={({ field }) => (
                 <PhoneNumberInput
                   {...field}
                   placeholder="(XX) X XXXX-XXXX"
                   className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                  onChange={(e) => {
+                    field.onChange(e);
+                    clearErrors("telefone");
+                  }}
                   onKeyPress={preventEnterSubmit}
                 />
               )}
             />
           </CampoComGradiente>
+          <div style={{ height: "14px" }}>
+            {errors.telefone && (
+              <span className="text-red text-xs">
+                {errors.telefone.message}
+              </span>
+            )}
+          </div>
         </div>
         <div className="col-span-2">
           <Controller
             name="data"
             control={control}
             defaultValue={null}
+            rules={{ required: "Data é obrigatória" }}
             render={({ field }) => (
               <CustomDatePicker
                 value={field.value}
-                onChange={field.onChange}
+                onChange={(date) => {
+                  field.onChange(date);
+                  clearErrors("data");
+                }}
                 label="Data"
                 placeholder="DD/MM"
                 onKeyPress={preventEnterSubmit}
               />
             )}
           />
+          <div style={{ height: "14px" }}>
+            {errors.data && (
+              <span className="text-red text-xs">{errors.data.message}</span>
+            )}
+          </div>
         </div>
 
         {deliveryOption === "Entrega" && (
@@ -180,6 +231,7 @@ const Step4 = () => {
                 name="cep"
                 control={control}
                 defaultValue=""
+                rules={{ required: "CEP é obrigatório" }}
                 render={({ field }) => (
                   <input
                     {...field}
@@ -201,12 +253,17 @@ const Step4 = () => {
                   Clique Aqui
                 </a>
               </span>
+              <div style={{ height: "14px" }}>
+                {errors.cep && (
+                  <span className="text-red text-xs">{errors.cep.message}</span>
+                )}
+              </div>
             </div>
             <div className="col-span-2">
               <Controller
                 name="estado"
                 control={control}
-                defaultValue=""
+                defaultValue="SP"
                 render={({ field }) => (
                   <Select
                     {...field}
@@ -226,14 +283,26 @@ const Step4 = () => {
                 name="cidade"
                 control={control}
                 defaultValue=""
+                rules={{ required: "Cidade é obrigatória" }}
                 render={({ field }) => (
                   <input
                     {...field}
                     className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                    onChange={(e) => {
+                      field.onChange(e);
+                      clearErrors("cidade");
+                    }}
                     onKeyPress={preventEnterSubmit}
                   />
                 )}
               />
+              <div style={{ height: "14px" }}>
+                {errors.cidade && (
+                  <span className="text-red text-xs">
+                    {errors.cidade.message}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="col-span-3">
               <label className="block text-blue font-semibold mb-1">
@@ -243,14 +312,26 @@ const Step4 = () => {
                 name="bairro"
                 control={control}
                 defaultValue=""
+                rules={{ required: "Bairro é obrigatório" }}
                 render={({ field }) => (
                   <input
                     {...field}
                     className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                    onChange={(e) => {
+                      field.onChange(e);
+                      clearErrors("bairro");
+                    }}
                     onKeyPress={preventEnterSubmit}
                   />
                 )}
               />
+              <div style={{ height: "14px" }}>
+                {errors.bairro && (
+                  <span className="text-red text-xs">
+                    {errors.bairro.message}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="col-span-8">
@@ -261,14 +342,24 @@ const Step4 = () => {
                 name="rua"
                 control={control}
                 defaultValue=""
+                rules={{ required: "Endereço é obrigatório" }}
                 render={({ field }) => (
                   <input
                     {...field}
                     className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                    onChange={(e) => {
+                      field.onChange(e);
+                      clearErrors("rua");
+                    }}
                     onKeyPress={preventEnterSubmit}
                   />
                 )}
               />
+              <div style={{ height: "14px" }}>
+                {errors.rua && (
+                  <span className="text-red text-xs">{errors.rua.message}</span>
+                )}
+              </div>
             </div>
             <div className="col-span-3">
               <label className="block text-blue font-semibold mb-1">
@@ -278,14 +369,26 @@ const Step4 = () => {
                 name="numero"
                 control={control}
                 defaultValue=""
+                rules={{ required: "Número é obrigatório" }}
                 render={({ field }) => (
                   <input
                     {...field}
                     className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                    onChange={(e) => {
+                      field.onChange(e);
+                      clearErrors("numero");
+                    }}
                     onKeyPress={preventEnterSubmit}
                   />
                 )}
               />
+              <div style={{ height: "14px" }}>
+                {errors.numero && (
+                  <span className="text-red text-xs">
+                    {errors.numero.message}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="col-span-8">
@@ -300,6 +403,10 @@ const Step4 = () => {
                   <input
                     {...field}
                     className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                    onChange={(e) => {
+                      field.onChange(e);
+                      clearErrors("complemento");
+                    }}
                     onKeyPress={preventEnterSubmit}
                   />
                 )}
@@ -313,6 +420,7 @@ const Step4 = () => {
               name="horario"
               control={control}
               defaultValue=""
+              rules={{ required: "Horário é obrigatório" }}
               render={({ field }) => (
                 <Select
                   {...field}
@@ -324,15 +432,26 @@ const Step4 = () => {
                     { value: "18:30", label: "18:30" },
                     { value: "19:00", label: "19:00" },
                   ]}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    clearErrors("horario");
+                  }}
                   onKeyPress={preventEnterSubmit}
                 />
               )}
             />
+            <div style={{ height: "14px" }}>
+              {errors.horario && (
+                <span className="text-red text-xs">
+                  {errors.horario.message}
+                </span>
+              )}
+            </div>
           </div>
         )}
       </div>
 
-      <div className="flex justify-between items-center mt-16">
+      <div className="flex justify-between items-center mt-4">
         <div className="text-gradient font-bold text-lg">
           VALOR ESTIMADO: R$ 999,99
         </div>
