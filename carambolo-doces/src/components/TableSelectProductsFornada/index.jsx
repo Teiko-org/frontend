@@ -34,11 +34,11 @@ export default function TableSelectProductsFornada() {
     try {
       const response = await productsFornadasService();
       console.log(response);
-      // Garante que sempre temos um array, mesmo que vazio
+      
       setProducts(Array.isArray(response) ? response : []);
     } catch (error) {
       console.log(error);
-      // Em caso de erro, define como array vazio
+      
       setProducts([]);
     }
   };
@@ -136,7 +136,7 @@ export default function TableSelectProductsFornada() {
                     align={column.align}
                     style={{ minWidth: column.minWidth }}
                     sx={{
-                      backgroundColor: "#f8f9fa",
+                      backgroundColor: "#FFE7DD",
                       fontWeight: "bold",
                       boxShadow: "none",
                       borderBottom: "1px solid #C8A882",

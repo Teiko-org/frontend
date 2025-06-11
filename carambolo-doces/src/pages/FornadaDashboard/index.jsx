@@ -69,7 +69,7 @@ function FornadaDashboard() {
       type: "success",
     });
     setTimeout(() => {
-      navigate("/dashboard-pedidos-kanban");
+      navigate("/dashboard-kanban-pedidos");
     }, 3000);
   };
 
