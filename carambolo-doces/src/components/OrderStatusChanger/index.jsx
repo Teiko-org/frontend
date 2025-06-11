@@ -6,13 +6,6 @@ import {
 } from "../../service/orderSummaryStatus.js";
 
 function OrderStatusChanger(props) {
-    const statusList = [
-        { label: "Cancelado", value: "CANCELADO", className: "bg-red", onclick: () => changeStatus("CANCELADO") },
-        { label: "Pendente", value: "PENDENTE", className: "bg-yellow-700", onclick: () => changeStatus("PENDENTE") },
-        { label: "Pago", value: "PAGO", className: "bg-light-blue-300", onclick: () => changeStatus("PAGO") },
-        { label: "Concluído", value: "CONCLUIDO", className: "bg-light-green-700", onclick: () => changeStatus("CONCLUIDO") },
-    ];
-
     const changeStatus = async (status) => {
         try {
             let resposta;
@@ -31,6 +24,13 @@ function OrderStatusChanger(props) {
             console.error("Erro ao alterar o status do pedido:", error);
         }
     };
+
+    const statusList = [
+        { label: "Cancelado", value: "CANCELADO", className: "bg-red", onclick: () => changeStatus("CANCELADO") },
+        { label: "Pendente", value: "PENDENTE", className: "bg-yellow-700", onclick: () => changeStatus("PENDENTE") },
+        { label: "Pago", value: "PAGO", className: "bg-light-blue-300", onclick: () => changeStatus("PAGO") },
+        { label: "Concluído", value: "CONCLUIDO", className: "bg-light-green-700", onclick: () => changeStatus("CONCLUIDO") },
+    ];
 
     return (
         <div className="bg-gradient-blue p-1 w-60 h-fit border border-gold rounded-lg sticky top-0">
