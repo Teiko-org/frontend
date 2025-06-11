@@ -1,14 +1,84 @@
 import React, { useState, useEffect } from 'react';
+import { getFornadaAtiva } from '../../service/fornadaService';
 
-const BannerFornada = () => {
-  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+const BannerFornada = ({ fornada }) => {
+  const [fornadaData, setFornadaData] = useState(fornada);
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
+    if (!fornada) {
+      const fetchFornadaAtiva = async () => {
+        try {
+          const fornadaAtiva = await getFornadaAtiva();
+          if (fornadaAtiva && fornadaAtiva.dataFim) {
+            setFornadaData(fornadaAtiva);
+          }
+        } catch (error) {
+          console.error('Erro ao buscar fornada ativa:', error);
+        }
+      };
+      fetchFornadaAtiva();
+    } else {
+      setFornadaData(fornada);
+    }
+  }, [fornada]);
+
+  useEffect(() => {
+    if (!fornadaData || !fornadaData.dataFim) {
+      return;
+    }
+
+    const calculateTimeLeft = () => {
+      let endDate;
+      const dataFim = fornadaData.dataFim;
+      
+      if (dataFim.includes('T') || dataFim.includes(' ')) {
+        endDate = new Date(dataFim);
+      } else {
+        endDate = new Date(dataFim + "T23:59:59");
+      }
+      
+      if (isNaN(endDate.getTime())) {
+        console.error('❌ Data inválida para timer:', dataFim);
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+      
+      const now = new Date();
+      const difference = endDate.getTime() - now.getTime();
+
+      if (difference > 0) {
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((difference / 1000 / 60) % 60);
+        const seconds = Math.floor((difference / 1000) % 60);
+
+        setTimeLeft({ days, hours, minutes, seconds });
+      } else {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      }
+    };
+
+    calculateTimeLeft();
+    
+    const timer = setInterval(calculateTimeLeft, 1000);
+    
     return () => clearInterval(timer);
-  }, []);
+  }, [fornadaData]);
+
+  const formatEndDate = () => {
+    if (!fornadaData || !fornadaData.dataFim) {
+      return "";
+    }
+    
+    const date = new Date(fornadaData.dataFim);
+    return date.toLocaleDateString('pt-BR');
+  };
 
   return (
     <section className="relative h-[150px] w-full bg-cover bg-center m-auto items-end" style={{ backgroundImage: 'url(src/assets/img_banner_fornada.png)' }}>
@@ -16,37 +86,20 @@ const BannerFornada = () => {
         <div className="text-white flex flex-col w-1/2 mx-auto">
           <h2 className="text-xl font-bold mb-2 text-pink">Fornada</h2>
           <p>Aproveite a nossa Fornada com doces exclusivos!</p>
-          <p>Disponível por tempo limitado até 02/05/2025</p>
+          <p>Disponível por tempo limitado até {formatEndDate()}</p>
         </div>
         <div className="text-white text-2xl flex gap-x-8">
-          <span>{timeLeft.days || '0'}D</span>
+          <span>{String(timeLeft.days).padStart(2, '0')}D</span>
           <span>:</span>
-          <span>{timeLeft.hours || '0'}H</span>
+          <span>{String(timeLeft.hours).padStart(2, '0')}H</span>
           <span>:</span>
-          <span>{timeLeft.minutes || '0'}M</span>
+          <span>{String(timeLeft.minutes).padStart(2, '0')}M</span>
           <span>:</span>
-          <span>{timeLeft.seconds || '0'}S</span>
+          <span>{String(timeLeft.seconds).padStart(2, '0')}S</span>
         </div>
       </div>
     </section>
   );
-};
-
-const calculateTimeLeft = () => {
-  const endDate = new Date("2025-05-02:00:00");
-  const difference = +endDate - +new Date();
-  let timeLeft = {};
-
-  if (difference > 0) {
-    timeLeft = {
-      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-      minutes: Math.floor((difference / 1000 / 60) % 60),
-      seconds: Math.floor((difference / 1000) % 60),
-    };
-  }
-
-  return timeLeft;
 };
 
 export default BannerFornada;

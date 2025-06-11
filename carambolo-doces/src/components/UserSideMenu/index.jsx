@@ -1,31 +1,61 @@
 import React, { useEffect, useState } from "react";
-import Button from "../../components/Button";
-import { LuUpload } from "react-icons/lu";
-import ModalConfirmationLogOff from "../../components/ModalConfirmationLogOff";
+import ProfileImageUpload from "../../components/InputImage/ProfileImageUpload";
 import { useNavigate } from "react-router-dom";
+import { getUserData } from "../../service/userService";
 
 function UserSideMenu() {
   const navigate = useNavigate();
+  const [userData, setUserData] = useState({ imagemUrl: null });
 
   useEffect(() => {
     let statusLogOn = localStorage.getItem("IS_SIGNED");
 
     if (!statusLogOn) {
       navigate("/");
+      return;
     }
+
+    const loadUserData = async () => {
+      const userId = localStorage.getItem("userId");
+      if (userId) {
+        try {
+          console.log("Carregando dados do usuário no UserSideMenu...");
+          const data = await getUserData(userId);
+          console.log("Dados recebidos no UserSideMenu:", data);
+          setUserData(data);
+        } catch (error) {
+          console.error("Erro ao carregar dados:", error);
+        }
+      }
+    };
+
+    loadUserData();
+
+    const handleImageUpdateEvent = () => {
+      console.log("Evento de atualização de imagem detectado no UserSideMenu");
+      loadUserData();
+    };
+
+    window.addEventListener("userImageUpdated", handleImageUpdateEvent);
+
+    return () => {
+      window.removeEventListener("userImageUpdated", handleImageUpdateEvent);
+    };
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("IS_SIGNED");
-    localStorage.removeItem("TOKEN_JWT");
-    window.dispatchEvent(new Event("storage")); // Força a "notificação" do evento
+    localStorage.removeItem("userId");
+    localStorage.removeItem("JWT_TOKEN");
+    localStorage.removeItem("userData");
+    
+    window.dispatchEvent(new Event("storage")); 
     navigate("/");
   };
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  const handleProfileImageUpdate = (newImageUrl) => {
+    setUserData(prev => ({ ...prev, imagemUrl: newImageUrl }));
+  };
 
   return (
     <div className={`w-[450px] px-10 bg-bgHome border-r-2 border-r-gold`}>
@@ -34,20 +64,11 @@ function UserSideMenu() {
       </header>
 
       <div className="flex flex-col items-center gap-10 mb-10">
-        <div className="flex flex-col items-center justify-around mb-6 gap-5">
-          <img
-            width={190}
-            src="src/assets/user_icon.png"
-            alt="Ícone de Usuário"
-          />
-          <Button
-            text={
-              <span className="flex items-center gap-3 p-1">
-                Enviar Imagem <LuUpload />
-              </span>
-            }
-          />
-        </div>
+        <ProfileImageUpload
+          currentImageUrl={userData.imagemUrl}
+          userId={localStorage.getItem("userId")}
+          onImageUpdate={handleProfileImageUpdate}
+        />
 
         <div className="flex flex-col gap-3 mb-10">
           <button
@@ -70,7 +91,6 @@ function UserSideMenu() {
         >
           Desconectar
         </button>
-        {isModalOpen && <ModalConfirmationLogOff onClose={closeModal} />}
       </footer>
     </div>
   );

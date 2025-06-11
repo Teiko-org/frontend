@@ -3,6 +3,7 @@ import { Search, ShoppingCart, ChevronDown } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../Button";
 import LoginModal from "../LoginModal";
+import ProfileImageDisplay from "../InputImage/ProfileImageDisplay";
 
 function Header() {
 
@@ -60,11 +61,11 @@ function Header() {
                   borderColor="border-gold"
                   onClick={openModal}
                 />) : (
-                  <button>
-                    <img
-                      src="src/assets/user_icon.png"
-                      width={"50px"}
-                      onClick={() => navigate('/pagina-usuario')}
+                  <button onClick={() => navigate('/pagina-usuario')}>
+                    <ProfileImageDisplay
+                      userId={localStorage.getItem("userId")}
+                      size={50}
+                      className="border-2 border-gold hover:border-darkGold transition-colors cursor-pointer"
                     />
                   </button>)
             }
@@ -87,9 +88,9 @@ function Header() {
         <a href="/fornada" className="hover:text-darkGold">
           FORNADA DA SEMANA
         </a>
-        <a href="#" className="hover:text-darkGold">
+        {/* <a href="#" className="hover:text-darkGold">
           DATAS ESPECIAIS
-        </a>
+        </a> */}
       </div>
 
       {isModalOpen && <LoginModal onClose={closeModal} />}

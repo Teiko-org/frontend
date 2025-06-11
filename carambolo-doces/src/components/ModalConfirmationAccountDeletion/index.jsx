@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import ModalBase from "../ModalBase";
 import Button from "../Button";
 
-function ModalConfirmationAccountDeletion({ onClose }) {
+function ModalConfirmationAccountDeletion({ onClose, onDelete }) {
 
   return (
     <>
@@ -19,7 +19,7 @@ function ModalConfirmationAccountDeletion({ onClose }) {
             fontSize="text-lg"
             textColor="text-white"
             borderColor="border-red"
-            // onClick={onClose}
+            onClick={onDelete}
             className="w-[120px]"
           />
 

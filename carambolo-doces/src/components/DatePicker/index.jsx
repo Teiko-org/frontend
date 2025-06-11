@@ -28,6 +28,8 @@ const CustomDatePicker = React.forwardRef(({ label, placeholder, value, onChange
     if (date instanceof Date && !isNaN(date.valueOf())) {
       const formattedDate = formatDateForBackend(date);
       onChange(formattedDate);
+    } else if (date === null) {
+      onChange('');
     }
   };
 

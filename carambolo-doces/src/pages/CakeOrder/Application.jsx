@@ -26,6 +26,20 @@ const Application = () => {
   const StepComponent = steps[currentStep - 1];
 
   useEffect(() => {
+    // Preenche os campos do Step1 se houver bolo selecionado
+    const selectedBolo = localStorage.getItem('selectedBolo');
+    if (selectedBolo) {
+      try {
+        const bolo = JSON.parse(selectedBolo);
+        // Aguarda o Step1 montar e preenche os campos
+        setTimeout(() => {
+          const event = new CustomEvent('fillStep1FromBolo', { detail: bolo });
+          window.dispatchEvent(event);
+        }, 100);
+        // Limpa o localStorage para não preencher novamente ao navegar
+        localStorage.removeItem('selectedBolo');
+      } catch (e) {}
+    }
     window.scrollTo(0, 0);
   }, []);
 
