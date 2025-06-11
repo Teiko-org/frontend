@@ -12,6 +12,7 @@ function ColumnOrder(props) {
 
             {(props.orderFilter || []).map((order) => (
               <CardOrder
+                key={order.id}
                 order={order}
                 orderStatus={props.status}
                 orderSummaryId={order.id}

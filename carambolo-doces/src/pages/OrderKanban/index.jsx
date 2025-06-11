@@ -52,7 +52,7 @@ const generateReport = async () => {
     <div className="flex bg-bgNativeHome">
       <BarraLateralDashboard />
 
-      <div className="w-full">
+      <div className="w-full pl-56">
         <header className="pb-5">
           <HeaderDashboard title={"Pedidos"} />
         </header>
