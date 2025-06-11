@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Upload } from "lucide-react";
-import { RiFileTextLine } from "react-icons/ri";
+import { X } from "lucide-react";
 import Button from "../Button";
 import InputOption from "../InputOption";
 import axios from "axios";
@@ -34,7 +33,6 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
 
     useEffect(() => {
         if (!isOpen) return;
-        // Preenche campos ao abrir
         setNome(produto?.produto || "");
         setCategoria(produto?.categoria || "");
         setValor(produto?.valor || "");
@@ -43,7 +41,12 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
         setMassa(produto?.massaId || "");
         setRecheioPedido(produto?.recheioPedidoId || "");
         setCobertura(produto?.coberturaId || "");
-        setFormato(produto?.formato || "");
+        // Corrige aqui: só seta formato se for válido
+        setFormato(
+            produto?.formato === "CIRCULO" || produto?.formato === "CORACAO"
+                ? produto?.formato
+                : ""
+        );
         setTamanho(produto?.tamanho || "");
         setDecoracao(produto?.decoracaoId || "");
         setFilePreview(produto?.imagemUrl || null);
@@ -57,7 +60,11 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
             axios.get("http://localhost:8080/bolos/recheio-exclusivo").then(res => setRecheiosDisponiveis(res.data));
         }
         axios.get("http://localhost:8080/bolos/cobertura").then(res => setCoberturasDisponiveis(res.data));
-        axios.get("http://localhost:8080/bolos/formatos").then(res => setFormatosDisponiveis(res.data));
+        axios.get("http://localhost:8080/bolos/formatos").then(res => {
+            // Filtra apenas os formatos válidos
+            const validos = res.data.filter(f => f === "CIRCULO" || f === "CORACAO");
+            setFormatosDisponiveis(validos);
+        });
         axios.get("http://localhost:8080/bolos/tamanhos").then(res => setTamanhosDisponiveis(res.data));
         axios.get("http://localhost:8080/decoracoes").then(res => setDecoracoesDisponiveis(res.data));
     }, [isOpen, categoria]);
@@ -76,30 +83,52 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
         try {
             if (categoria.toLowerCase().includes("fornada")) {
                 // Atualiza produto de fornada
-                const formData = new FormData();
-                formData.append("produto", nome);
-                formData.append("descricao", descricao);
-                formData.append("valor", valor);
-                formData.append("categoria", categoria);
-                formData.append("quantidade", quantidade);
-                if (file) formData.append("imagens", file);
-                await axios.put(`http://localhost:8080/fornadas/produto-fornada/${produto.id}`, formData);
-            } else {
+                const data = {
+                    id: produto.id,
+                    produto: nome,
+                    descricao,
+                    valor: Number(valor),
+                    categoria,
+                };
+                await axios.put(`http://localhost:8080/fornadas/produto-fornada/${produto.id}`, data, {
+                    headers: { "Content-Type": "application/json" }
+                });
+            } else if (categoria.toLowerCase().includes("carambolo")) {
+                // Atualiza decoração antes do bolo
+                if (formato !== "CIRCULO" && formato !== "CORACAO") {
+                    alert("Selecione um formato válido!");
+                    return;
+                }
+                // Atualiza decoração
+                const decoracaoIdToUpdate = produto?.decoracaoId || decoracao;
+                let nomeDecoracao = nome;
+                if (decoracaoIdToUpdate) {
+                    await axios.put(`http://localhost:8080/decoracoes/${decoracaoIdToUpdate}`, {
+                        nome: nome,
+                        observacao: descricao
+                    }, {
+                        headers: { "Content-Type": "application/json" }
+                    });
+                    // Atualiza o nome da decoração para o payload do bolo
+                    nomeDecoracao = nome;
+                }
                 // Atualiza bolo (carambolo)
                 const data = {
-                    nome,
-                    preco: valor,
-                    categoria,
-                    massaId: massa ? Number(massa) : null,
+                    produto: nomeDecoracao, // <-- Adicione esta linha!
                     recheioPedidoId: recheioPedido ? Number(recheioPedido) : null,
+                    massaId: massa ? Number(massa) : null,
                     coberturaId: cobertura ? Number(cobertura) : null,
                     decoracaoId: decoracao ? Number(decoracao) : null,
-                    formato,
-                    tamanho,
+                    formato: formato || null,
+                    tamanho: tamanho || null,
+                    categoria,
                 };
                 await axios.put(`http://localhost:8080/bolos/${produto.id}`, data, {
                     headers: { "Content-Type": "application/json" }
                 });
+            } else {
+                alert("Categoria inválida! Informe se é Fornada ou Carambolo.");
+                return;
             }
             alert("Produto atualizado com sucesso!");
             onProdutoEditado && onProdutoEditado();
@@ -121,53 +150,31 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
                         <X size={26} />
                     </button>
                 </header>
-                <section className="flex px-8 gap-8 py-4 h-[557px] overflow-y-auto">
-                    {/* Imagem */}
-                    <div className="w-1/2 flex flex-col items-center justify-center gap-4">
-                        <div className="flex flex-col gap-4 items-center border-[3px] border-[#d6a87c] rounded-md p-2 px-1 w-72 h-80">
-                            <div className="border-2 border-dashed border-[#d6a87c] rounded-md p-4 flex flex-col items-center justify-center gap-3 bg-white w-64 h-64 overflow-hidden">
-                                {filePreview ? (
-                                    <img src={filePreview} alt="Prévia" className="w-full h-full object-contain rounded-md" />
-                                ) : (
-                                    <RiFileTextLine size={100} className="text-goldCard" />
-                                )}
-                            </div>
-                            <Button type="button" className="text-sm flex flex-row gap-2 items-center" onClick={exibirImagem}>
-                                <Upload size={16} /> Trocar Imagem
-                            </Button>
-                            <input type="file" ref={imagemRef} accept="image/*" className="hidden" onChange={anexarImagem} />
-                        </div>
-                    </div>
+                <section className="flex justify-center px-8 gap-8 py-4 h-[557px] overflow-y-auto">
                     {/* Inputs */}
                     <div className="w-1/2 text-sm flex flex-col justify-start overflow-y-auto pr-2 gap-4">
                         {/* Campos comuns */}
                         <div className="flex flex-col gap-1">
                             <label className="font-medium">Nome do produto</label>
-                            <input type="text" value={nome} onChange={e => setNome(e.target.value)} className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]" />
+                            <input type="text" value={nome} onChange={e => setNome(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]" />
                         </div>
                         <div className="flex flex-col gap-1">
                             <label className="font-medium">Categoria</label>
-                            <input type="text" value={categoria} onChange={e => setCategoria(e.target.value)} className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]" />
+                            <input type="text" value={categoria} onChange={e => setCategoria(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]" />
                         </div>
                         <div className="flex flex-col gap-1">
                             <label className="font-medium">Valor</label>
-                            <input type="number" step="0.01" value={valor} onChange={e => setValor(e.target.value)} className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]" />
+                            <input type="number" step="0.01" value={valor} onChange={e => setValor(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]" />
                         </div>
                         <div className="flex flex-col gap-1">
                             <label className="font-medium">Descrição</label>
-                            <textarea value={descricao} onChange={e => setDescricao(e.target.value)} className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]" />
+                            <textarea value={descricao} onChange={e => setDescricao(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]" />
                         </div>
-                        {categoria.toLowerCase().includes("fornada") && (
-                            <div className="flex flex-col gap-1">
-                                <label className="font-medium">Quantidade</label>
-                                <input type="number" value={quantidade} onChange={e => setQuantidade(e.target.value)} className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]" />
-                            </div>
-                        )}
                         {categoria.toLowerCase().includes("carambolo") && (
                             <>
                                 <div className="flex flex-col gap-1">
                                     <label className="font-medium">Massa</label>
-                                    <select value={massa} onChange={e => setMassa(e.target.value)} className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]">
+                                    <select value={massa} onChange={e => setMassa(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]">
                                         <option value="">Selecione uma massa</option>
                                         {massasDisponiveis.map((m) => (
                                             <option key={m.id} value={m.id}>{m.sabor}</option>
@@ -176,7 +183,7 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <label className="font-medium">Recheio</label>
-                                    <select value={recheioPedido} onChange={e => setRecheioPedido(e.target.value)} className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]">
+                                    <select value={recheioPedido} onChange={e => setRecheioPedido(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]">
                                         <option value="">Selecione um recheio</option>
                                         {recheiosDisponiveis.map((r) => (
                                             <option key={r.id} value={r.id}>{r.nome}</option>
@@ -185,7 +192,7 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <label className="font-medium">Cobertura</label>
-                                    <select value={cobertura} onChange={e => setCobertura(e.target.value)} className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]">
+                                    <select value={cobertura} onChange={e => setCobertura(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]">
                                         <option value="">Selecione uma cobertura</option>
                                         {coberturasDisponiveis.map((c) => (
                                             <option key={c.id} value={c.id}>{c.descricao}</option>
@@ -194,7 +201,7 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <label className="font-medium">Formato</label>
-                                    <select value={formato} onChange={e => setFormato(e.target.value)} className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]">
+                                    <select value={formato} onChange={e => setFormato(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]">
                                         <option value="">Selecione um formato</option>
                                         {formatosDisponiveis.map((f) => (
                                             <option key={f} value={f}>{f.charAt(0).toUpperCase() + f.slice(1).toLowerCase()}</option>
@@ -203,7 +210,7 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <label className="font-medium">Tamanho</label>
-                                    <select value={tamanho} onChange={e => setTamanho(e.target.value)} className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]">
+                                    <select value={tamanho} onChange={e => setTamanho(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]">
                                         <option value="">Selecione um tamanho</option>
                                         {tamanhosDisponiveis.map((t) => (
                                             <option key={t.id ?? t.nome ?? t} value={t.id ?? t.nome ?? t}>{(t.nome ?? t.toString()).charAt(0).toUpperCase() + (t.nome ?? t.toString()).slice(1).toLowerCase()}</option>
@@ -212,7 +219,7 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
                                 </div>
                                 <div className="flex flex-col gap-1">
                                     <label className="font-medium">Decoração</label>
-                                    <select value={decoracao} onChange={e => setDecoracao(e.target.value)} className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]">
+                                    <select value={decoracao} onChange={e => setDecoracao(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]">
                                         <option value="">Selecione uma decoração</option>
                                         {decoracoesDisponiveis.map((d) => (
                                             <option key={d.id} value={d.id}>{d.nome}</option>
@@ -221,7 +228,7 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
                                 </div>
                             </>
                         )}
-                        <Button type="submit" className="w-fit self-end">Salvar Alterações</Button>
+                        <Button type="submit" className="w-full">Salvar Alterações</Button>
                     </div>
                 </section>
             </form>
