@@ -7,8 +7,8 @@ import ArrowButton from "../../components/ButtonArrow";
 import Button from "../../components/Button";
 import BannerPrincipal from "../../components/BannerPrincipal";
 import BannerFornada from "../../components/BannerFornada";
-import { getFornadaAtiva, getProdutosPorFornadaId } from "../../service/fornadaService";
-import { getBolosPorCategoria } from "../../service/boloService";
+import { getFornadaAtiva, getProdutosFornadaComImagens } from "../../service/fornadaService";
+import { getBolosComImagens } from "../../service/boloService";
 import './cardsTransition.css';
 
 function Home() {
@@ -35,7 +35,7 @@ function Home() {
   useEffect(() => {
     const fetchBolos = async () => {
       try {
-        const data = await getBolosPorCategoria();
+        const data = await getBolosComImagens();
         setBolos(data);
       } catch (error) {
         console.error("Erro ao carregar bolos:", error);
@@ -48,7 +48,7 @@ function Home() {
         
         if (fornadaAtual) {
           setFornada(fornadaAtual);
-          const produtos = await getProdutosPorFornadaId(fornadaAtual.id);
+          const produtos = await getProdutosFornadaComImagens(fornadaAtual.id);
           setProdutosFornada(produtos.slice(0, 4)); // Limita a 4 produtos na home
         }
       } catch (error) {
@@ -82,6 +82,7 @@ function Home() {
                   type="Bolo"
                   nome={bolo.produto}
                   preco={bolo.precoTotal}
+                  boloData={bolo}
                 />
               ))
             ) : (

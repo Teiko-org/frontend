@@ -3,7 +3,7 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Card from "../../components/Card";
 import BannerFornada from "../../components/BannerFornada";
-import { getFornadaAtiva, getProdutosPorFornadaId } from "../../service/fornadaService";
+import { getFornadaAtiva, getProdutosFornadaComImagens } from "../../service/fornadaService";
 import { toast } from "react-toastify";
 
 function FornadaSemana() {
@@ -26,7 +26,7 @@ function FornadaSemana() {
         
         setFornada(fornadaAtual);
         
-        const produtosFornada = await getProdutosPorFornadaId(fornadaAtual.id);
+        const produtosFornada = await getProdutosFornadaComImagens(fornadaAtual.id);
         
         setProdutos(produtosFornada);
         

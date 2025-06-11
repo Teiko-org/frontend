@@ -33,14 +33,49 @@ export default function ModalCadastroProduto() {
     const [tamanhosDisponiveis, setTamanhosDisponiveis] = useState([]);
     const [decoracoesDisponiveis, setDecoracoesDisponiveis] = useState([]);
 
+    // Função para buscar decorações - separada para reutilização
+    const fetchDecoracoes = async () => {
+        try {
+            const token = localStorage.getItem('JWT_TOKEN');
+            let config = {};
+            
+            if (token && token.trim() !== '') {
+                try {
+                    config.headers = { Authorization: `Bearer ${token}` };
+                    const response = await axios.get("http://localhost:8080/decoracoes", config);
+                    console.log("Decorações:", response.data);
+                    setDecoracoesDisponiveis(response.data);
+                    return;
+                } catch (authError) {
+                    console.warn("Erro com autenticação ao buscar decorações, tentando sem token:", authError);
+                }
+            }
+            
+            // Tenta sem autenticação
+            const response = await axios.get("http://localhost:8080/decoracoes");
+            console.log("Decorações:", response.data);
+            setDecoracoesDisponiveis(response.data);
+        } catch (error) {
+            console.error("Erro ao buscar decorações:", error);
+        }
+    };
+
     const anexarImagem = (e) => {
+        console.log("anexarImagem chamada, categoria atual:", categoria);
         const img = e.target.files[0];
+        console.log("Arquivo selecionado:", img);
         if (img) {
             setFile(img);
             setFilePreview(URL.createObjectURL(img));
+            console.log("Arquivo definido no estado:", img.name);
         }
     };
-    const exibirImagem = () => imagemRef.current?.click();
+    
+    const exibirImagem = () => {
+        console.log("exibirImagem chamada, categoria atual:", categoria);
+        console.log("imagemRef.current:", imagemRef.current);
+        imagemRef.current?.click();
+    };
 
     const alterarObservacao = (opcao) =>
         observacao.includes(opcao)
@@ -48,6 +83,11 @@ export default function ModalCadastroProduto() {
             : setObservacao([...observacao, opcao]);
 
     useEffect(() => {
+        // Limpar estados quando categoria muda
+        console.log("useEffect categoria mudou para:", categoria);
+        setFile(null);
+        setFilePreview(null);
+        
         if (categoria === "Carambolo") {
             axios
                 .get("http://localhost:8080/bolos/massa")
@@ -87,18 +127,15 @@ export default function ModalCadastroProduto() {
                 setTamanhosDisponiveis(res.data))
             .catch(err => console.error("Erro ao buscar tamanhos:", err));
 
-            axios.get("http://localhost:8080/decoracoes")
-            .then(res =>
-                console.log("Decorações:", res.data) ||
-                setDecoracoesDisponiveis(res.data))
-            .catch(err => console.error("Erro ao buscar decorações:", err));
+        // Buscar decorações com autenticação
+        fetchDecoracoes();
     }, [categoria]);
 
 
     const cadastrarDecoracao = async (e) => {
         e?.preventDefault?.();
 
-        console.log("nomeDecoracao:", nomeDecoracao); // <-- Adicione isso
+        console.log("nomeDecoracao:", nomeDecoracao);
 
         if (!nomeDecoracao) {
             alert("Preencha o nome da decoração!");
@@ -111,12 +148,67 @@ export default function ModalCadastroProduto() {
         if (file) formData.append("imagens", file);
 
         try {
-            const response = await axios.post("http://localhost:8080/decoracoes", formData);
+            const token = localStorage.getItem('JWT_TOKEN');
+            let config = {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            };
+            
+            // Primeiro tenta com autenticação se houver token
+            if (token && token.trim() !== '') {
+                try {
+                    config.headers.Authorization = `Bearer ${token}`;
+                    const response = await axios.post("http://localhost:8080/decoracoes", formData, config);
+                    alert("Decoração cadastrada com sucesso!");
+                    
+                    // Atualizar a lista de decorações após o cadastro
+                    await fetchDecoracoes();
+                    
+                    // Limpar campos após cadastro
+                    setNomeDecoracao("");
+                    setObservacao([]);
+                    setFile(null);
+                    setFilePreview(null);
+                    
+                    // Se categoria é "Decoracao", fechar modal
+                    if (categoria === "Decoracao") {
+                        setIsOpen(false);
+                    }
+                    
+                    return response.data.id;
+                } catch (authError) {
+                    console.warn("Erro com autenticação, tentando sem token:", authError);
+                }
+            }
+            
+            // Se não há token ou deu erro de auth, tenta sem autenticação
+            delete config.headers.Authorization;
+            const response = await axios.post("http://localhost:8080/decoracoes", formData, config);
             alert("Decoração cadastrada com sucesso!");
-            setIsOpen(false);
+            
+            // Atualizar a lista de decorações após o cadastro
+            await fetchDecoracoes();
+            
+            // Limpar campos após cadastro
+            setNomeDecoracao("");
+            setObservacao([]);
+            setFile(null);
+            setFilePreview(null);
+            
+            // Se categoria é "Decoracao", fechar modal
+            if (categoria === "Decoracao") {
+                setIsOpen(false);
+            }
+            
             return response.data.id;
         } catch (error) {
             alert("Erro ao cadastrar decoração!");
+            console.error("Erro completo:", error);
+            if (error.response) {
+                console.error("Status:", error.response.status);
+                console.error("Data:", error.response.data);
+            }
             throw error;
         }
     };
@@ -135,11 +227,34 @@ export default function ModalCadastroProduto() {
         };
 
         try {
-            await axios.post("http://localhost:8080/bolos", data, {
-                headers: { "Content-Type": "application/json" }
-            });
+            const token = localStorage.getItem('JWT_TOKEN');
+            let config = {
+                headers: { 
+                    "Content-Type": "application/json" 
+                }
+            };
+            
+            // Primeiro tenta com autenticação se houver token
+            if (token && token.trim() !== '') {
+                try {
+                    config.headers.Authorization = `Bearer ${token}`;
+                    await axios.post("http://localhost:8080/bolos", data, config);
+                    return;
+                } catch (authError) {
+                    console.warn("Erro com autenticação, tentando sem token:", authError);
+                }
+            }
+            
+            // Se não há token ou deu erro de auth, tenta sem autenticação
+            delete config.headers.Authorization;
+            await axios.post("http://localhost:8080/bolos", data, config);
         } catch (error) {
             alert("Erro ao cadastrar produto!");
+            console.error("Erro completo:", error);
+            if (error.response) {
+                console.error("Status:", error.response.status);
+                console.error("Data:", error.response.data);
+            }
             throw error;
         }
     };
@@ -149,6 +264,12 @@ export default function ModalCadastroProduto() {
         e.preventDefault();
         try {
             const decoracaoId = await cadastrarDecoracao();
+            
+            // Selecionar automaticamente a decoração recém-cadastrada
+            if (decoracaoId) {
+                setDecoracao(decoracaoId.toString());
+            }
+            
             await cadastrarProduto(decoracaoId);
             alert("Produto e decoração cadastrados com sucesso!");
             setIsOpen(false);
@@ -169,17 +290,45 @@ export default function ModalCadastroProduto() {
 
         // O backend espera imagens como array, mesmo que só uma imagem
         if (file) {
-            formData.append("imagens", file); // nome deve ser 'imagens'
+            console.log("Arquivo selecionado:", file);
+            console.log("Tipo do arquivo:", file.type);
+            console.log("Nome do arquivo:", file.name);
+            formData.append("imagens", file); // Envia como array
+        } else {
+            console.log("Nenhum arquivo selecionado!");
+        }
+
+        // Debug do FormData
+        for (let [key, value] of formData.entries()) {
+            console.log(key, ":", value);
         }
 
         try {
-            await axios.post("http://localhost:8080/fornadas/produto-fornada", formData);
+            console.log("Enviando requisição...");
+            const response = await axios.post("http://localhost:8080/fornadas/produto-fornada", formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            console.log("Resposta do backend:", response.data);
             alert("Fornada cadastrada com sucesso!");
+            
+            // Limpar os campos
+            setProduto("");
+            setDescricao("");
+            setValor("");
+            setCategoriaFornada("");
+            setFile(null);
+            setFilePreview(null);
+            
             setIsOpen(false);
-            // Limpe os campos se desejar
         } catch (error) {
             alert("Erro ao cadastrar fornada!");
-            console.error(error);
+            console.error("Erro completo:", error);
+            if (error.response) {
+                console.error("Status:", error.response.status);
+                console.error("Data:", error.response.data);
+            }
         }
     }
 

@@ -17,4 +17,41 @@ export const getBolosPorCategoria = async () => {
     console.error('Erro ao buscar bolos:', error);
     return [];
   }
+};
+
+export const getBolosComImagens = async () => {
+  try {
+    const bolos = await getBolosPorCategoria();
+    
+    // Para cada bolo, busca as imagens da decoração
+    const bolosComImagens = await Promise.all(
+      bolos.map(async (bolo) => {
+        try {
+          // Se tem decoração, busca as imagens
+          if (bolo.decoracaoId) {
+            const decoracaoResponse = await axiosApi.get(`/decoracoes/${bolo.decoracaoId}`);
+            return {
+              ...bolo,
+              imagens: decoracaoResponse.data.imagens || []
+            };
+          }
+          return {
+            ...bolo,
+            imagens: []
+          };
+        } catch (error) {
+          console.warn(`Erro ao buscar imagens do bolo ${bolo.id}:`, error);
+          return {
+            ...bolo,
+            imagens: []
+          };
+        }
+      })
+    );
+    
+    return bolosComImagens;
+  } catch (error) {
+    console.error('Erro ao buscar bolos com imagens:', error);
+    throw error;
+  }
 }; 
