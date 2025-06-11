@@ -10,6 +10,7 @@ function Header() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [userSigned, setUserSigned] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
@@ -27,6 +28,20 @@ function Header() {
       window.removeEventListener("storage", checkLoginStatus);
     };
   }, [])
+
+  useEffect(() => {
+    const checkAdminStatus = () => {
+      setIsAdmin(!!localStorage.getItem("IS_ADMIN"));
+    };
+
+    checkAdminStatus();
+
+    window.addEventListener("storage", checkAdminStatus);
+
+    return () => {
+      window.removeEventListener("storage", checkAdminStatus);
+    };
+  }, []);
 
   const navigate = useNavigate();
 
@@ -69,11 +84,18 @@ function Header() {
                     />
                   </button>)
             }
-
+            {
+              isAdmin && (
+                <Button
+                onClick={() => navigate('/dashboard-kanban-pedidos')}
+                text={"Ir para pedidos"}
+                ></Button>
+              )
+            }
           </>
 
           <button className="p-2 bg-transparent rounded-full transform hover:scale-105 transition-transform">
-            <ShoppingCart className="text-gold w-8 h-8" />
+            {/* <ShoppingCart className="text-gold w-8 h-8" /> */}
           </button>
         </div>
       </div>

@@ -16,6 +16,7 @@ const BarraLateralDashboard = () => {
         localStorage.removeItem("userId");
         localStorage.removeItem("JWT_TOKEN");
         localStorage.removeItem("userData");
+        localStorage.removeItem("IS_ADMIN");
 
         window.dispatchEvent(new Event("storage"));
         navigate("/");

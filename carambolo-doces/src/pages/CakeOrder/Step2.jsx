@@ -9,12 +9,10 @@ const Step2 = () => {
   const { control, handleSubmit } = useFormContext();
 
   const handleNext = (data) => {
-  appendFormData({ observacoes: data.observacoes });
+  appendFormData({ observacoes: data.observacoes }, 'dadosMontagem');
 
   const imageFiles = data.images || [];
-  imageFiles.forEach((file, index) => {
-    appendFormData({ [`imagem_${index}`]: file });
-  });
+  appendFormData(imageFiles, 'imagens');
 
   console.log("Step 2 data:", data);
   nextStep();
