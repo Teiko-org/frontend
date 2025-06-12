@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useEffect } from 'react';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -23,12 +24,8 @@ const columns = [
     { id: 'produto', label: 'PRODUTO', minWidth: 100, align: 'left' },
     { id: 'categoria', label: 'CATEGORIA', minWidth: 100, align: 'left' },
     { id: 'preco', label: 'PREÇO', minWidth: 100, align: 'left' },
-    // { id: 'quantidade', label: 'QUANTIDADE', minWidth: 100, align: 'left' },
     { id: 'status', label: 'STATUS', minWidth: 100, align: 'center' },
     { id: 'edit', label: '', minWidth: 100 },
-
-    // LÓGICA PARA DELEÇÃO DE PRODUTOS - TODO -> ADD LIXEIRA
-    // { id: 'delete', label: '', minWidth: 100 },
 ];
 
 export default function ProductList() {
@@ -37,49 +34,22 @@ export default function ProductList() {
     const [isFilterModalOpen, setFilterModalOpen] = React.useState(false);
     const [produtoSelecionado, setProdutoSelecionado] = React.useState(null);
     const [isModalEdicaoOpen, setModalEdicaoOpen] = React.useState(false);
-
-    // LÓGICA PARA DELEÇÃO DE PRODUTOS - TODO -> ADD LIXEIRA
-    // const [idToDelete, setIdToDelete] = React.useState(null);
-    // const [categoryToDelete, setCategoryToDelete] = React.useState("")
-
     const [showConfirm, setShowConfirm] = React.useState(false);
 
+    const fetchProducts = async () => {
+        try {
+            const bolos = await findAllBolo();
+            setProducts(bolos);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     React.useEffect(() => {
-        getData();
+        fetchProducts();
     }, []);
 
-    const getData = async () => {
-        try {
-            console.log('Buscando produtos...');
-            const fornadas = await findAllFornada();
-            const bolos = await findAllBolo(); // <-- Corrigido aqui!
-            console.log('Bolos retornados:', bolos);
-
-            const responseProducts = [...(fornadas || []), ...(bolos || [])];
-
-            // Remove duplicados por id
-            const uniqueProducts = responseProducts.filter(
-                (item, index, self) => index === self.findIndex((p) => p.id === item.id && p.categoria === item.categoria)
-            );
-
-            setProducts(uniqueProducts);
-        } catch (error) {
-            console.log(error);
-        }
-    }
-
-    //LÓGICA PARA DELEÇÃO DE PRODUTOS - TODO -> ADD LIXEIRA
-    const handleDeleteRow = async (id) => {
-        if ((categoryToDelete ?? '').toLowerCase().includes("carambolo")) {
-            handleDeleteBolo(id);
-        }
-        await getData();
-        setShowConfirm(false);
-        setIdToDelete(null);
-    }
-
     const handleVisibility = (id, category) => {
-        console.log("PRODUTOS AAAAAAAAAA: " + products)
         const productToChange = products.filter((product) => product.id == id && product.categoria == category);
 
         if (productToChange[0].isAtivo == true) {
@@ -93,11 +63,10 @@ export default function ProductList() {
         } else {
             handleVisibilityProdutoFornada(productToChange, id)
         }
-        getData();
+        fetchProducts();
     }
 
     const filteredProducts = products.filter(product => {
-        console.log(product);
         const categoryFilter = localStorage.getItem('CATEGORY');
         const priceDe = parseFloat(localStorage.getItem('PRICE_DE')) || 0;
         const priceAte = parseFloat(localStorage.getItem('PRICE_ATE')) || Infinity;
@@ -126,6 +95,10 @@ export default function ProductList() {
         return matchCategory && matchPrice && matchQuantity && matchStatus && matchSearch;
     });
 
+    const formatCurrency = (value) => {
+        return `R$ ${value?.toFixed(2).replace('.', ',') || '0,00'}`;
+    };
+
     return (
         <div className='flex flex-col w-[100%] h-[70%]'>
             <div className='flex flex-row justify-between items-center bg-gradient-blue h-[4.6875rem] w-full'>
@@ -138,14 +111,12 @@ export default function ProductList() {
                             className='h-[38px] w-[100%] pl-2 rounded-lg'
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                    <LuSearch className='absolute left-[90%] top-1.5 text-[1.625rem] text-[#A47032]'/>
+                        <LuSearch className='absolute left-[90%] top-1.5 text-[1.625rem] text-[#A47032]'/>
                     </div>
                     <Button text={'FILTRAR'} children={<CiFilter className='text-[1.625rem]'/>} onClick={() => setFilterModalOpen(true)} className='flex flex-row items-center' />
-                    {
-                        isFilterModalOpen && (
-                            <ModalFilterProduct products={products} setFilterModalOpen={setFilterModalOpen} onClose={() => setFilterModalOpen(false)} />
-                        )
-                    }
+                    {isFilterModalOpen && (
+                        <ModalFilterProduct products={products} setFilterModalOpen={setFilterModalOpen} onClose={() => setFilterModalOpen(false)} />
+                    )}
                 </div>
             </div>
             <Paper sx={{ width: '100%', maxHeight: '100%', overflow: 'hidden', border: 'none', boxShadow: 'none' }} >
@@ -176,7 +147,6 @@ export default function ProductList() {
                                     sx={{ boxShadow: "none", borderBottom: "none" }}
                                 >
                                     {columns.map((column) => {
-                                        const value = row[column.id];
                                         if (column.id === 'ativo') {
                                             return (
                                                 <TableCell key={column.id} align={column.align} className='rounded-l-full' sx={{ boxShadow: "none", borderBottom: "none", padding: 0, paddingLeft: '1.25rem' }}>
@@ -203,66 +173,49 @@ export default function ProductList() {
                                             )
                                         }
 
-                                        if (column.id == 'preco') {
+                                        if (column.id === 'preco') {
                                             return (
                                                 <TableCell key={column.id} align={column.align} sx={{ boxShadow: "none", borderBottom: "none", padding: 0 }}>
-                                                    <span>{"R$ " + row.valor.toFixed(2)}</span>
+                                                    {formatCurrency(row.valor)}
                                                 </TableCell>
                                             )
                                         }
 
-                                        // if (column.id === 'quantidade') {
-                                        //     if (row.categoria.includes("carambolo")) {
-                                        //         return <TableCell key={column.id} align={column.align} sx={{ boxShadow: "none", borderBottom: "none", padding: 0 }}>-</TableCell>;
-                                        //     } else {
-                                        //         return <TableCell key={column.id} align={column.align} sx={{ boxShadow: "none", borderBottom: "none", padding: 0 }}>{row.quantidade}</TableCell>
-                                        //     }
-                                        // }
-
                                         if (column.id === 'status') {
-                                            if ((row.categoria ?? '').toLowerCase().includes("carambolo")) {
-                                                return <TableCell key={column.id} align={column.align} sx={{ boxShadow: "none", borderBottom: "none", padding: 0 }}>-</TableCell>;
+                                            const categoryToSearch = (row.categoria ?? '').toLowerCase();
+                                            const isFornada = categoryToSearch.includes('fornada');
+                                            const isBolo = !isFornada;
+                                            
+                                            let statusText = '';
+                                            if (isBolo) {
+                                                statusText = 'Disponível';
+                                            } else if (isFornada) {
+                                                statusText = row.quantidade > 0 ? 'Disponível' : 'Esgotado';
                                             }
+
                                             return (
                                                 <TableCell key={column.id} align={column.align} sx={{ boxShadow: "none", borderBottom: "none", padding: 0 }}>
-                                                    <div className='flex flex-row justify-center items-center gap-2'>
-                                                        <div className={`rounded-full min-w-2 min-h-2 ${row.quantidade <= 0 ? 'bg-[#D70000]' : 'bg-[#00AF2F]'}`} />
-                                                        <span>{row.quantidade <= 0 ? 'Indisponível' : 'Disponível'}</span>
-                                                    </div>
+                                                    {statusText}
                                                 </TableCell>
-                                            );
+                                            )
                                         }
 
                                         if (column.id === 'edit') {
                                             return (
-                                                <TableCell key={column.id} align={column.align} className='rounded-e-full items-center' sx={{ boxShadow: "none", borderBottom: "none", padding: 0, paddingRight: '1.25rem' }}>
-                                                    <div className='flex justify-end'>
-                                                        <FaRegEdit className='text-[#A47032] text-[1.625rem] cursor-pointer' onClick={() => { setProdutoSelecionado(row); setModalEdicaoOpen(true); }} />
-                                                    </div>
+                                                <TableCell key={column.id} align={column.align} className="rounded-r-full" sx={{ boxShadow: "none", borderBottom: "none", padding: 0, paddingRight: '1.25rem' }}>
+                                                    <FaRegEdit
+                                                        className='cursor-pointer text-[#A47032] text-[1.625rem]'
+                                                        onClick={() => {
+                                                            setProdutoSelecionado(row);
+                                                            setModalEdicaoOpen(true);
+                                                        }}
+                                                    />
                                                 </TableCell>
-                                            );
+                                            )
                                         }
 
-                                        // LÓGICA PARA DELEÇÃO DE PRODUTOS - TODO -> ADD LIXEIRA
-                                        // if (column.id === 'delete') {
-                                        //     return (
-                                        //         <TableCell key={column.id} align={column.align} style={{ borderLeft: '.0625rem solid black' }} className='rounded-e-full'>
-                                        //             <div className='flex justify-left'>
-                                        //                 <RiDeleteBinLine
-                                        //                     onClick={() => {
-                                        //                         setIdToDelete(row.id);
-                                        //                         setCategoryToDelete(row.categoria);
-                                        //                         setShowConfirm(true);
-                                        //                     }}
-                                        //                     className='cursor-pointer'
-                                        //                 />
-                                        //             </div>
-                                        //         </TableCell>
-                                        //     );
-                                        // }
-
+                                        return null;
                                     })}
-
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -270,25 +223,27 @@ export default function ProductList() {
                 </TableContainer>
             </Paper>
 
-            {/* LÓGICA PARA DELEÇÃO DE PRODUTOS - TODO -> ADD LIXEIRA */}
-            {/* {showConfirm && (
+            {showConfirm && (
                 <ConfirmToast
-                    buttonNoText='Não'
-                    buttonYesText='Sim'
-                    customFunction={() => handleDeleteRow(idToDelete)}
+                    asModal={true}
+                    customFunction={() => setShowConfirm(false)}
                     setShowConfirmToast={setShowConfirm}
-                    showConfirmToast={showConfirm}
-                    theme='light'
-                    toastText='Deseja excluir o produto selecionado?'
-                    className='z-10'
+                    message="Tem certeza que deseja excluir este produto?"
+                    theme="light"
+                    position="top-center"
                 />
-            )} */}
-            <ModalEdicaoProduto
-                isOpen={isModalEdicaoOpen}
-                onClose={() => setModalEdicaoOpen(false)}
-                produto={produtoSelecionado}
-                onProdutoEditado={getData}
-            />
+            )}
+
+            {isModalEdicaoOpen && (
+                <ModalEdicaoProduto
+                    produto={produtoSelecionado}
+                    onClose={() => {
+                        setModalEdicaoOpen(false);
+                        setProdutoSelecionado(null);
+                        fetchProducts();
+                    }}
+                />
+            )}
         </div>
     );
 }

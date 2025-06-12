@@ -12,6 +12,7 @@ export const FormProvider = ({ children }) => {
   const [dadosEntrega, setDadosEntrega] = useState({});
   const [imagens, setImagens] = useState([]);
   const [dadosMontagem, setDadosMontagem] = useState({});
+  const [valorEstimado, setValorEstimado] = useState(0);
 
   const nextStep = () => setCurrentStep((prev) => Math.min(prev + 1, 5));
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
@@ -32,7 +33,6 @@ export const FormProvider = ({ children }) => {
     }
   };
 
-  // Funções de mapeamento para os enums do backend
   const mapTamanhoToEnum = (tamanho) => {
     const mapping = {
       "11cm": "TAMANHO_5",
@@ -63,16 +63,14 @@ export const FormProvider = ({ children }) => {
 
   const getOrCreateCobertura = async () => {
     try {
-      // Primeiro tenta buscar coberturas existentes
       const response = await axiosApi.get("/bolos/cobertura");
       if (response.data && response.data.length > 0) {
-        return response.data[0].id; // Retorna o ID da primeira cobertura
+        return response.data[0].id;
       }
     } catch (error) {
-      console.log('Nenhuma cobertura encontrada, criando uma padrão...');
+      // Create default if none exists
     }
 
-    // Se não houver coberturas, cria uma padrão
     try {
       const coberturaData = {
         cor: "Branco",
@@ -82,7 +80,6 @@ export const FormProvider = ({ children }) => {
       return response.data.id;
     } catch (error) {
       console.error('Erro ao criar cobertura padrão:', error);
-      // Se não conseguir criar, retorna null para tornar opcional
       return null;
     }
   };
@@ -99,28 +96,21 @@ export const FormProvider = ({ children }) => {
 
   const getOrCreateRecheioPedido = async (recheioUnitarioId) => {
     try {
-      // Primeiro tenta buscar recheios pedido existentes
       const response = await axiosApi.get("/bolos/recheio-pedido");
       if (response.data && response.data.length > 0) {
-        // Procura um recheio que tenha o sabor desejado
         const recheioExistente = response.data.find(r => 
           r.sabor1 === recheioUnitarioId || r.sabor2 === recheioUnitarioId
         );
         if (recheioExistente) {
           return recheioExistente.id;
         }
-        // Se não encontrar um específico, usa o primeiro disponível
         return response.data[0].id;
       }
     } catch (error) {
-      console.log('Erro ao buscar recheios pedido existentes:', error);
+      // Try creating new
     }
 
-    // Se não conseguir buscar recheios existentes, tenta inserir direto na base
-    // usando uma abordagem que não depende da projection problemática
     try {
-      console.log('Tentando inserir recheio pedido diretamente...');
-      // Vamos tentar uma abordagem mais simples - inserir diretamente via SQL simples
       const response = await axiosApi.post("/bolos/recheio-unitario", {
         sabor: "Recheio Padrão",
         descricao: "Recheio criado automaticamente", 
@@ -128,30 +118,23 @@ export const FormProvider = ({ children }) => {
       });
       
       if (response.data && response.data.id) {
-        // Se conseguiu criar um recheio unitário, usa ele como base
         return response.data.id;
       }
     } catch (error) {
-      console.log('Erro ao criar recheio unitário:', error);
+      // Try fallback
     }
 
-    // Se tudo falhar, tenta usar IDs padrão comuns no desenvolvimento
-    console.log('Tentando IDs padrão...');
     for (let id of [1, 2, 3, 4, 5]) {
       try {
         const response = await axiosApi.get(`/bolos/recheio-pedido/${id}`);
         if (response.data) {
-          console.log(`Usando recheio pedido existente com ID: ${id}`);
           return id;
         }
       } catch (error) {
-        // Continua tentando o próximo ID
         continue;
       }
     }
 
-    // Como último recurso, retorna 1 (assumindo que há pelo menos um registro)
-    console.log('Usando recheio pedido padrão (ID: 1) como último recurso');
     return 1;
   };
 
@@ -187,13 +170,8 @@ export const FormProvider = ({ children }) => {
 
   const submitForm = async () => {
     try {
-      console.log('Iniciando envio do pedido...');
-      console.log('Dados de montagem:', dadosMontagem);
-      console.log('Dados de entrega:', dadosEntrega);
-      
       toast.info("Processando seu pedido...");
 
-      // Validações básicas
       if (!dadosEntrega.nome) {
         toast.warn("Por favor, preencha seu nome!");
         return;
@@ -237,7 +215,6 @@ export const FormProvider = ({ children }) => {
 
       let enderecoId = null;
 
-      // Criar endereço se for entrega
       if (dadosEntrega.deliveryOption === "Entrega") {
         const endereco = {
           nome: "Endereço de Entrega",
@@ -249,21 +226,14 @@ export const FormProvider = ({ children }) => {
           numero: dadosEntrega.numero,
           complemento: dadosEntrega.complemento || "",
           referencia: dadosEntrega.referencia || "",
-          usuario: null // Para usuários não logados
+          usuario: null
         };
         enderecoId = await registerAddress(endereco);
-        console.log('Endereço criado com ID:', enderecoId);
       }
 
-      // Buscar ou criar cobertura
       const coberturaId = await getOrCreateCobertura();
-      console.log('Cobertura ID:', coberturaId);
-
-      // Buscar ou usar recheio pedido existente
       const recheioPedidoId = await getOrCreateRecheioPedido(dadosMontagem.recheioId);
-      console.log('Recheio pedido ID:', recheioPedidoId);
 
-      // Mapear dados para o formato do backend
       const tamanhoMapeado = mapTamanhoToEnum(dadosMontagem.tamanho);
       const formatoMapeado = mapFormatoToEnum(dadosMontagem.formato);
 
@@ -277,27 +247,23 @@ export const FormProvider = ({ children }) => {
         return;
       }
 
-      // Criar o bolo conforme BoloRequestDTO
       const boloData = {
         recheioPedidoId: recheioPedidoId,
         massaId: dadosMontagem.massaId,
         coberturaId: coberturaId,
-        decoracaoId: null, // Opcional
+        decoracaoId: null,
         formato: formatoMapeado,
         tamanho: tamanhoMapeado,
         categoria: "PERSONALIZADO"
       };
 
-      console.log('Dados do bolo a serem enviados:', boloData);
       const boloId = await registerBolo(boloData);
-      console.log('Bolo criado com ID:', boloId);
 
-      // Criar o pedido do bolo
       const pedidoData = {
         boloId: boloId,
-        usuarioId: null, // Para usuários não logados
+        usuarioId: null,
         observacao: dadosEntrega.observacoes || "",
-        dataPrevisaoEntrega: dadosEntrega.data.replace(/\//g, '-'), // Converter 2025/06/12 para 2025-06-12
+        dataPrevisaoEntrega: dadosEntrega.data.replace(/\//g, '-'),
         dataUltimaAtualizacao: new Date().toISOString(),
         tipoEntrega: dadosEntrega.deliveryOption?.toUpperCase() || "ENTREGA",
         nomeCliente: dadosEntrega.nome,
@@ -305,12 +271,9 @@ export const FormProvider = ({ children }) => {
         enderecoId: enderecoId
       };
 
-      console.log('Dados do pedido a serem enviados:', pedidoData);
       const pedidoId = await registerPedidoBolo(pedidoData);
-      console.log('Pedido de bolo criado com ID:', pedidoId);
 
-      // Criar o resumo do pedido
-      const dataEntregaFormatada = dadosEntrega.data.replace(/\//g, '-'); // Garantir formato ISO
+      const dataEntregaFormatada = dadosEntrega.data.replace(/\//g, '-');
       const resumoData = {
         dataEntrega: dadosEntrega.horario ? 
           `${dataEntregaFormatada}T${dadosEntrega.horario}:00` : 
@@ -319,12 +282,9 @@ export const FormProvider = ({ children }) => {
         pedidoFornadaId: null
       };
 
-      console.log('Dados do resumo a serem enviados:', resumoData);
       const resumo = await registerResumoPedido(resumoData);
-      console.log("Resumo criado:", resumo);
 
-      // Enviar para WhatsApp
-      const numeroWhatsApp = "11964849864"; // Mesmo número usado na página de fornada
+      const numeroWhatsApp = "11964849864";
       const mensagem = resumo.mensagem;
       const linkWhatsApp = `https://wa.me/55${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`;
 
@@ -337,12 +297,10 @@ export const FormProvider = ({ children }) => {
     } catch (error) {
       console.error('Erro ao enviar pedido:', error);
       
-      // Feedback de erro mais específico
       if (error.response?.status === 422 && error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else if (error.response?.status === 400) {
         toast.error("Dados inválidos! Verifique se todos os campos estão preenchidos corretamente.");
-        console.error('Detalhes do erro 400:', error.response?.data);
       } else if (error.response?.status === 404) {
         toast.error("Recurso não encontrado!");
       } else if (error.response?.data?.message) {
@@ -369,7 +327,9 @@ export const FormProvider = ({ children }) => {
         prevStep, 
         appendFormData, 
         submitForm, 
-        formData: formDataEntries 
+        formData: formDataEntries,
+        valorEstimado,
+        setValorEstimado
       }}>
         {children}
       </FormContext.Provider>

@@ -10,7 +10,7 @@ import CampoComGradiente from "../../components/gradientField";
 import { searchAddressByCep } from "../../service/viaCepService";
 
 const Step4 = () => {
-  const { nextStep, prevStep, appendFormData } = useContext(FormContext);
+  const { nextStep, prevStep, appendFormData, valorEstimado } = useContext(FormContext);
   const {
     control,
     handleSubmit,
@@ -22,14 +22,21 @@ const Step4 = () => {
 
   const onSubmit = (data) => {
     const plainData = {
-      ...data,
-      data: data.data ? data.data.toString() : "",
-      horario: data.horario || "",
-      telefone: data.telefone || "",
+      nome: data.nome,
+      telefone: data.telefone,
+      data: data.data,
+      deliveryOption: data.deliveryOption,
+      cep: data.cep,
+      estado: data.estado,
+      cidade: data.cidade,
+      bairro: data.bairro,
+      rua: data.rua,
+      numero: data.numero,
+      complemento: data.complemento,
+      horario: data.horario,
     };
 
     appendFormData(plainData, "dadosEntrega");
-    console.log("Step 4 data:", plainData);
     nextStep();
   };
 
@@ -453,7 +460,7 @@ const Step4 = () => {
 
       <div className="flex justify-between items-center mt-4">
         <div className="text-gradient font-bold text-lg">
-          VALOR ESTIMADO: R$ 999,99
+          VALOR ESTIMADO: R$ {valorEstimado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </div>
         <div>
           <Button

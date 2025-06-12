@@ -8,7 +8,7 @@ import ModalFinalizar from "../../components/ModalFinalizar";
 import { FaEdit } from "react-icons/fa";
 
 const Step5 = () => {
-  const { prevStep, submitForm, formData } = useContext(FormContext);
+  const { prevStep, submitForm, formData, valorEstimado } = useContext(FormContext);
   
   if (!formData) {
     console.error("formData não está definido");
@@ -89,7 +89,6 @@ const Step5 = () => {
 };
 
 const handleConfirmFinalizar = () => {
-  console.log("Chamando submitForm do FormContext...");
   submitForm();
   setIsModalFinalizarOpen(false);
 };
@@ -240,7 +239,7 @@ const handleConfirmFinalizar = () => {
 
       <div className="flex justify-between items-center mt-6">
         <div className="text-gradient font-bold text-lg">
-          VALOR ESTIMADO: R$ 999,99
+          VALOR ESTIMADO: R$ {valorEstimado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </div>
         <div>
           <Button

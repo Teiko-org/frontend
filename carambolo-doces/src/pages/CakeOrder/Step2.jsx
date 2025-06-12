@@ -5,7 +5,7 @@ import Button from "../../components/Button";
 import InputImage from "../../components/InputImage";
 
 const Step2 = () => {
-  const { nextStep, prevStep, appendFormData } = useContext(FormContext);
+  const { nextStep, prevStep, appendFormData, valorEstimado } = useContext(FormContext);
   const { control, handleSubmit } = useFormContext();
 
   const handleNext = (data) => {
@@ -14,7 +14,6 @@ const Step2 = () => {
   const imageFiles = data.images || [];
   appendFormData(imageFiles, 'imagens');
 
-  console.log("Step 2 data:", data);
   nextStep();
 };
 
@@ -53,7 +52,7 @@ const Step2 = () => {
       </div>
       <div className="flex justify-between items-center mt-7">
         <div className="text-gradient font-bold text-lg">
-          VALOR ESTIMADO: R$ 999,99
+          VALOR ESTIMADO: R$ {valorEstimado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </div>
         <div>
           <Button
