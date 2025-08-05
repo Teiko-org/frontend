@@ -15,20 +15,24 @@ function CardOrder(props) {
   const [detalhesPedido, setDetalhesPedido] = useState({});
 
   const requests = async () => {
-    let resposta;
-
-    if (idPedidoBolo > 0) {
-
-      resposta = await orderCakeDetails(idPedidoBolo);
+    try {
+      console.log(`🔍 Carregando detalhes - Bolo ID: ${idPedidoBolo}, Fornada ID: ${idPedidoFornada}`);
       
-    } else if (idPedidoFornada > 0) {
+      let resposta;
 
-      resposta = await orderFornadaDetails(idPedidoFornada);
+      if (idPedidoBolo > 0) {
+        resposta = await orderCakeDetails(idPedidoBolo);
+        console.log("📋 Detalhes do bolo:", resposta);
+      } else if (idPedidoFornada > 0) {
+        resposta = await orderFornadaDetails(idPedidoFornada);
+        console.log("🍰 Detalhes da fornada:", resposta);
+      }
 
+      setDetalhesPedido(resposta || {});
+    } catch (error) {
+      console.error("❌ Erro ao carregar detalhes:", error);
+      setDetalhesPedido({});
     }
-
-    setDetalhesPedido(resposta);
-
   };
 
   useEffect(() => {

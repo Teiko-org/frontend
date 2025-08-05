@@ -24,6 +24,8 @@ const steps = [Step1, Step2, Step3, Step4, Step5];
 const Application = () => {
   const { currentStep } = useContext(FormContext);
   const StepComponent = steps[currentStep - 1];
+  const [selectedBoloName, setSelectedBoloName] = React.useState("CARAMBOLO VINTAGE");
+  const [carouselSlides, setCarouselSlides] = React.useState(slides);
 
   useEffect(() => {
     // Preenche os campos do Step1 se houver bolo selecionado
@@ -31,6 +33,22 @@ const Application = () => {
     if (selectedBolo) {
       try {
         const bolo = JSON.parse(selectedBolo);
+        
+        // Atualizar o nome do produto na tela
+        if (bolo.produto || bolo.nome) {
+          setSelectedBoloName(bolo.produto || bolo.nome);
+        }
+        
+        // Atualizar imagens do carousel se o bolo tiver imagens
+        if (bolo.imagens && bolo.imagens.length > 0) {
+          const boloSlides = bolo.imagens.map((imagem, index) => ({
+            id: index + 1,
+            image: typeof imagem === 'object' && imagem.url ? imagem.url : imagem,
+            title: `${bolo.produto || bolo.nome} - ${index + 1}`
+          }));
+          setCarouselSlides(boloSlides);
+        }
+        
         // Aguarda o Step1 montar e preenche os campos
         setTimeout(() => {
           const event = new CustomEvent('fillStep1FromBolo', { detail: bolo });
@@ -48,14 +66,14 @@ const Application = () => {
       <Header />
       <div className="max-w-screen mx-auto px-6 py-8 bg-bgNativeHome">
         <div className="flex items-center gap-12">
-          <h1 className="text-blue font-bold text-4xl mb-6">CARAMBOLO VINTAGE</h1>
+          <h1 className="text-blue font-bold text-4xl mb-6">{selectedBoloName.toUpperCase()}</h1>
           <p className="text-blue text-lg mb-8">
-            Frase específica para gerar um pouco de interação com o usuário
+            Personalize seu bolo escolhendo tamanho, formato, massa e recheio
           </p>
         </div>
         <div className="grid grid-cols-8 gap-8">
           <div className="col-span-2 w-[25rem]">
-            <Carousel slides={slides} />
+            <Carousel slides={carouselSlides} />
           </div>
           <div className="col-span-5 ml-16 mr-8 min-h-[32.625rem]">
             <StepComponent />

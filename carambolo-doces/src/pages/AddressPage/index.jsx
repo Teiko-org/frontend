@@ -22,59 +22,47 @@ function AddressPage() {
   const currentAddresses = enderecos.slice(startIndex, startIndex + addressesPerPage);
 
   useEffect(() => {
-    loadAddresses();
-  }, []);
-
-  const loadAddresses = async () => {
-    try {
-      setIsLoading(true);
-      const addresses = await listAddresses();
-      console.log("Endereços carregados:", addresses);
-      
-      const userId = localStorage.getItem("userId");
-      console.log("UserId:", userId);
-      
-      if (userId) {
-        const userAddresses = addresses.filter(addr => {
-          console.log("Checking address:", addr, "usuario:", addr.usuario, "userId:", parseInt(userId));
-          return addr.usuario === parseInt(userId);
-        });
-        console.log("Endereços filtrados para o usuário:", userAddresses);
-        setEnderecos(userAddresses);
-      } else {
-        console.log("Usuário não logado, mostrando todos os endereços");
-        setEnderecos(addresses);
+    const fetchAddresses = async () => {
+      try {
+        const addressData = await listAddresses();
+        const userId = localStorage.getItem('USER_ID');
+        
+        if (userId) {
+          const userAddresses = addressData.filter(addr => 
+            addr.usuario && addr.usuario.toString() === userId
+          );
+          setEnderecos(userAddresses);
+        } else {
+          setEnderecos(addressData);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar endereços:', error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Erro ao carregar endereços:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+
+    fetchAddresses();
+  }, []);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
   const handleAddressCreated = (newAddress) => {
-    console.log("Novo endereço criado:", newAddress);
-    setEnderecos(prevEnderecos => [...prevEnderecos, newAddress]);
+    setEnderecos(prev => [...prev, newAddress]);
   };
 
   const handleAddressUpdated = (updatedAddress) => {
-    console.log("AddressPage - Atualizando endereço na lista:", updatedAddress);
-    setEnderecos(prevEnderecos => {
-      const updated = prevEnderecos.map(endereco => 
-        endereco.id === updatedAddress.id ? updatedAddress : endereco
-      );
-      console.log("Lista de endereços atualizada:", updated);
-      return updated;
-    });
+    setEnderecos(prev => 
+      prev.map(addr => 
+        addr.id === updatedAddress.id ? updatedAddress : addr
+      )
+    );
   };
 
   const handleAddressDeleted = (deletedAddressId) => {
     setEnderecos(prevEnderecos => {
       const updatedAddresses = prevEnderecos.filter(endereco => endereco.id !== deletedAddressId);
-      // Adjust current page if necessary
       const newTotalPages = Math.ceil(updatedAddresses.length / addressesPerPage);
       if (currentPage >= newTotalPages && newTotalPages > 0) {
         setCurrentPage(newTotalPages - 1);

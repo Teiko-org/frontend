@@ -13,7 +13,7 @@ const formatLabel = (text) => {
 };
 
 const Step1 = () => {
-  const { nextStep, appendFormData } = useContext(FormContext);
+  const { nextStep, appendFormData, updateDadosMontagem, valorEstimado, setValorEstimado } = useContext(FormContext);
   const {
     control,
     handleSubmit,
@@ -26,6 +26,17 @@ const Step1 = () => {
 
   const [massaOptions, setMassaOptions] = useState([]);
   const [recheioOptions, setRecheioOptions] = useState([]);
+  const [massasComValor, setMassasComValor] = useState([]);
+  const [recheiosComValor, setRecheiosComValor] = useState([]);
+  const [valorMudou, setValorMudou] = useState(false);
+
+  // Valores fixos dos tamanhos (baseado no backend)
+  const valoresTamanho = {
+    "11cm": 50.0,   // TAMANHO_5 -> 50.0 (assumindo 11cm = 5)
+    "13cm": 100.0,  // TAMANHO_7 -> 100.0 (assumindo 13cm = 7)
+    "15cm": 150.0,  // TAMANHO_12 -> 150.0 (assumindo 15cm = 12)
+    "17cm": 200.0   // TAMANHO_15 -> 200.0 (assumindo 17cm = 15)
+  };
 
   useEffect(() => {
     const fetchMassas = async () => {
@@ -38,6 +49,8 @@ const Step1 = () => {
             label: formatLabel(massa.sabor),
           }))
         );
+        // Salvar massas com valores para cálculo
+        setMassasComValor(response.data);
       } catch (error) {
         console.error("Erro ao buscar massas:", error);
       }
@@ -53,6 +66,8 @@ const Step1 = () => {
             label: recheio.descricao,
           }))
         );
+        // Salvar recheios com valores para cálculo
+        setRecheiosComValor(response.data);
       } catch (error) {
         console.error("Erro ao buscar recheios:", error);
       }
@@ -63,22 +78,13 @@ const Step1 = () => {
   }, []);
 
   const onSubmit = (data) => {
-    const massaSelecionada = massaOptions.find(
-      (massa) => massa.value === data.massa
-    );
-    const recheioSelecionado = recheioOptions.find(
-      (recheio) => recheio.value === data.recheio
-    );
-
     const postData = {
-      tamanho: data.tamanho,
-      formato: data.formato,
-      massaId: massaSelecionada ? massaSelecionada.id : null,
-      recheioId: recheioSelecionado ? recheioSelecionado.id : null,
+      ...data,
+      massaId: massaOptions.find((m) => m.value === data.massa)?.id,
+      recheioId: recheioOptions.find((r) => r.value === data.recheio)?.id,
     };
 
-    console.log("Dados para POST:", postData);
-    appendFormData(postData, "dadosMontagem");
+    appendFormData(postData, 'dadosMontagem');
     nextStep();
   };
 
@@ -118,6 +124,45 @@ const Step1 = () => {
   };
 
   const massaSelecionada = watch("massa", "");
+  const tamanhoSelecionado = watch("tamanho", "");
+  const recheioSelecionado = watch("recheio", "");
+  const formatoSelecionado = watch("formato", "");
+
+  // Função para calcular o valor estimado
+  const calcularValorEstimado = () => {
+    let valorTotal = 0;
+
+    if (tamanhoSelecionado && valoresTamanho[tamanhoSelecionado]) {
+      const valorTamanho = valoresTamanho[tamanhoSelecionado];
+      valorTotal += valorTamanho;
+    }
+
+    if (massaSelecionada && massasComValor.length > 0) {
+      const massa = massasComValor.find(m => m.sabor === massaSelecionada);
+      if (massa && massa.valor) {
+        valorTotal += massa.valor;
+      }
+    }
+
+    if (recheioSelecionado && recheiosComValor.length > 0) {
+      const recheio = recheiosComValor.find(r => r.sabor === recheioSelecionado);
+      if (recheio && recheio.valor) {
+        valorTotal += recheio.valor;
+      }
+    }
+
+    if (valorTotal !== valorEstimado) {
+      setValorMudou(true);
+      setTimeout(() => setValorMudou(false), 300);
+    }
+    
+    setValorEstimado(valorTotal);
+  };
+
+  // Recalcular valor quando qualquer seleção mudar
+  useEffect(() => {
+    calcularValorEstimado();
+  }, [tamanhoSelecionado, massaSelecionada, recheioSelecionado, massasComValor, recheiosComValor]);
 
   useEffect(() => {
     if (!massaSelecionada) {
@@ -140,11 +185,27 @@ const Step1 = () => {
     // Listener para preencher os campos do Step1 ao receber evento
     const fillFromBolo = (e) => {
       const bolo = e.detail;
-      // Preenche os campos de acordo com os dados do bolo
-      if (bolo.tamanho) setValue('tamanho', bolo.tamanho);
-      if (bolo.formato) setValue('formato', bolo.formato);
+      
+      if (bolo.tamanho) {
+        const tamanhoFormatado = bolo.tamanho.replace('TAMANHO_', '') + 'cm';
+        setValue('tamanho', tamanhoFormatado);
+      }
+      
+      if (bolo.formato) {
+        const formatoFormatado = bolo.formato === 'CIRCULO' ? 'Redondo' : 
+                                 bolo.formato === 'CORACAO' ? 'Coração' : bolo.formato;
+        setValue('formato', formatoFormatado);
+      }
+      
+      if (bolo.massaId) setValue('massa', bolo.massaId);
+      if (bolo.recheioPedidoId) setValue('recheio', bolo.recheioPedidoId);
+      
       if (bolo.saborMassa) setValue('massa', bolo.saborMassa);
       if (bolo.saborRecheio) setValue('recheio', bolo.saborRecheio);
+      
+      if (bolo.precoTotal) {
+        setValorEstimado(bolo.precoTotal);
+      }
     };
     window.addEventListener('fillStep1FromBolo', fillFromBolo);
     return () => window.removeEventListener('fillStep1FromBolo', fillFromBolo);
@@ -264,10 +325,10 @@ const Step1 = () => {
         </div>
       </div>
 
-      <div className="flex justify-between items-center mt-">
-        <div className="text-gradient font-bold text-lg">
-          VALOR ESTIMADO: R$ 999,99
-        </div>
+              <div className="flex justify-between items-center mt-">
+          <div className={`text-gradient font-bold text-lg transition-all duration-300 ${valorMudou ? 'scale-110 text-gold' : ''}`}>
+            VALOR ESTIMADO: R$ {valorEstimado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
         <Button
           text="Continuar"
           className="px-6 py-1"
@@ -280,3 +341,4 @@ const Step1 = () => {
 };
 
 export default Step1;
+

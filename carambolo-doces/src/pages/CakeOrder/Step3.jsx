@@ -5,7 +5,7 @@ import Button from "../../components/Button";
 import InputOption from "../../components/InputOption";
 
 const Step3 = () => {
-  const { nextStep, prevStep, appendFormData, formData } =
+  const { nextStep, prevStep, appendFormData, formData, valorEstimado } =
     useContext(FormContext);
   const { control, handleSubmit, getValues } = useFormContext();
 
@@ -23,11 +23,6 @@ const Step3 = () => {
 
     appendFormData({ observacoes: observacoesAtualizadas }, "dadosMontagem");
 
-    console.log("Step 3 ", {
-      ...formData,
-      observacoes: observacoesAtualizadas,
-    });
-    console.log(data);
     nextStep();
   };
 
@@ -71,7 +66,7 @@ const Step3 = () => {
       </div>
       <div className="flex justify-between items-center mt-16">
         <div className="text-gradient font-bold text-lg">
-          VALOR ESTIMADO: R$ 999,99
+          VALOR ESTIMADO: R$ {valorEstimado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </div>
         <div>
           <Button
