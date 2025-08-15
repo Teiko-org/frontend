@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { BsFillArrowRightCircleFill, BsFillArrowLeftCircleFill } from "react-icons/bs";
 
-export default function Carousel({ slides, autoPlay = true, interval = 4000, showIndicators = false }) {
+export default function Carousel({ slides, autoPlay = true, interval = 4000, showIndicators = false, imageHeightClass = 'h-[270px]', itemsPerView = 3, showTitles = true }) {
   const [current, setCurrent] = useState(0);
-  const cardWidthPercent = 30.5;
+  const cardWidthPercent = itemsPerView === 1 ? 85 : 24;
   const timerRef = useRef(null);
 
   const previous = () => {
@@ -29,12 +29,12 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
     const desired = current * cardWidthPercent + cardWidthPercent / 2 - 50;
     const clamped = Math.min(Math.max(desired, 0), maxTranslate);
     return clamped;
-  }, [current, slides.length]);
+  }, [current, slides.length, cardWidthPercent]);
 
   return (
-    <div className="relative w-full overflow-x-hidden overflow-y-visible pb-12">
+    <div className="relative w-full overflow-x-hidden overflow-y-visible pb-8">
       <div
-        className="flex transition-transform ease-out duration-500 gap-x-[54px] px-6 md:px-12"
+        className={`flex transition-transform ease-out duration-500 ${itemsPerView === 1 ? 'gap-x-8 px-4' : 'gap-x-[54px] px-6 md:px-12'}`}
         style={{ transform: `translateX(-${translatePercent}%)` }}
       >
         {slides.map((slide, index) => {
@@ -45,7 +45,7 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
 
           return (
             <div
-              key={`${slide.title ?? "slide"}-${index}`}
+              key={`${slide.title ?? 'slide'}-${index}`}
               className="flex-none"
               style={{ width: `${cardWidthPercent}%` }}
             >
@@ -55,22 +55,22 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
                 <img
                   src={slide.image}
                   alt={slide.title || `Slide ${index + 1}`}
-                  className="w-full h-[320px] object-cover"
+                  className={`w-full object-cover ${imageHeightClass}`}
                 />
-                {slide.title && (
+                {showTitles && slide.title && (
                   <div className={`absolute left-1/2 -translate-x-1/2 ${
-                    isCenter ? "bottom-3" : "bottom-4"
-                  }`}>
+                    isCenter ? 'bottom-3' : 'bottom-4'
+                  } w-full flex justify-center px-2`}>
                     <span
-                      className={`inline-block rounded-[12px] border border-[#D4B076] shadow-[0_4px_12px_rgba(0,0,0,0.16)] backdrop-blur-sm font-montserrat font-normal ${
+                      title={slide.title}
+                      className={`inline-block rounded-[12px] border border-[#D4B076] shadow-[0_4px_12px_rgba(0,0,0,0.16)] backdrop-blur-sm font-montserrat font-normal whitespace-nowrap overflow-hidden text-ellipsis leading-tight ${
                         isCenter
-                          ? "px-5 py-2 text-base"
-                          : "px-4 py-1.5 text-sm"
+                          ? 'px-5 py-2 text-[clamp(12px,1.1vw,16px)] max-w-[88%]'
+                          : 'px-4 py-1.5 text-[clamp(10px,0.95vw,14px)] max-w-[80%]'
                       }`}
                       style={{
-                        background: "rgba(255, 232, 196, 0.8)",
-                        color: "#8A541C",
-                        lineHeight: 1.2,
+                        background: 'rgba(255, 232, 196, 0.8)',
+                        color: '#8A541C',
                       }}
                     >
                       {slide.title}
@@ -87,7 +87,7 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
         aria-label="anterior"
         onClick={previous}
         className="absolute top-1/2 -translate-y-1/2 z-40 text-3xl text-gold hover:scale-110 transition-transform"
-        style={{ left: "16px" }}
+        style={{ left: '16px' }}
       >
         <BsFillArrowLeftCircleFill />
       </button>
@@ -95,7 +95,7 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
         aria-label="próximo"
         onClick={next}
         className="absolute top-1/2 -translate-y-1/2 z-40 text-3xl text-gold hover:scale-110 transition-transform"
-        style={{ right: "16px" }}
+        style={{ right: '16px' }}
       >
         <BsFillArrowRightCircleFill />
       </button>
@@ -107,7 +107,7 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
               aria-label={`ir para slide ${i + 1}`}
               onClick={() => setCurrent(i)}
               key={`dot-${i}`}
-              className={`rounded-full w-2 h-2 ${i === current ? "bg-gold" : "bg-blue"}`}
+              className={`rounded-full w-2 h-2 ${i === current ? 'bg-gold' : 'bg-blue'}`}
             />
           ))}
         </div>
