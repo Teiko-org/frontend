@@ -14,7 +14,6 @@ function LoginModal({ onClose }) {
   const onSubmit = async (data) => {
     try {
       const response = await login(data.phone, data.password);
-      console.log("Login response:", response);
       
       localStorage.setItem("userId", response.userId || response.id);
       localStorage.setItem("JWT_TOKEN", response.token);

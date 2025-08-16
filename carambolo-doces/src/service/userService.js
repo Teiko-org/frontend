@@ -1,10 +1,11 @@
+import { useNavigate } from 'react-router-dom';
 import { axiosApi } from '../provider/AxiosApi.js';
 import { toast } from 'react-toastify';
 
 export const login = async (phone, password) => {
   try {
-    const response = await axiosApi.post('/usuarios/login', { contato: phone, senha: password });
-    if(response.data.admin != null) {
+    const response = await axiosApi.post('/usuarios/login', { contato: phone, senha: password }, { withCredentials: true });
+    if (response.data.admin != null) {
       localStorage.setItem("IS_ADMIN", true);
     }
     return response.data;
@@ -13,6 +14,21 @@ export const login = async (phone, password) => {
     throw error;
   }
 };
+
+export const logOff = () => {
+  try {
+    axiosApi.post('usuarios/logOut', {})
+    localStorage.removeItem("IS_SIGNED");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("JWT_TOKEN");
+    localStorage.removeItem("userData");
+
+    window.dispatchEvent(new Event("storage"));
+  } catch(e) {
+    toast.error("Falha ao deslogar");
+    console.log("Erro ao deslogar: " + e);
+  }
+  };
 
 export const register = async (name, password, phone) => {
   try {
@@ -54,7 +70,7 @@ export const changePassword = async (userId, senhaAtual, novaSenha, token) => {
         Authorization: `Bearer ${token}`
       }
     });
-    
+
     toast.success("Senha alterada com sucesso! Faça login novamente.");
     clearAuthData();
     return true;
@@ -71,7 +87,7 @@ export const deleteUser = async (userId, token) => {
         Authorization: `Bearer ${token}`
       }
     });
-    
+
     toast.success("Conta excluída com sucesso!");
     clearAuthData();
     return true;
@@ -91,7 +107,7 @@ export const getUserData = async (userId) => {
       genero: response.data.genero,
       imagemUrl: response.data.imagemUrl,
     };
-    
+
     console.log("Dados do usuário carregados:", userData);
     return userData;
   } catch (error) {
@@ -107,14 +123,14 @@ export const updateUserData = async (userId, userData, token, shouldLogout = tru
         Authorization: `Bearer ${token}`
       }
     });
-    
+
     if (shouldLogout) {
       toast.success("Telefone alterado com sucesso! Faça login novamente.");
       clearAuthData();
     } else {
       toast.success("Dados atualizados com sucesso!");
     }
-    
+
     return response.data;
   } catch (error) {
     if (error.response && error.response.status === 409) {
@@ -151,39 +167,39 @@ export const uploadProfileImage = async (userId, file, token) => {
       fileSize: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
       fileType: file.type
     });
-    
+
     // Validações no frontend
     if (!file.type.startsWith('image/')) {
       throw new Error('Arquivo deve ser uma imagem');
     }
-    
+
     if (file.size > 20 * 1024 * 1024) { // 20MB
       throw new Error('Arquivo muito grande (máximo 20MB)');
     }
-    
+
     const formData = new FormData();
     formData.append('file', file);
-    
+
     const response = await axiosApi.post(`/usuarios/${userId}/upload-imagem`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         Authorization: `Bearer ${token}`
       }
     });
-    
+
     console.log("Upload realizado com sucesso:", response.data);
     toast.success("Imagem de perfil atualizada com sucesso!");
-    
+
     // Disparar evento para atualizar outros componentes
-    window.dispatchEvent(new CustomEvent("userImageUpdated", { 
-      detail: { imagemUrl: response.data.imagemUrl } 
+    window.dispatchEvent(new CustomEvent("userImageUpdated", {
+      detail: { imagemUrl: response.data.imagemUrl }
     }));
-    
+
     return response.data;
-    
+
   } catch (error) {
     console.error("Erro no upload:", error);
-    
+
     if (error.message.includes('imagem') || error.message.includes('grande')) {
       toast.error(error.message);
     } else if (error.response?.status === 401) {
@@ -195,7 +211,7 @@ export const uploadProfileImage = async (userId, file, token) => {
     } else {
       toast.error("Erro ao fazer upload da imagem. Tente novamente.");
     }
-    
+
     throw error;
   }
 };
