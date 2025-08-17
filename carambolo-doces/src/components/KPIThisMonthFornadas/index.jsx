@@ -1,7 +1,7 @@
 import Button from "../Button";
 import DataKPIFornada from "../DataKPIFornada/DataKPIFornada";
 
-function KPILastFornada() {
+function KPIThisMonthFornadas() {
 
   return (
     <div className="m-0 h-fit w-fit g-0 bg-gradient-to-l from-gold to-darkGold rounded-2xl border-1 border-gold shadow-md">
@@ -10,18 +10,19 @@ function KPILastFornada() {
       >
 
         <div className="flex justify-center gap-x-1">
-          <span className="font-bold">Última Fornada:</span>
-          <span>99/99/99 - 99/99/99</span>
+          <span className="font-bold">Fornadas Deste Mês</span>
         </div>
 
         <DataKPIFornada />
 
       </div>
 
-      <button className="p-1 w-full font-bold text-blue rounded-2xl border-none focus:outline-none transform hover:scale-105 transition-transform">Consultar Produtos</button>
+      <button className="p-1 w-full font-bold text-blue rounded-2xl border-none focus:outline-none transform hover:scale-105 transition-transform">
+        Consultar Outras Fornadas
+      </button>
 
     </div>
   );
 }
 
-export default KPILastFornada;
+export default KPIThisMonthFornadas;
