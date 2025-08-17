@@ -7,9 +7,7 @@ const orderSummary = async () => {
         // Primeiro tenta com autenticação se houver token
         if (token && token.trim() !== '') {
             try {
-                const response = await axiosApi.get('/resumo-pedido', {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
+                const response = await axiosApi.get('/resumo-pedido');
                 return response.data;
             } catch (authError) {
                 console.warn("Erro com autenticação, tentando sem token:", authError);

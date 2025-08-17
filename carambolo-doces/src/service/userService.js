@@ -24,11 +24,11 @@ export const logOff = () => {
     localStorage.removeItem("userData");
 
     window.dispatchEvent(new Event("storage"));
-  } catch(e) {
+  } catch (e) {
     toast.error("Falha ao deslogar");
     console.log("Erro ao deslogar: " + e);
   }
-  };
+};
 
 export const register = async (name, password, phone) => {
   try {
@@ -65,10 +65,6 @@ export const changePassword = async (userId, senhaAtual, novaSenha, token) => {
     await axiosApi.patch(`/usuarios/${userId}/alterar-senha`, {
       senhaAtual,
       novaSenha
-    }, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
     });
 
     toast.success("Senha alterada com sucesso! Faça login novamente.");
@@ -82,11 +78,7 @@ export const changePassword = async (userId, senhaAtual, novaSenha, token) => {
 
 export const deleteUser = async (userId, token) => {
   try {
-    await axiosApi.delete(`/usuarios/${userId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+    await axiosApi.delete(`/usuarios/${userId}`);
 
     toast.success("Conta excluída com sucesso!");
     clearAuthData();
@@ -118,11 +110,7 @@ export const getUserData = async (userId) => {
 
 export const updateUserData = async (userId, userData, token, shouldLogout = true) => {
   try {
-    const response = await axiosApi.patch(`/usuarios/${userId}/dados-pessoais`, userData, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+    const response = await axiosApi.patch(`/usuarios/${userId}/dados-pessoais`, userData);
 
     if (shouldLogout) {
       toast.success("Telefone alterado com sucesso! Faça login novamente.");
@@ -182,8 +170,7 @@ export const uploadProfileImage = async (userId, file, token) => {
 
     const response = await axiosApi.post(`/usuarios/${userId}/upload-imagem`, formData, {
       headers: {
-        'Content-Type': 'multipart/form-data',
-        Authorization: `Bearer ${token}`
+        'Content-Type': 'multipart/form-data'
       }
     });
 
