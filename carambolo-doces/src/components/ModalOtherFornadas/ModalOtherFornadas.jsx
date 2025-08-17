@@ -1,17 +1,24 @@
 import Button from "../Button";
 import ModalBaseForm from "../ModalBaseForm";
 import DataKPIFornada from "../DataKPIFornada/DataKPIFornada";
+import ModalProductsFornada from "../ModalProductsFornada/ModalProductsFornada";
+import { useState } from "react";
 
-function ModalOtherFornadas() {
+function ModalOtherFornadas(props) {
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const openModal = () => setIsModalOpen(true);
+    const closeModal = () => setIsModalOpen(false);
 
     return (
-        <ModalBaseForm title={"Consultar Fornadas Antigas"}>
+        <ModalBaseForm title={"Consultar Fornadas Antigas"} onClose={props.onClose}>
 
             <div className="w-full flex flex-col justify-center items-center gap-y-4">
 
                 <div className="w-full h-fit flex justify-between border-2 border-gold rounded-2xl bg-bgHome px-5 py-2">
                     <span>1ª Fornada: 99/99/9999 - 99/99/9999</span>
-                    <Button variant="outline">Consultar</Button>
+                    <Button variant="outline" onClick={openModal}>Consultar</Button>
                 </div>
 
                 <div
@@ -22,6 +29,12 @@ function ModalOtherFornadas() {
 
                 </div>
             </div>
+
+            {isModalOpen && (
+                <ModalProductsFornada
+                    onClose={closeModal}
+                />
+            )}
 
         </ModalBaseForm>
     );

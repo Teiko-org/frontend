@@ -78,7 +78,7 @@ export default function TableSelectProductsFornada() {
   };
 
   return (
-    <div className="flex flex-col w-[90%] h-[350px] border-rounded-lg border-2 border-gold bg-bgHome">
+    <div className="flex flex-col w-[90%] h-[320px] border-rounded-lg border-2 border-gold bg-bgHome">
       <header className="flex flex-row justify-between border-rounded-lg px-20 items-center bg-gradient-blue h-[3.6875rem] w-full flex-shrink-0">
         <h1 className="text-gold text-[1.5rem]">Selecionar Produtos</h1>
 
@@ -144,7 +144,7 @@ export default function TableSelectProductsFornada() {
                       paddingBottom: "0.75rem",
                       position: "sticky",
                       top: 0,
-                      zIndex: 100,
+                      zIndex: 2,
                     }}
                   >
                     {column.label}

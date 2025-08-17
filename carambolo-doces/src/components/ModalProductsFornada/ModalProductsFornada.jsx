@@ -2,10 +2,10 @@ import Button from "../Button";
 import ModalBaseForm from "../ModalBaseForm";
 import DataKPIFornada from "../DataKPIFornada/DataKPIFornada";
 
-function ModalProductsFornada() {
+function ModalProductsFornada(props) {
 
     return (
-        <ModalBaseForm title={"Produtos Fornada: 99/99/9999 - 99/99/9999"}>
+        <ModalBaseForm title={"Produtos Fornada: 99/99/9999 - 99/99/9999"} onClose={props.onClose}>
 
             <div className="w-full flex justify-center">
 

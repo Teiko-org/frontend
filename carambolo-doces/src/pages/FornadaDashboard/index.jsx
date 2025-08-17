@@ -10,6 +10,8 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import { insertNewFornada } from "../../service/fornadaService"
+import KPILastFornada from "../../components/KPILastFornada";
+import KPIThisMonthFornadas from "../../components/KPIThisMonthFornadas";
 
 function FornadaDashboard() {
   const navigate = useNavigate();
@@ -108,36 +110,41 @@ function FornadaDashboard() {
   };
 
   return (
-    <div className="flex bg-bgNativeHome">
+    <div className="flex h-full bg-bgNativeHome">
       <BarraLateralDashboard />
 
-      <div className="w-full pl-56">
-        <header className="pb-5 w-full">
+      <div className="w-full h-full pl-56">
+        <header className="w-full">
           <HeaderDashboard title={"Fornada"} />
         </header>
 
-        <div className="flex flex-col justify-evenly items-center gap-10">
-          <div className="flex flex-col justify-center items-center w-[470px] h-[170px] border-2 border-gold rounded-2xl bg-bgHome gap-5 p-10">
-            <h3 className="font-bold text-blue">Iniciar Nova Fornada</h3>
+        <div className="flex flex-col justify-evenly items-center">
+          <p className="pb-5">Não há nenhuma fornada acontecendo no momento</p>
+          <div className="flex flex-row justify-evenly items-center gap-10">
+            <KPILastFornada />
+            <div className="flex flex-col justify-center items-center w-[470px] h-[170px] border-2 border-gold rounded-2xl bg-bgHome gap-5 p-10">
+              <h3 className="font-bold text-blue">Iniciar Nova Fornada</h3>
 
-            <div className="flex justify-center gap-10">
-              <CustomDatePicker
-                label="De:"
-                value={fornada.dataInicio}
-                onChange={(date) => handleDateChange("dataInicio", date)}
-                placeholder="Data Início"
-              />
-              <CustomDatePicker
-                label="Até:"
-                value={fornada.dataFim}
-                onChange={(date) => handleDateChange("dataFim", date)}
-                placeholder="Data Fim"
-              />
+              <div className="flex justify-center gap-10">
+                <CustomDatePicker
+                  label="De:"
+                  value={fornada.dataInicio}
+                  onChange={(date) => handleDateChange("dataInicio", date)}
+                  placeholder="Data Início"
+                />
+                <CustomDatePicker
+                  label="Até:"
+                  value={fornada.dataFim}
+                  onChange={(date) => handleDateChange("dataFim", date)}
+                  placeholder="Data Fim"
+                />
+              </div>
             </div>
+            <KPIThisMonthFornadas />
           </div>
-          <div className="flex flex-col w-full items-center gap-5">
+          <div className="flex flex-col w-full items-center gap-5 pt-5">
             <TableSelectProductsFornada />
-            <Button
+            <Button className="mb-5"
               text={"INICIAR FORNADA"}
               onClick={() => registerFornada()}
             />
