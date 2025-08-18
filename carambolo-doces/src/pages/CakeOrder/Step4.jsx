@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { FormContext } from "../../contexts/FormContext";
 import { useFormContext, Controller } from "react-hook-form";
 import Button from "../../components/Button";
@@ -8,6 +8,7 @@ import CustomDatePicker from "../../components/DatePicker";
 import PhoneNumberInput from "../../components/PhoneInput";
 import CampoComGradiente from "../../components/gradientField";
 import { searchAddressByCep } from "../../service/viaCepService";
+import { listUserAddresses } from "../../service/addressService";
 
 const Step4 = () => {
   const { nextStep, prevStep, appendFormData, valorEstimado } = useContext(FormContext);
@@ -19,6 +20,25 @@ const Step4 = () => {
     watch,
     formState: { errors },
   } = useFormContext();
+
+  const [userAddresses, setUserAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState("");
+  const isSignedIn = !!localStorage.getItem("IS_SIGNED");
+
+  useEffect(() => {
+    const loadAddresses = async () => {
+      try {
+        const userId = localStorage.getItem("userId");
+        if (isSignedIn && userId) {
+          const addresses = await listUserAddresses(userId);
+          setUserAddresses(addresses || []);
+        }
+      } catch (_) {
+        setUserAddresses([]);
+      }
+    };
+    loadAddresses();
+  }, [isSignedIn]);
 
   const onSubmit = (data) => {
     const plainData = {
@@ -49,7 +69,7 @@ const Step4 = () => {
 
   useEffect(() => {
     if (deliveryOption === "Entrega") {
-      setValue("horario", null);
+      setValue("horario", "");
     } else if (deliveryOption === "Retirada") {
       setValue("cep", "");
       setValue("estado", "");
@@ -58,6 +78,7 @@ const Step4 = () => {
       setValue("rua", "");
       setValue("numero", "");
       setValue("complemento", "");
+      setSelectedAddressId("");
     }
     setValue("estado", "SP");
   }, [deliveryOption, setValue]);
@@ -108,6 +129,36 @@ const Step4 = () => {
     setValue("rua", "");
   };
 
+  const handleAddressSelection = (addressId) => {
+    setSelectedAddressId(addressId);
+    if (!addressId) return;
+
+    if (addressId === "novo") {
+      setValue("cep", "");
+      setValue("cidade", "");
+      setValue("bairro", "");
+      setValue("rua", "");
+      setValue("numero", "");
+      setValue("complemento", "");
+      return;
+    }
+
+    const selected = userAddresses.find((addr) => addr.id === parseInt(addressId));
+    if (selected) {
+      setValue("cep", selected.cep || "");
+      setValue("cidade", selected.cidade || "");
+      setValue("bairro", selected.bairro || "");
+      setValue("rua", selected.logradouro || "");
+      setValue("numero", selected.numero || "");
+      setValue("complemento", selected.complemento || "");
+      clearErrors("cep");
+      clearErrors("cidade");
+      clearErrors("bairro");
+      clearErrors("rua");
+      clearErrors("numero");
+    }
+  };
+
   const formatCep = (value) =>
     value.replace(/\D/g, "").replace(/(\d{5})(\d{3})/, "$1-$2");
 
@@ -137,7 +188,7 @@ const Step4 = () => {
                   checked={field.value === option}
                   onChange={() => {
                     field.onChange(option);
-                    setValue("horario", null);
+                    setValue("horario", "");
                     clearErrors("deliveryOption");
                   }}
                 />
@@ -184,14 +235,11 @@ const Step4 = () => {
               rules={{ required: "Telefone é obrigatório" }}
               render={({ field }) => (
                 <PhoneNumberInput
-                  {...field}
-                  placeholder="(XX) X XXXX-XXXX"
-                  className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                  value={field.value}
                   onChange={(e) => {
                     field.onChange(e);
                     clearErrors("telefone");
                   }}
-                  onKeyPress={preventEnterSubmit}
                 />
               )}
             />
@@ -232,6 +280,25 @@ const Step4 = () => {
 
         {deliveryOption === "Entrega" && (
           <>
+            {isSignedIn && userAddresses.length > 0 && (
+              <div className="col-span-12">
+                <label className="block text-blue font-semibold mb-1">Endereço salvo</label>
+                <select
+                  value={selectedAddressId}
+                  onChange={(e) => handleAddressSelection(e.target.value)}
+                  className="border-2 border-gold rounded-lg px-4 py-2 w-full"
+                >
+                  <option value="">Selecione um endereço</option>
+                  {userAddresses.map((address) => (
+                    <option key={address.id} value={address.id}>
+                      {address.nome} - {address.logradouro}, {address.numero} - {address.bairro}
+                    </option>
+                  ))}
+                  <option value="novo">Usar novo endereço</option>
+                </select>
+              </div>
+            )}
+
             <div className="col-span-3">
               <label className="block text-blue font-semibold mb-1">CEP</label>
               <Controller
