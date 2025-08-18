@@ -6,7 +6,7 @@ import InputImage from "../../components/InputImage";
 
 const Step2 = () => {
   const { nextStep, prevStep, appendFormData, valorEstimado } = useContext(FormContext);
-  const { control, handleSubmit } = useFormContext();
+  const { control, handleSubmit, formState: { errors } } = useFormContext();
 
   const handleNext = (data) => {
   appendFormData({ observacoes: data.observacoes }, 'dadosMontagem');
@@ -34,19 +34,27 @@ const Step2 = () => {
           OBSERVAÇÕES
         </h2>
         <span className="text-blue text-sm">
-          Escreva abaixo tudo relacionado a o que e como você quer o seu
-          Carambolo
+          Conte com detalhes como você quer o seu Carambolo: tamanho, formato, massa, recheio, cobertura, cores/tema, frase a escrever, referências (link/Instagram), alergias e qualquer detalhe importante. Quanto mais detalhes, mais perfeito ele fica!
         </span>
         <Controller
           name="observacoes"
           control={control}
           defaultValue=""
+          rules={{
+            required: "Por favor, descreva como você quer o seu Carambolo.",
+            minLength: { value: 10, message: "Escreva pelo menos 10 caracteres para entendermos seu pedido." }
+          }}
           render={({ field }) => (
-            <textarea
-              {...field}
-              className="border-2 border-gold rounded-lg px-4 py-2 w-full mt-2 h-32"
-              placeholder="Descreva abaixo como você quer o seu Carambolo"
-            ></textarea>
+            <>
+              <textarea
+                {...field}
+                className="border-2 border-gold rounded-lg px-4 py-2 w-full mt-2 h-32"
+                placeholder=""
+              ></textarea>
+              {errors.observacoes && (
+                <p className="text-red-500 text-sm mt-1">{errors.observacoes.message}</p>
+              )}
+            </>
           )}
         />
       </div>
