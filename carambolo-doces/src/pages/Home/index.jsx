@@ -8,22 +8,22 @@ import Button from "../../components/Button";
 import BannerPrincipal from "../../components/BannerPrincipal";
 import BannerFornada from "../../components/BannerFornada";
 import { getFornadaAtiva, getProdutosFornadaComImagens } from "../../service/fornadaService";
-import { getBolosComImagens } from "../../service/boloService";
+import { findFeaturedDecoracoes } from "../../service/productService";
 import Carousel from "../../components/Carousel";
 import './cardsTransition.css';
 
 function Home() {
-  const [bolos, setBolos] = useState([]);
+  const [decoracoes, setDecoracoes] = useState([]);
   const [produtosFornada, setProdutosFornada] = useState([]);
   const [fornada, setFornada] = useState(null);
 
   useEffect(() => {
-    const fetchBolos = async () => {
+    const fetchDecoracoes = async () => {
       try {
-        const data = await getBolosComImagens();
-        setBolos(data);
+        const data = await findFeaturedDecoracoes();
+        setDecoracoes(data);
       } catch (error) {
-        console.error("Erro ao carregar bolos:", error);
+        console.error("Erro ao carregar decorações:", error);
       }
     };
     
@@ -41,12 +41,12 @@ function Home() {
       }
     };
 
-    fetchBolos();
+    fetchDecoracoes();
     carregarDadosFornada();
   }, []);
 
   const slides = useMemo(() => {
-    if (!bolos || bolos.length === 0) {
+    if (!decoracoes || decoracoes.length === 0) {
       return [
         { image: "src/assets/image_card.png", title: "Carambolos Vintage" },
         { image: "src/assets/image_card.png", title: "Carambolos Birthday" },
@@ -54,8 +54,8 @@ function Home() {
         { image: "src/assets/image_card.png", title: "Monte o seu Carambolo" },
       ];
     }
-    return bolos.map((b) => ({ image: b.imagemUrl ?? "src/assets/image_card.png", title: b.categoria ?? b.produto }));
-  }, [bolos]);
+    return decoracoes.map((d) => ({ image: d.imagens?.[0] ?? "src/assets/image_card.png", title: d.categoria ?? d.nome }));
+  }, [decoracoes]);
 
   return (
     <div className="bg-bgNativeHome">

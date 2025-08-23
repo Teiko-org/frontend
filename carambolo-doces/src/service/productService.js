@@ -39,6 +39,16 @@ export const findAllBolo = async () => {
 
 };
 
+export const findFeaturedDecoracoes = async () => {
+    try {
+        const response = await axiosApi.get(`/decoracoes/featured`);
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        return [];
+    }
+};
+
 export const handleVisibilityBolo = (data, id) => {
     try {
         axiosApi.patch(`/bolos/atualizar-status/${id}`, {
