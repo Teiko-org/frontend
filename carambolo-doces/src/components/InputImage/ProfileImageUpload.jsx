@@ -42,7 +42,6 @@ const ProfileImageUpload = ({ currentImageUrl, userId, onImageUpdate }) => {
     
     setIsUploading(true);
     try {
-      const token = localStorage.getItem("JWT_TOKEN");
       const updatedUser = await uploadProfileImage(userId, selectedFile, token);
       
       if (onImageUpdate) {
