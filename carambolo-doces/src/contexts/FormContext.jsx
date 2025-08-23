@@ -200,6 +200,10 @@ export const FormProvider = ({ children }) => {
         toast.warn("Por favor, selecione o recheio do bolo!");
         return;
       }
+      if (!dadosMontagem.observacoes || dadosMontagem.observacoes.trim().length < 10) {
+        toast.warn("Por favor, descreva nas observações como você quer o bolo (mín. 10 caracteres).");
+        return;
+      }
       if (dadosEntrega.deliveryOption === "Entrega" && !dadosEntrega.cep) {
         toast.warn("Por favor, preencha o CEP para entrega!");
         return;

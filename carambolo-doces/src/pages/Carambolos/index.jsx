@@ -107,44 +107,44 @@ const renderSection = (title, bolos, page, onArrowClick) => {
   const paginatedBolos = bolos.slice(startIdx, endIdx);
   
   return (
-    <>
-      <section className="pb-16 bg-bgHome border-t border-b border-gold" key={title}>
-      <h2 className="text-center text-3xl font-medium mb-6 mt-6">{title}</h2>
-      <div className="flex justify-between items-center px-4">
-        <ArrowButton 
-          direction="left" 
-          onClick={() => onArrowClick('left')} 
-          disabled={page === 0} 
-        />
-        <div className="flex space-x-12">
-          {paginatedBolos && paginatedBolos.length > 0 ? (
-            paginatedBolos.map((bolo) => (
-              <Card
-                key={bolo.boloId}
-                type="Bolo"
-                nome={bolo.produto}
-                preco={bolo.precoTotal}
-                boloData={bolo}
-              />
-            ))
-          ) : (
-            <>
-              <Card type="Bolo" />
-              <Card type="Bolo" />
-              <Card type="Bolo" />
-              <Card type="Bolo" />
-            </>
-          )}
+    <React.Fragment key={title}>
+      <section className="pb-16 bg-bgHome border-t border-b border-gold">
+        <h2 className="text-center text-3xl font-medium mb-6 mt-6">{title}</h2>
+        <div className="flex justify-between items-center px-4">
+          <ArrowButton 
+            direction="left" 
+            onClick={() => onArrowClick('left')} 
+            disabled={page === 0} 
+          />
+          <div className="flex space-x-12">
+            {paginatedBolos && paginatedBolos.length > 0 ? (
+              paginatedBolos.map((bolo) => (
+                <Card
+                  key={bolo.boloId ?? bolo.id}
+                  type="Bolo"
+                  nome={bolo.produto}
+                  preco={bolo.precoTotal}
+                  boloData={bolo}
+                />
+              ))
+            ) : (
+              <>
+                <Card key={`${title}-placeholder-1`} type="Bolo" />
+                <Card key={`${title}-placeholder-2`} type="Bolo" />
+                <Card key={`${title}-placeholder-3`} type="Bolo" />
+                <Card key={`${title}-placeholder-4`} type="Bolo" />
+              </>
+            )}
+          </div>
+          <ArrowButton 
+            direction="right" 
+            onClick={() => onArrowClick('right')} 
+            disabled={endIdx >= bolos.length} 
+          />
         </div>
-        <ArrowButton 
-          direction="right" 
-          onClick={() => onArrowClick('right')} 
-          disabled={endIdx >= bolos.length} 
-        />
-      </div>
-    </section>
-    <div className="h-24"></div>
-    </>
+      </section>
+      <div className="h-24"></div>
+    </React.Fragment>
   );
 };
 
