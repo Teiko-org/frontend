@@ -233,7 +233,6 @@ export const createPedidoFornada = async (pedido) => {
 export const insertNewFornada = async (data) => {
   console.log(data);
   try {
-    const token = localStorage.getItem('JWT_TOKEN');
     const payload = {
       dataInicio: data.dataInicio,
       dataFim: data.dataFim

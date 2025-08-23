@@ -20,7 +20,6 @@ export const logOff = () => {
     axiosApi.post('usuarios/logOut', {})
     localStorage.removeItem("IS_SIGNED");
     localStorage.removeItem("userId");
-    localStorage.removeItem("JWT_TOKEN");
     localStorage.removeItem("userData");
 
     window.dispatchEvent(new Event("storage"));
@@ -135,14 +134,12 @@ export const updateUserData = async (userId, userData, token, shouldLogout = tru
 
 export const setAuthData = (userId, token) => {
   localStorage.setItem("userId", userId);
-  localStorage.setItem("JWT_TOKEN", token);
   localStorage.setItem("IS_SIGNED", true);
   window.dispatchEvent(new Event("storage"));
 };
 
 export const clearAuthData = () => {
   localStorage.removeItem("userId");
-  localStorage.removeItem("JWT_TOKEN");
   localStorage.removeItem("IS_SIGNED");
   window.dispatchEvent(new Event("storage"));
 };
