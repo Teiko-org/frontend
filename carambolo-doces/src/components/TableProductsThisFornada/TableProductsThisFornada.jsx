@@ -6,7 +6,7 @@ import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-// import productsFornadasService from "../../service/productsFornadasService";
+import { productsThisFornadasService } from "../../service/productsFornadasService";
 
 const columns = [
     { id: "produto", label: "PRODUTO", minWidth: 150, align: "left" },
@@ -14,19 +14,26 @@ const columns = [
     { id: "quantidade", label: "QUANTIDADE", minWidth: 50, align: "left" },
 ];
 
-export default function TableProductsThisFornada(products) {
-    // const getData = async () => {
-    //     try {
-    //         const response = await productsFornadasService();
-    //         console.log(response);
+export default function TableProductsThisFornada(idFornada) {
 
-    //         setProducts(Array.isArray(response) ? response : []);
-    //     } catch (error) {
-    //         console.log(error);
+    const [products, setProducts] = React.useState([]);
 
-    //         setProducts([]);
-    //     }
-    // };
+    const getData = async () => {
+        try {
+            const response = await productsThisFornadasService(idFornada);
+            console.log(response);
+
+            setProducts(Array.isArray(response) ? response : []);
+        } catch (error) {
+            console.log(error);
+
+            setProducts([]);
+        }
+    };
+
+    React.useEffect(() => {
+        getData();
+    }, [idFornada]);
 
     return (
         <div className="flex flex-col w-[90%] h-[320px] border-rounded-lg border-2 border-gold bg-bgHome">
