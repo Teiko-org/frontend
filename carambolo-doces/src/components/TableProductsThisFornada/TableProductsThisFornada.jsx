@@ -10,17 +10,18 @@ import { productsThisFornadasService } from "../../service/productsFornadasServi
 
 const columns = [
     { id: "produto", label: "PRODUTO", minWidth: 150, align: "left" },
+    { id: "categoria", label: "CATEGORIA", minWidth: 50, align: "left" },
     { id: "valor", label: "PREÇO", minWidth: 50, align: "left" },
     { id: "quantidade", label: "QUANTIDADE", minWidth: 50, align: "left" },
 ];
 
-export default function TableProductsThisFornada(idFornada) {
+export default function TableProductsThisFornada(props) {
 
     const [products, setProducts] = React.useState([]);
 
     const getData = async () => {
         try {
-            const response = await productsThisFornadasService(idFornada);
+            const response = await productsThisFornadasService(props.idFornada);
             console.log(response);
 
             setProducts(Array.isArray(response) ? response : []);
@@ -33,10 +34,10 @@ export default function TableProductsThisFornada(idFornada) {
 
     React.useEffect(() => {
         getData();
-    }, [idFornada]);
+    }, [props.idFornada]);
 
     return (
-        <div className="flex flex-col w-[90%] h-[320px] border-rounded-lg border-2 border-gold bg-bgHome">
+        <div className="flex flex-col w-[90%] h-[320px]">
 
             <div className="flex-1 overflow-hidden">
                 <Paper
@@ -44,8 +45,11 @@ export default function TableProductsThisFornada(idFornada) {
                     sx={{
                         width: "100%",
                         height: "100%",
-                        overflow: "hidden",
-                        border: "none",
+                        border: "2px solid #A47032",
+                        borderRadius: "1rem",
+                        borderTopLeftRadius: props.roundedTop ? "1rem" : 0,
+                        borderTopRightRadius: props.roundedTop ? "1rem" : 0,
+                        // overflow: "hidden",
                         boxShadow: "none",
                     }}
                 >
@@ -69,7 +73,7 @@ export default function TableProductsThisFornada(idFornada) {
                                 background: '#B8956F',
                             },
                         }}
-                        className="bg-bgHome p-2 rounded-lg"
+                        className={`bg-bgHome p-2 rounded-2xl ${props.roundedTop ? "rounded-t-2xl" : "rounded-t-none"}`}
                     >
                         <Table stickyHeader aria-label="sticky table">
                             <TableHead>
@@ -104,7 +108,7 @@ export default function TableProductsThisFornada(idFornada) {
                                         role="checkbox"
                                         tabIndex={-1}
                                         key={row.id}
-                                        className={`${index % 2 === 0 ? "bg-[#FFE7DD]" : "bg-none"}`}
+                                        className={`${index % 2 === 0 ? "bg-[#FFEEE7]" : "bg-none"}`}
                                         sx={{
                                             boxShadow: "none",
                                             borderBottom: "none",
@@ -128,9 +132,11 @@ export default function TableProductsThisFornada(idFornada) {
                                                             paddingBottom: "0.5rem",
                                                         }}
                                                     >
-                                                        <div>
-                                                            quantidadeVendida/quantidadeTotal
-                                                        </div>
+                                                        {props.amountLeft ? (
+                                                            <div className="flex gap-1 items-center">
+                                                            <div className="flex items-center w-fit bg-bgNativeHome px-2 border-2 border-gold rounded-lg text-base">quantidadeVendida / {row.quantidade}</div>
+                                                            Restantes </div>)
+                                                        : <div>quantidadeVendida/{row.quantidade}</div>}
                                                     </TableCell>
                                                 );
                                             }

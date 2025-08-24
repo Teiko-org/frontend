@@ -23,7 +23,7 @@ function AllFornadasDashboard() {
 
                 <div className="flex flex-col justify-evenly items-center">
 
-                    <TableProductsThisFornada />
+                    <TableProductsThisFornada idFornada={1} roundedTop={false} amountLeft={false} />
                     <div className="flex flex-row justify-evenly items-center gap-10">
 
                         <KPIThisMonthFornadas />
