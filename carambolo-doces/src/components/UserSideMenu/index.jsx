@@ -81,6 +81,11 @@ function UserSideMenu() {
           onClick={() => { navigate("/pagina-enderecos") }}>
             Endereços
           </button>
+
+          <button className="w-[365px] bg-bgNativeHome border-2 border-gold rounded-2xl font-semibold p-3 px-5 text-left"
+          onClick={() => { navigate("/carrinho") }}>
+            Carrinho
+          </button>
         </div>
       </div>
 

@@ -11,6 +11,8 @@ import FornadaDashboard from '../pages/FornadaDashboard';
 import ModalCadastroProduto from '../components/ModalCadastroProduto';
 import Products from '../pages/Products/index';
 import OrderKanban from '../pages/OrderKanban/index';
+import CartPage from '../pages/Cart';
+import FornadaMultiOrderPage from '../pages/FornadaOrderPage/Multi';
 
 const AppRoutes = () => {
   return (
@@ -25,6 +27,8 @@ const AppRoutes = () => {
       <Route path="/dashboard-kanban-pedidos" element={<OrderKanban />} />
       <Route path="/produtos" element={<Products />} />
       <Route path="/fornada-dashboard" element={<FornadaDashboard/>} />
+      <Route path="/carrinho" element={<CartPage />} />
+      <Route path="/pedido-fornada-multiplo" element={<FornadaMultiOrderPage />} />
     </Routes>
   );
 };

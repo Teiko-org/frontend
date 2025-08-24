@@ -39,7 +39,7 @@ function FornadaOrderPage() {
         imagens: produtoSelecionado?.imagens || []
     }
 
-    const [amount, setAmount] = useState(1);
+    const [amount, setAmount] = useState(location.state?.quantidade || 1);
 
     const [deliveryOption, setDeliveryOption] = useState("Entrega");
 
@@ -330,7 +330,8 @@ function FornadaOrderPage() {
             
             setTimeout(() => {
                 window.open(linkWhatsApp, "_blank");
-            }, 1000);
+                navigate('/');
+            }, 800);
 
         } catch (error) {
             console.error("Erro ao realizar pedido:", error);
