@@ -5,13 +5,23 @@ import { RiFileEditLine } from "react-icons/ri";
 import { BiLogOut } from "react-icons/bi";
 import { Link, useNavigate } from "react-router-dom";
 import { FaHome } from "react-icons/fa";
+import { useEffect } from "react";
 
 const BarraLateralDashboard = () => {
+
+    useEffect(() => {
+        let statusLogOn = localStorage.getItem("IS_SIGNED");
+        let statusAdmin = localStorage.getItem("IS_ADMIN");
+
+        if (!statusAdmin || !statusLogOn) {
+            navigate("/");
+            return;
+        }
+    }, [])
 
     const navigate = useNavigate();
 
     const handleLogout = () => {
-
         localStorage.removeItem("IS_SIGNED");
         localStorage.removeItem("userId");
         localStorage.removeItem("userData");
@@ -19,7 +29,6 @@ const BarraLateralDashboard = () => {
 
         window.dispatchEvent(new Event("storage"));
         navigate("/");
-
     };
 
     return (

@@ -19,6 +19,7 @@ export const logOff = () => {
   try {
     axiosApi.post('usuarios/logOut', {})
     localStorage.removeItem("IS_SIGNED");
+    localStorage.removeItem("IS_ADMIN");
     localStorage.removeItem("userId");
     localStorage.removeItem("userData");
 
