@@ -37,22 +37,9 @@ export default function ModalCadastroProduto() {
 
     const fetchDecoracoes = async () => {
         try {
-            const token = localStorage.getItem('JWT_TOKEN');
-            let config = {};
-            
-            if (token && token.trim() !== '') {
-                try {
-                    config.headers = { Authorization: `Bearer ${token}` };
-                    const response = await axios.get("http://localhost:8080/decoracoes", config);
-                    setDecoracoesDisponiveis(response.data);
-                    return;
-                } catch (authError) {
-                    // Fallback to no auth
-                }
-            }
-            
-            const response = await axios.get("http://localhost:8080/decoracoes");
+            const response = await axios.get("http://localhost:8080/decoracoes",);
             setDecoracoesDisponiveis(response.data);
+            return;
         } catch (error) {
             console.error("Erro ao buscar decorações:", error);
         }
@@ -65,7 +52,7 @@ export default function ModalCadastroProduto() {
             setFilePreview(URL.createObjectURL(img));
         }
     };
-    
+
     const exibirImagem = () => {
         imagemRef.current?.click();
     };
@@ -78,7 +65,7 @@ export default function ModalCadastroProduto() {
     useEffect(() => {
         setFile(null);
         setFilePreview(null);
-        
+
         if (categoria === "Carambolo") {
             axios
                 .get("http://localhost:8080/bolos/massa")
@@ -126,49 +113,49 @@ export default function ModalCadastroProduto() {
         }
 
         try {
-            const token = localStorage.getItem('JWT_TOKEN');
             let config = { headers: {} };
             
-            if (token && token.trim() !== '') {
-                try {
-                    config.headers.Authorization = `Bearer ${token}`;
-                    const response = await axios.post("http://localhost:8080/decoracoes", formData, config);
-                    toast.success("Decoração cadastrada com sucesso!");
-                    
-                    await fetchDecoracoes();
-                    
-                    setNomeDecoracao("");
-                    setObservacao([]);
-                    setFile(null);
-                    setFilePreview(null);
-                    setCategoriaDecoracao("");
-                    
-                    if (categoria === "Decoracao" && !naoFecharModal) {
-                        setIsOpen(false);
-                    }
-                    
-                    return response.data.id;
-                } catch (authError) {
-                    // Fallback to no auth
+       
+            try {
+                config.headers.Authorization = `Bearer ${token}`;
+                const response = await axios.post("http://localhost:8080/decoracoes", formData, config);
+                toast.success("Decoração cadastrada com sucesso!");
+
+                await fetchDecoracoes();
+
+                setNomeDecoracao("");
+                setObservacao([]);
+                setFile(null);
+                setFilePreview(null);
+                setCategoriaDecoracao("");
+
+                if (categoria === "Decoracao" && !naoFecharModal) {
+                    setIsOpen(false);
                 }
+
+                return response.data.id;
+            } catch (authError) {
+                // Fallback to no auth
             }
+            
             
             delete config.headers.Authorization;
             const response = await axios.post("http://localhost:8080/decoracoes", formData, config);
             toast.success("Decoração cadastrada com sucesso!");
             
             await fetchDecoracoes();
-            
+
             setNomeDecoracao("");
             setObservacao([]);
             setFile(null);
             setFilePreview(null);
+
             setCategoriaDecoracao("");
             
             if (categoria === "Decoracao" && !naoFecharModal) {
                 setIsOpen(false);
             }
-            
+
             return response.data.id;
         } catch (error) {
             toast.error("Erro ao cadastrar decoração!");
@@ -179,7 +166,7 @@ export default function ModalCadastroProduto() {
 
     const cadastrarProduto = async (decoracaoId) => {
         const decoracaoFinal = decoracaoId || (decoracao ? Number(decoracao) : null);
-        
+
         const data = {
             recheioPedidoId: Number(recheioPedido),
             massaId: Number(massa),
@@ -191,23 +178,8 @@ export default function ModalCadastroProduto() {
         };
 
         try {
-            const token = localStorage.getItem('JWT_TOKEN');
-            let config = {
-                headers: { "Content-Type": "application/json" }
-            };
-            
-            if (token && token.trim() !== '') {
-                try {
-                    config.headers.Authorization = `Bearer ${token}`;
-                    await axios.post("http://localhost:8080/bolos", data, config);
-                    return;
-                } catch (authError) {
-                    // Fallback to no auth
-                }
-            }
-            
-            delete config.headers.Authorization;
-            await axios.post("http://localhost:8080/bolos", data, config);
+            await axios.post("http://localhost:8080/bolos", data);
+            return;
         } catch (error) {
             toast.error("Erro ao cadastrar produto!");
             console.error("Erro completo:", error);
@@ -276,7 +248,7 @@ export default function ModalCadastroProduto() {
             setCategoriaFornada("");
             setFile(null);
             setFilePreview(null);
-            
+
             setIsOpen(false);
         } catch (error) {
             toast.error("Erro ao cadastrar fornada!");
@@ -287,8 +259,8 @@ export default function ModalCadastroProduto() {
     return (
         <>
             <Button
-                className="w-[310px] h-[2.5rem] mb-5 mr-6" 
-                text={"ADICIONAR NOVO PRODUTO +"} 
+                className="w-[310px] h-[2.5rem] mb-5 mr-6"
+                text={"ADICIONAR NOVO PRODUTO +"}
                 onClick={() => setIsOpen(true)}
             >
             </Button>
@@ -300,8 +272,8 @@ export default function ModalCadastroProduto() {
                             categoria === "Fornada"
                                 ? cadastrarFornada
                                 : categoria === "Carambolo"
-                                ? handleSubmitCarambolo
-                                : cadastrarDecoracao
+                                    ? handleSubmitCarambolo
+                                    : cadastrarDecoracao
                         }
                         className="bg-[#fbe4d6] rounded-md border border-blue-400 max-w-4xl w-full max-h-[90vh] overflow-auto text-[#5c3c10] shadow-xl"
                     >
@@ -398,7 +370,7 @@ export default function ModalCadastroProduto() {
                                         </Button>
                                     </>
                                 )}
-                
+
                                 {categoria === "Fornada" && (
                                     <>
                                         <div className="flex flex-col gap-1">
@@ -430,7 +402,7 @@ export default function ModalCadastroProduto() {
                                             />
                                         </div>
 
-                                        
+
                                         <div className="flex flex-col gap-1">
                                             <label className="font-medium">Valor</label>
                                             <input

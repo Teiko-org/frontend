@@ -14,7 +14,6 @@ const BarraLateralDashboard = () => {
 
         localStorage.removeItem("IS_SIGNED");
         localStorage.removeItem("userId");
-        localStorage.removeItem("JWT_TOKEN");
         localStorage.removeItem("userData");
         localStorage.removeItem("IS_ADMIN");
 

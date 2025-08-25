@@ -62,7 +62,6 @@ function UserPage() {
   const handleEditSave = async () => {
     if (isEditing) {
       const userId = localStorage.getItem("userId");
-      const token = localStorage.getItem("JWT_TOKEN");
       
       try {
         const updatedData = {
@@ -112,7 +111,6 @@ function UserPage() {
 
   const handleChangePassword = async () => {
     const userId = localStorage.getItem("userId");
-    const token = localStorage.getItem("JWT_TOKEN");
     try {
       await changePassword(userId, senhaAtual, novaSenha, token);
       navigate("/");
@@ -122,7 +120,6 @@ function UserPage() {
 
   const handleDeleteUser = async () => {
     const userId = localStorage.getItem("userId");
-    const token = localStorage.getItem("JWT_TOKEN");
     try {
       await deleteUser(userId, token);
       navigate("/");

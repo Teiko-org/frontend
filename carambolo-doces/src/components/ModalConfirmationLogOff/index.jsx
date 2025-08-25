@@ -2,18 +2,13 @@ import React from "react";
 import ModalBase from "../ModalBase";
 import Button from "../Button";
 import { useNavigate } from "react-router-dom";
+import { logOff } from "../../service/userService";
 
 function ModalConfirmationLogOff({ onClose }) {
   const navigate = useNavigate();
 
-  const logOff = () => {
-    localStorage.removeItem("IS_SIGNED");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("JWT_TOKEN");
-    localStorage.removeItem("userData");
-    
-    window.dispatchEvent(new Event("storage"));
-    navigate("/");
+  const handleLogOff = () => {
+    logOff()
   };
 
   return (
@@ -30,7 +25,7 @@ function ModalConfirmationLogOff({ onClose }) {
             fontSize="text-lg"
             textColor="text-white"
             borderColor="border-red"
-            onClick={logOff}
+            onClick={handleLogOff}
             className="w-[120px]"
           />
 
