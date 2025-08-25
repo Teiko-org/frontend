@@ -1,5 +1,13 @@
 import { axiosApi } from '../provider/AxiosApi';
 
+// Evita parsing UTC do formato YYYY-MM-DD em JS, usando fuso local
+function parseLocalDate(dateStr) {
+  if (!dateStr) return null;
+  const [y, m, d] = String(dateStr).split("-").map(Number);
+  if (!y || !m || !d) return new Date(dateStr);
+  return new Date(y, m - 1, d, 23, 59, 59, 999);
+}
+
 export const listFornadas = async () => {
   try {
     const response = await axiosApi.get('/fornadas');
@@ -91,8 +99,7 @@ export const getFornadaAtiva = async () => {
 
     // Primeiro, filtra fornadas que ainda não expiraram (dataFim >= hoje)
     const fornadasNaoExpiradas = fornadas.filter(fornada => {
-      const dataFim = new Date(fornada.dataFim);
-      dataFim.setHours(23, 59, 59, 999); // Fim do dia
+      const dataFim = parseLocalDate(fornada.dataFim);
       return dataFim >= hoje;
     });
 
@@ -107,13 +114,12 @@ export const getFornadaAtiva = async () => {
 
     // Das não expiradas, pega a que está ativa agora (hoje entre dataInicio e dataFim)
     const fornadasAtivas = fornadasNaoExpiradas.filter(fornada => {
-      const dataInicio = new Date(fornada.dataInicio);
-      const dataFim = new Date(fornada.dataFim);
-      dataInicio.setHours(0, 0, 0, 0);   // Início do dia
-      dataFim.setHours(23, 59, 59, 999); // Fim do dia
+      const [yi, mi, di] = String(fornada.dataInicio).split("-").map(Number);
+      const [yf, mf, df] = String(fornada.dataFim).split("-").map(Number);
+      const dataInicio = new Date(yi, mi - 1, di, 0, 0, 0, 0);
+      const dataFim = new Date(yf, mf - 1, df, 23, 59, 59, 999);
+      return hoje >= dataInicio && hoje <= dataFim;
 
-      const estaAtiva = hoje >= dataInicio && hoje <= dataFim;
-      return estaAtiva;
     });
 
     if (fornadasAtivas.length > 0) {

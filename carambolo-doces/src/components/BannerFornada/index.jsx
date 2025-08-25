@@ -40,7 +40,8 @@ const BannerFornada = ({ fornada }) => {
       if (dataFim.includes('T') || dataFim.includes(' ')) {
         endDate = new Date(dataFim);
       } else {
-        endDate = new Date(dataFim + "T23:59:59");
+        const [y, m, d] = String(dataFim).split('-').map(Number);
+        endDate = new Date(y, m - 1, d, 23, 59, 59, 999);
       }
       
       if (isNaN(endDate.getTime())) {
@@ -76,7 +77,8 @@ const BannerFornada = ({ fornada }) => {
       return "";
     }
     
-    const date = new Date(fornadaData.dataFim);
+    const [y, m, d] = String(fornadaData.dataFim).split('-').map(Number);
+    const date = new Date(y, m - 1, d);
     return date.toLocaleDateString('pt-BR');
   };
 

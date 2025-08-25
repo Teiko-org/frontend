@@ -5,13 +5,17 @@ import { BrowserRouter } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ScrollToTop from "./components/ScrollToTop";
+import { CartProvider } from "./contexts/CartContext";
 
 function App() {
   return (
     <BrowserRouter>
-      <ScrollToTop />
-      <AppRoutes />
+      <CartProvider>
+        <ScrollToTop />
+        <AppRoutes />
+      </CartProvider>
       <ToastContainer
+        containerId="global"
         position="top-right"
         autoClose={3000}
         hideProgressBar={false}

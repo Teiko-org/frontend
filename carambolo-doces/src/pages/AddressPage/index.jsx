@@ -6,7 +6,7 @@ import CardAddress from "../../components/CardAddress";
 import UserSideMenu from "../../components/UserSideMenu";
 import ModalAddressRegister from "../../components/ModalAddressRegister";
 import { IoAdd, IoChevronBack, IoChevronForward } from "react-icons/io5";
-import { listAddresses } from "../../service/addressService";
+import { listUserAddresses } from "../../service/addressService";
 import { useNavigate } from "react-router-dom";
 
 function AddressPage() {
@@ -24,17 +24,15 @@ function AddressPage() {
   useEffect(() => {
     const fetchAddresses = async () => {
       try {
-        const addressData = await listAddresses();
         const userId = localStorage.getItem('USER_ID');
         
-        if (userId) {
-          const userAddresses = addressData.filter(addr => 
-            addr.usuario && addr.usuario.toString() === userId
-          );
-          setEnderecos(userAddresses);
-        } else {
-          setEnderecos(addressData);
+        if (!userId) {
+          setEnderecos([]);
+          return;
         }
+
+        const addressData = await listUserAddresses(userId);
+        setEnderecos(addressData || []);
       } catch (error) {
         console.error('Erro ao buscar endereços:', error);
       } finally {
