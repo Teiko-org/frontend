@@ -17,7 +17,7 @@ import FornadaMultiOrderPage from '../pages/FornadaOrderPage/Multi';
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<AllFornadasDashboard />} />
       <Route path="/pagina-usuario" element={<UserPage />} />
       <Route path="/pagina-enderecos" element={<AddressPage />} />
       <Route path="/pedido-bolo" element={<Application />} />
