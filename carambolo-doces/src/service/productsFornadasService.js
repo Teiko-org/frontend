@@ -2,6 +2,7 @@ import { axiosApi } from '../provider/AxiosApi.js';
 
 export const productsFornadasService = async () => {
     try {
+
         const token = localStorage.getItem('JWT_TOKEN');
         
         if (token && token.trim() !== '') {
@@ -16,12 +17,12 @@ export const productsFornadasService = async () => {
                 console.warn("Erro com autenticação, tentando sem token:", authError);
             }
         }
-        
+
         const response = await axiosApi.get('/fornadas/produto-fornada');
         return response.data;
     } catch (error) {
         console.error("Erro ao buscar os produtos da Fornada:", error);
-
+      
         return [];
     }
 }

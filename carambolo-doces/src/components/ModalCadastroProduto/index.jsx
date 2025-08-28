@@ -4,6 +4,7 @@ import { RiFileTextLine } from "react-icons/ri";
 import Button from "../Button";
 import InputOption from "../InputOption";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 export default function ModalCadastroProduto() {
     const [isModalOpen, setIsOpen] = useState(false);
@@ -25,6 +26,7 @@ export default function ModalCadastroProduto() {
     const [decoracao, setDecoracao] = useState("");
     const [categoriaFornada, setCategoriaFornada] = useState("");
     const [nomeDecoracao, setNomeDecoracao] = useState("");
+    const [categoriaDecoracao, setCategoriaDecoracao] = useState("");
 
     const [massasDisponiveis, setMassasDisponiveis] = useState([]);
     const [recheiosDisponiveis, setRecheiosDisponiveis] = useState([]);
@@ -35,22 +37,9 @@ export default function ModalCadastroProduto() {
 
     const fetchDecoracoes = async () => {
         try {
-            const token = localStorage.getItem('JWT_TOKEN');
-            let config = {};
-            
-            if (token && token.trim() !== '') {
-                try {
-                    config.headers = { Authorization: `Bearer ${token}` };
-                    const response = await axios.get("http://localhost:8080/decoracoes", config);
-                    setDecoracoesDisponiveis(response.data);
-                    return;
-                } catch (authError) {
-                    // Fallback to no auth
-                }
-            }
-            
-            const response = await axios.get("http://localhost:8080/decoracoes");
+            const response = await axios.get("http://localhost:8080/decoracoes",);
             setDecoracoesDisponiveis(response.data);
+            return;
         } catch (error) {
             console.error("Erro ao buscar decorações:", error);
         }
@@ -63,7 +52,7 @@ export default function ModalCadastroProduto() {
             setFilePreview(URL.createObjectURL(img));
         }
     };
-    
+
     const exibirImagem = () => {
         imagemRef.current?.click();
     };
@@ -76,7 +65,7 @@ export default function ModalCadastroProduto() {
     useEffect(() => {
         setFile(null);
         setFilePreview(null);
-        
+
         if (categoria === "Carambolo") {
             axios
                 .get("http://localhost:8080/bolos/massa")
@@ -111,7 +100,7 @@ export default function ModalCadastroProduto() {
         e?.preventDefault?.();
 
         if (!nomeDecoracao) {
-            alert("Preencha o nome da decoração!");
+            toast.warn("Preencha o nome da decoração!");
             return;
         }
 
@@ -119,52 +108,57 @@ export default function ModalCadastroProduto() {
         observacao.forEach((obs) => formData.append("observacao", obs));
         formData.append("nome", nomeDecoracao);
         if (file) formData.append("imagens", file);
+        if (categoriaDecoracao && categoria === "Decoracao") {
+            formData.append("categoria", categoriaDecoracao);
+        }
 
         try {
-            const token = localStorage.getItem('JWT_TOKEN');
             let config = { headers: {} };
             
-            if (token && token.trim() !== '') {
-                try {
-                    config.headers.Authorization = `Bearer ${token}`;
-                    const response = await axios.post("http://localhost:8080/decoracoes", formData, config);
-                    alert("Decoração cadastrada com sucesso!");
-                    
-                    await fetchDecoracoes();
-                    
-                    setNomeDecoracao("");
-                    setObservacao([]);
-                    setFile(null);
-                    setFilePreview(null);
-                    
-                    if (categoria === "Decoracao" && !naoFecharModal) {
-                        setIsOpen(false);
-                    }
-                    
-                    return response.data.id;
-                } catch (authError) {
-                    // Fallback to no auth
+       
+            try {
+                config.headers.Authorization = `Bearer ${token}`;
+                const response = await axios.post("http://localhost:8080/decoracoes", formData, config);
+                toast.success("Decoração cadastrada com sucesso!");
+
+                await fetchDecoracoes();
+
+                setNomeDecoracao("");
+                setObservacao([]);
+                setFile(null);
+                setFilePreview(null);
+                setCategoriaDecoracao("");
+
+                if (categoria === "Decoracao" && !naoFecharModal) {
+                    setIsOpen(false);
                 }
+
+                return response.data.id;
+            } catch (authError) {
+                // Fallback to no auth
             }
+            
             
             delete config.headers.Authorization;
             const response = await axios.post("http://localhost:8080/decoracoes", formData, config);
-            alert("Decoração cadastrada com sucesso!");
+            toast.success("Decoração cadastrada com sucesso!");
             
             await fetchDecoracoes();
-            
+
             setNomeDecoracao("");
             setObservacao([]);
             setFile(null);
             setFilePreview(null);
+
+            setCategoriaDecoracao("");
             
             if (categoria === "Decoracao" && !naoFecharModal) {
                 setIsOpen(false);
             }
-            
+
             return response.data.id;
         } catch (error) {
-            alert("Erro ao cadastrar decoração!");
+            toast.error("Erro ao cadastrar decoração!");
             console.error("Erro completo:", error);
             throw error;
         }
@@ -172,7 +166,7 @@ export default function ModalCadastroProduto() {
 
     const cadastrarProduto = async (decoracaoId) => {
         const decoracaoFinal = decoracaoId || (decoracao ? Number(decoracao) : null);
-        
+
         const data = {
             recheioPedidoId: Number(recheioPedido),
             massaId: Number(massa),
@@ -184,25 +178,10 @@ export default function ModalCadastroProduto() {
         };
 
         try {
-            const token = localStorage.getItem('JWT_TOKEN');
-            let config = {
-                headers: { "Content-Type": "application/json" }
-            };
-            
-            if (token && token.trim() !== '') {
-                try {
-                    config.headers.Authorization = `Bearer ${token}`;
-                    await axios.post("http://localhost:8080/bolos", data, config);
-                    return;
-                } catch (authError) {
-                    // Fallback to no auth
-                }
-            }
-            
-            delete config.headers.Authorization;
-            await axios.post("http://localhost:8080/bolos", data, config);
+            await axios.post("http://localhost:8080/bolos", data);
+            return;
         } catch (error) {
-            alert("Erro ao cadastrar produto!");
+            toast.error("Erro ao cadastrar produto!");
             console.error("Erro completo:", error);
             throw error;
         }
@@ -211,44 +190,35 @@ export default function ModalCadastroProduto() {
     const handleSubmitCarambolo = async (e) => {
         e.preventDefault();
         
-        if (!massa) {
-            alert("Por favor, selecione uma massa!");
+        const decoracaoIdSelecionada = decoracao ? Number(decoracao) : null;
+        if (!decoracaoIdSelecionada) {
+            toast.warn("Selecione uma decoração!");
             return;
         }
-        if (!recheioPedido) {
-            alert("Por favor, selecione um recheio!");
+        if (!categoriaBolo || !categoriaBolo.trim()) {
+            toast.warn("Preencha a categoria para exibição na Home!");
             return;
         }
-        if (!cobertura) {
-            alert("Por favor, selecione uma cobertura!");
-            return;
-        }
-        if (!formato) {
-            alert("Por favor, selecione um formato!");
-            return;
-        }
-        if (!tamanho) {
-            alert("Por favor, selecione um tamanho!");
-            return;
-        }
-        
+
+        const selecionada = decoracoesDisponiveis.find(d => d.id === decoracaoIdSelecionada);
+        const payload = {
+            observacao: selecionada?.observacao ?? "",
+            nome: selecionada?.nome ?? "",
+            categoria: categoriaBolo
+        };
+
         try {
-            let decoracaoIdParaUsar = null;
-            
-            if (nomeDecoracao && nomeDecoracao.trim() !== '') {
-                decoracaoIdParaUsar = await cadastrarDecoracao(null, true);
-                
-                if (decoracaoIdParaUsar) {
-                    setDecoracao(decoracaoIdParaUsar.toString());
-                }
-            } else {
-                decoracaoIdParaUsar = decoracao ? Number(decoracao) : null;
+            const token = localStorage.getItem('JWT_TOKEN');
+            let config = { headers: { "Content-Type": "application/json" } };
+            if (token && token.trim() !== '') {
+                config.headers.Authorization = `Bearer ${token}`;
             }
-            
-            await cadastrarProduto(decoracaoIdParaUsar);
-            alert("Produto cadastrado com sucesso!");
+            await axios.put(`http://localhost:8080/decoracoes/${decoracaoIdSelecionada}`, payload, config);
+
+            toast.success("Pré-decoração adicionada à Home!");
             setIsOpen(false);
         } catch (error) {
+            toast.error("Erro ao marcar pré-decoração!");
             console.error(error);
         }
     };
@@ -270,7 +240,7 @@ export default function ModalCadastroProduto() {
             const response = await axios.post("http://localhost:8080/fornadas/produto-fornada", formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            alert("Fornada cadastrada com sucesso!");
+            toast.success("Fornada cadastrada com sucesso!");
             
             setProduto("");
             setDescricao("");
@@ -278,10 +248,10 @@ export default function ModalCadastroProduto() {
             setCategoriaFornada("");
             setFile(null);
             setFilePreview(null);
-            
+
             setIsOpen(false);
         } catch (error) {
-            alert("Erro ao cadastrar fornada!");
+            toast.error("Erro ao cadastrar fornada!");
             console.error("Erro completo:", error);
         }
     };
@@ -289,8 +259,8 @@ export default function ModalCadastroProduto() {
     return (
         <>
             <Button
-                className="w-[310px] h-[2.5rem] mb-5 mr-6" 
-                text={"ADICIONAR NOVO PRODUTO +"} 
+                className="w-[310px] h-[2.5rem] mb-5 mr-6"
+                text={"ADICIONAR NOVO PRODUTO +"}
                 onClick={() => setIsOpen(true)}
             >
             </Button>
@@ -302,8 +272,8 @@ export default function ModalCadastroProduto() {
                             categoria === "Fornada"
                                 ? cadastrarFornada
                                 : categoria === "Carambolo"
-                                ? handleSubmitCarambolo
-                                : cadastrarDecoracao
+                                    ? handleSubmitCarambolo
+                                    : cadastrarDecoracao
                         }
                         className="bg-[#fbe4d6] rounded-md border border-blue-400 max-w-4xl w-full max-h-[90vh] overflow-auto text-[#5c3c10] shadow-xl"
                     >
@@ -369,89 +339,6 @@ export default function ModalCadastroProduto() {
                             <div className="w-1/2 text-sm flex flex-col justify-start overflow-y-auto pr-2 gap-4">
                                 {categoria === "Carambolo" && (
                                     <>
-                                        {/* Campos de Carambolo */}
-                                        <div className="flex flex-col gap-1">
-                                            <label className="font-medium">Massa</label>
-                                            <select
-                                                value={massa}
-                                                onChange={(e) => setMassa(e.target.value)}
-                                                className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
-                                            >
-                                                <option value="" disabled>
-                                                    Selecione uma massa
-                                                </option>
-                                                {massasDisponiveis.map((m) => (
-                                                    <option key={m.id} value={m.id}>
-                                                        {m.sabor}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <label className="font-medium">Recheio</label>
-                                            <select
-                                                value={recheioPedido}
-                                                onChange={(e) => setRecheioPedido(e.target.value)}
-                                                className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
-                                            >
-                                                <option value="" disabled>
-                                                    Selecione um recheio
-                                                </option>
-                                                {recheiosDisponiveis.map((r) => (
-                                                    <option key={r.id} value={r.id}>
-                                                        {r.nome}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <label className="font-medium">Cobertura</label>
-                                            <select
-                                                value={cobertura}
-                                                onChange={(e) => setCobertura(e.target.value)}
-                                                className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
-                                            >
-                                                <option value="" disabled>
-                                                    Selecione uma cobertura
-                                                </option>
-                                                {coberturasDisponiveis.map((c) => (
-                                                    <option key={c.id} value={c.id}>
-                                                        {c.descricao}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <label className="font-medium">Formato</label>
-                                            <select
-                                                value={formato}
-                                                onChange={(e) => setFormato(e.target.value)}
-                                                className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
-                                            >
-                                                <option value="">Selecione um formato</option>
-                                                {formatosDisponiveis.map((f) => (
-                                                    <option key={f} value={f}>
-                                                        {f.charAt(0).toUpperCase() + f.slice(1).toLowerCase()}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <label className="font-medium">Tamanho</label>
-                                            <select
-                                                value={tamanho}
-                                                onChange={(e) => setTamanho(e.target.value)}
-                                                className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
-                                            >
-                                                <option value="">Selecione um tamanho</option>
-                                                {tamanhosDisponiveis.map((t) => (
-                                                    <option key={t.id ?? t.nome ?? t} value={t.id ?? t.nome ?? t}>
-                                                        {(t.nome ?? t.toString()).charAt(0).toUpperCase() + (t.nome ?? t.toString()).slice(1).toLowerCase()}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-
                                         <div className="flex flex-col gap-1">
                                             <label className="font-medium">Decoração</label>
                                             <select
@@ -467,7 +354,6 @@ export default function ModalCadastroProduto() {
                                                 ))}
                                             </select>
                                         </div>
-
                                         <div className="flex flex-col gap-1">
                                             <label className="font-medium">Categoria</label>
                                             <input
@@ -480,11 +366,11 @@ export default function ModalCadastroProduto() {
                                         </div>
 
                                         <Button type="submit" className="w-fit self-end">
-                                            Cadastrar
+                                            Selecionar
                                         </Button>
                                     </>
                                 )}
-                
+
                                 {categoria === "Fornada" && (
                                     <>
                                         <div className="flex flex-col gap-1">
@@ -516,7 +402,7 @@ export default function ModalCadastroProduto() {
                                             />
                                         </div>
 
-                                        
+
                                         <div className="flex flex-col gap-1">
                                             <label className="font-medium">Valor</label>
                                             <input
@@ -543,6 +429,17 @@ export default function ModalCadastroProduto() {
                                                 onChange={(e) => setNomeDecoracao(e.target.value)}
                                                 className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
                                                 placeholder="Digite o nome da decoração"
+                                            />
+                                        </div>
+
+                                        <div className="flex flex-col gap-1">
+                                            <label className="font-medium">Categoria (para exibir na Home)</label>
+                                            <input
+                                                type="text"
+                                                value={categoriaDecoracao}
+                                                onChange={(e) => setCategoriaDecoracao(e.target.value)}
+                                                className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
+                                                placeholder="Ex.: Vintage, Birthday, ..."
                                             />
                                         </div>
 

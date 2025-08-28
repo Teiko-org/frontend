@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import ProfileImageUpload from "../../components/InputImage/ProfileImageUpload";
 import { useNavigate } from "react-router-dom";
-import { getUserData } from "../../service/userService";
+import { getUserData, logOff } from "../../service/userService";
 
 function UserSideMenu() {
   const navigate = useNavigate();
@@ -44,12 +44,7 @@ function UserSideMenu() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("IS_SIGNED");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("JWT_TOKEN");
-    localStorage.removeItem("userData");
-    
-    window.dispatchEvent(new Event("storage")); 
+    logOff();
     navigate("/");
   };
 
@@ -80,6 +75,11 @@ function UserSideMenu() {
           <button className="w-[365px] bg-bgNativeHome border-2 border-gold rounded-2xl font-semibold p-3 px-5 text-left"
           onClick={() => { navigate("/pagina-enderecos") }}>
             Endereços
+          </button>
+
+          <button className="w-[365px] bg-bgNativeHome border-2 border-gold rounded-2xl font-semibold p-3 px-5 text-left"
+          onClick={() => { navigate("/carrinho") }}>
+            Carrinho
           </button>
         </div>
       </div>
