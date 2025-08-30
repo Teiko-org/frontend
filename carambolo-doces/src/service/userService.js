@@ -5,9 +5,6 @@ import { toast } from 'react-toastify';
 export const login = async (phone, password) => {
   try {
     const response = await axiosApi.post('/usuarios/login', { contato: phone, senha: password }, { withCredentials: true });
-    if (response.data.admin != null) {
-      localStorage.setItem("IS_ADMIN", true);
-    }
     return response.data;
   } catch (error) {
     handleAuthError(error, phone);
@@ -19,7 +16,6 @@ export const logOff = () => {
   try {
     axiosApi.post('usuarios/logOut', {})
     localStorage.removeItem("IS_SIGNED");
-    localStorage.removeItem("IS_ADMIN");
     localStorage.removeItem("userId");
     localStorage.removeItem("userData");
 
