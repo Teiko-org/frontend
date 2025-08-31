@@ -1,7 +1,6 @@
 import Button from "../../components/Button";
 
-function DashboardFornadaData() {
-
+function DashboardFornadaData({ fornada }) {
     return (
 
         <div className="w-full h-fit flex justify-between items-center border-2 border-gold rounded-2xl bg-bgNativeHome px-5 py-2">
