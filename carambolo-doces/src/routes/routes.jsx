@@ -8,6 +8,8 @@ import Carambolos from '../pages/Carambolos';
 import FornadaSemana from '../pages/Fornada';
 import FornadaOrderPage from '../pages/FornadaOrderPage';
 import FornadaDashboard from '../pages/FornadaDashboard';
+import Dashboard from '../pages/Dashboard';
+import AllFornadasDashboard from '../pages/AllFornadasDashboard/AllFornadasDashboard';
 import ModalCadastroProduto from '../components/ModalCadastroProduto';
 import Products from '../pages/Products/index';
 import OrderKanban from '../pages/OrderKanban/index';
@@ -17,7 +19,8 @@ import FornadaMultiOrderPage from '../pages/FornadaOrderPage/Multi';
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<AllFornadasDashboard />} />
+      <Route path="/" element={<Home />} />
+      <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/pagina-usuario" element={<UserPage />} />
       <Route path="/pagina-enderecos" element={<AddressPage />} />
       <Route path="/pedido-bolo" element={<Application />} />
