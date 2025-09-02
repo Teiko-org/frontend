@@ -74,7 +74,36 @@ function Card({ available, type, produto, nome, preco, imagem, boloData, onClick
   };
 
   const getQuantity = () => {
-    return produto ? produto.quantidade : 50;
+    if (produto && produto.quantidade !== undefined) {
+      return produto.quantidade;
+    }
+    return 0;
+  };
+
+  const getQuantitySold = () => {
+    if (produto && produto.quantidadeVendida !== undefined) {
+      return produto.quantidadeVendida;
+    }
+    return 0;
+  };
+
+  const getTotalQuantity = () => {
+    if (produto && produto.quantidadeTotal !== undefined) {
+      return produto.quantidadeTotal;
+    }
+    // Se não tem quantidade total, usa a quantidade atual como total
+    return getQuantity() + getQuantitySold();
+  };
+
+  const getQuantityText = () => {
+    const total = getTotalQuantity();
+    const vendida = getQuantitySold();
+    const disponivel = getQuantity();
+    
+    if (total > 0) {
+      return `${disponivel} de ${total} disponíveis`;
+    }
+    return `${disponivel} disponíveis`;
   };
 
   return (
@@ -167,7 +196,7 @@ function Card({ available, type, produto, nome, preco, imagem, boloData, onClick
           </div>
         </div>
       </div>
-      {type === "Fornada" && (available ? <AvailableBox quantity={getQuantity()} /> : <SoldOutBox />)}
+      {type === "Fornada" && (available ? <AvailableBox quantity={getQuantity()} quantityText={getQuantityText()} /> : <SoldOutBox />)}
     </div>
   );
 }

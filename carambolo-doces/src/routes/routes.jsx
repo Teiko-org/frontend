@@ -22,7 +22,6 @@ const AppRoutes = () => {
       <Route path="/" element={<Home />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/pagina-usuario" element={<UserPage />} />
-      <Route path="/pagina-enderecos" element={<AddressPage />} />
       <Route path="/pedido-bolo" element={<Application />} />
       <Route path="/carambolos" element={<Carambolos/>} />
       <Route path="/fornada" element={<FornadaSemana/>} />

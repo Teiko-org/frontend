@@ -14,7 +14,7 @@ export const findAllFornada = async () => {
         console.log(error);
         return [];
     }
-}
+};
 
 export const findAllBolo = async () => {
     try {
@@ -36,7 +36,6 @@ export const findAllBolo = async () => {
         console.log(error);
         return [];
     }
-
 };
 
 export const findFeaturedDecoracoes = async () => {

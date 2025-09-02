@@ -28,6 +28,11 @@ const BannerFornada = ({ fornada }) => {
     }
   }, [fornada]);
 
+  // Se não há fornada ativa, não renderiza o banner
+  if (!fornadaData || !fornadaData.dataFim) {
+    return null;
+  }
+
   useEffect(() => {
     if (!fornadaData || !fornadaData.dataFim) {
       return;

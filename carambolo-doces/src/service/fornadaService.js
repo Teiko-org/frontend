@@ -143,6 +143,16 @@ export const getFornadaAtiva = async () => {
   }
 };
 
+export const getProximaFornada = async () => {
+  try {
+    const response = await axiosApi.get('/fornadas/proxima');
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao buscar próxima fornada:', error);
+    return null;
+  }
+};
+
 export const getProdutoFornadaById = async (fornadaDaVezId) => {
   try {
     const response = await axiosApi.get(`/fornadas/da-vez/${fornadaDaVezId}`);
