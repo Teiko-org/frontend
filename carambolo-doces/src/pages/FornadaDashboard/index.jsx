@@ -131,6 +131,7 @@ function FornadaDashboard() {
 
       if (fornadaProxima) {
         setFornadaProxima(fornadaProxima);
+        console.log("aAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" + fornadaProxima);
         // const produtos = await getProdutosFornadaComImagens(fornadaProxima.id);
         // setProdutosFornada(produtos.slice(0, 4));
 
@@ -204,6 +205,9 @@ function FornadaDashboard() {
         setTimeLeft({ days, hours, minutes, seconds });
       } else {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      
+        setFornadaAtual(null);
+        setFornadaData(null);
       }
     };
 
@@ -213,6 +217,13 @@ function FornadaDashboard() {
 
     return () => clearInterval(timer);
   }, [fornadaData]);
+
+  function isFornadaAtiva(fornada) {
+    const now = new Date();
+    const inicio = new Date(fornada.dataInicio);
+    const fim = new Date(fornada.dataFim);
+    return now >= inicio && now <= fim;
+  }
 
   // const formatEndDate = () => {
   //   if (!fornadaData || !fornadaData.dataFim) {
@@ -258,14 +269,17 @@ function FornadaDashboard() {
                 </>
               ) : (<>
                 <h3 className="font-bold text-blue">Duração da Fornada Cadastrada</h3>
-                {fornadaAtual ? (
+                {fornadaAtual && isFornadaAtiva(fornadaAtual) ? (
                   <div>
-                    <span>{String(timeLeft.days).padStart(2, '0')} Dias {String(timeLeft.hours).padStart(2, '0')} Horas {String(timeLeft.minutes).padStart(2, '0')} Minutos {String(timeLeft.seconds).padStart(2, '0')} Segundos </span>
+                    <span>
+                      {String(timeLeft.days).padStart(2, '0')} Dias {String(timeLeft.hours).padStart(2, '0')} Horas {String(timeLeft.minutes).padStart(2, '0')} Minutos {String(timeLeft.seconds).padStart(2, '0')} Segundos
+                    </span>
                   </div>
-                ) : (
-                  <span>{fornadaProxima.dataInicio} - {fornadaProxima.dataFim}</span>
-
-                )}
+                ) : fornadaProxima ? (
+                  <span>
+                    {fornadaProxima.dataInicio} - {fornadaProxima.dataFim}
+                  </span>
+                ) : null}
               </>)}
 
             </div>
