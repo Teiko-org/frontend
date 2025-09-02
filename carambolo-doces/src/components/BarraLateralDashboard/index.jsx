@@ -32,12 +32,12 @@ const BarraLateralDashboard = () => {
                 <nav className="flex-1">
                     <ul className="text-gold">
                         <li>
-                            <Link to="/">
+                            <Link to="/dashboard">
                                 <div className='flex items-center
                                     pl-5 py-2 gap-2 ml-3 rounded-l-full
                                     hover:bg-bgNativeHome hover:text-darkBlue
                                     transition-colors duration-400 ease-in-out'>
-                                    <FaHome /> Página Inicial
+                                    <FaHome /> Dashboard
                                 </div>
                             </Link>
                         </li>
@@ -91,7 +91,7 @@ const BarraLateralDashboard = () => {
                                     pl-5 py-2 gap-2 ml-3 rounded-l-full
                                     hover:bg-bgNativeHome hover:text-darkBlue
                                     transition-colors duration-400 ease-in-out'>
-                                    <RiFileEditLine /> Fornada
+                                    <RiFileEditLine /> Produção
                                 </div>
                             </Link>
                         </li>
