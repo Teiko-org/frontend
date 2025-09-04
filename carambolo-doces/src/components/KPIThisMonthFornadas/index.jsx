@@ -1,9 +1,9 @@
 import { useState } from "react";
 import Button from "../Button";
 import DataKPIFornada from "../DataKPIFornada/DataKPIFornada";
-import ModalProductsFornada from "../ModalProductsFornada/ModalProductsFornada";
+import ModalOtherFornadas from "../ModalOtherFornadas/ModalOtherFornadas";
 
-function KPILastFornada() {
+function KPIThisMonthFornadas() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -17,18 +17,19 @@ function KPILastFornada() {
       >
 
         <div className="flex justify-center gap-x-1">
-          <span className="font-bold">Última Fornada:</span>
-          <span>99/99/99 - 99/99/99</span>
+          <span className="font-bold">Fornadas Deste Mês</span>
         </div>
 
         <DataKPIFornada />
 
       </div>
 
-      <button onClick={openModal} className="p-1 w-full font-bold text-blue rounded-2xl border-none focus:outline-none transform hover:scale-105 transition-transform">Consultar Produtos</button>
+      <button onClick={openModal} className="p-1 w-full font-bold text-blue rounded-2xl border-none focus:outline-none transform hover:scale-105 transition-transform">
+        Consultar Outras Fornadas
+      </button>
 
       {isModalOpen && (
-        <ModalProductsFornada
+        <ModalOtherFornadas
           onClose={closeModal}
         />
       )}
@@ -37,4 +38,4 @@ function KPILastFornada() {
   );
 }
 
-export default KPILastFornada;
+export default KPIThisMonthFornadas;

@@ -49,6 +49,39 @@
   transition: transform 1s;
 }
 
+/* Animações sutis para botões pill (Dashboard) */
+.button-animated {
+  position: relative;
+  overflow: hidden;
+  transition: transform 150ms ease, box-shadow 200ms ease;
+}
+
+.button-animated::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 120%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  transform: skewX(-20deg);
+}
+
+.button-animated:hover::after {
+  left: 140%;
+  transition: left 600ms ease;
+}
+
+.button-animated:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(212, 176, 118, 0.3);
+}
+
+.button-animated:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 10px rgba(212, 176, 118, 0.25);
+}
+
 /* :root {
     font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.5;

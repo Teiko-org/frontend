@@ -11,6 +11,13 @@ import FornadaDashboard from '../pages/FornadaDashboard';
 import Products from '../pages/Products/index';
 import OrderKanban from '../pages/OrderKanban/index';
 import ProtectedRoute from './ProtectedRoute';
+import Dashboard from '../pages/Dashboard';
+import AllFornadasDashboard from '../pages/AllFornadasDashboard/AllFornadasDashboard';
+import ModalCadastroProduto from '../components/ModalCadastroProduto';
+import Products from '../pages/Products/index';
+import OrderKanban from '../pages/OrderKanban/index';
+import CartPage from '../pages/Cart';
+import FornadaMultiOrderPage from '../pages/FornadaOrderPage/Multi';
 
 const AppRoutes = () => {
   return (

@@ -11,7 +11,7 @@ import { FaMinus } from "react-icons/fa";
 import { FaPlus } from "react-icons/fa";
 import Button from "../Button";
 import { CiSearch } from "react-icons/ci";
-import productsFornadasService from "../../service/productsFornadasService";
+import { productsFornadasService } from "../../service/productsFornadasService";
 
 const columns = [
   { id: "selecionado", label: "", minWidth: 10, align: "center" },
@@ -34,11 +34,11 @@ export default function TableSelectProductsFornada() {
     try {
       const response = await productsFornadasService();
       console.log(response);
-      
+
       setProducts(Array.isArray(response) ? response : []);
     } catch (error) {
       console.log(error);
-      
+
       setProducts([]);
     }
   };
@@ -78,7 +78,7 @@ export default function TableSelectProductsFornada() {
   };
 
   return (
-    <div className="flex flex-col w-[90%] h-[350px] border-rounded-lg border-2 border-gold bg-bgHome">
+    <div className="flex flex-col w-[90%] h-[320px] border-rounded-lg border-2 border-gold bg-bgHome">
       <header className="flex flex-row justify-between border-rounded-lg px-20 items-center bg-gradient-blue h-[3.6875rem] w-full flex-shrink-0">
         <h1 className="text-gold text-[1.5rem]">Selecionar Produtos</h1>
 
@@ -106,9 +106,9 @@ export default function TableSelectProductsFornada() {
           }}
         >
           <TableContainer
-            sx={{ 
-              height: "100%", 
-              maxHeight: "100%", 
+            sx={{
+              height: "100%",
+              maxHeight: "100%",
               overflow: "auto",
               '&::-webkit-scrollbar': {
                 width: '8px',
@@ -127,141 +127,156 @@ export default function TableSelectProductsFornada() {
             }}
             className="bg-bgHome p-2 rounded-lg"
           >
-          <Table stickyHeader aria-label="sticky table">
-            <TableHead>
-              <TableRow>
-                {columns.map((column) => (
-                  <TableCell
-                    key={column.id}
-                    align={column.align}
-                    style={{ minWidth: column.minWidth }}
+            <Table stickyHeader aria-label="sticky table">
+              <TableHead>
+                <TableRow>
+                  {columns.map((column) => (
+                    <TableCell
+                      key={column.id}
+                      align={column.align}
+                      style={{ minWidth: column.minWidth }}
+                      sx={{
+                        backgroundColor: "#FFE7DD",
+                        fontWeight: "bold",
+                        boxShadow: "none",
+                        borderBottom: "1px solid #C8A882",
+                        paddingTop: "0.75rem",
+                        paddingBottom: "0.75rem",
+                        position: "sticky",
+                        top: 0,
+                        zIndex: 2,
+                      }}
+                    >
+                      {column.label}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredProducts.map((row, index) => (
+                  <TableRow
+                    hover
+                    role="checkbox"
+                    tabIndex={-1}
+                    key={row.id}
+                    className={`${index % 2 === 0 ? "bg-[#FFEEE7]" : "bg-none"}`}
                     sx={{
-                      backgroundColor: "#FFE7DD",
-                      fontWeight: "bold",
                       boxShadow: "none",
-                      borderBottom: "1px solid #C8A882",
-                      paddingTop: "0.75rem",
-                      paddingBottom: "0.75rem",
-                      position: "sticky",
-                      top: 0,
-                      zIndex: 100,
+                      borderBottom: "none",
+                      paddingTop: "0.5rem",
+                      paddingBottom: "0.5rem",
                     }}
                   >
-                    {column.label}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredProducts.map((row, index) => (
-                <TableRow
-                  hover
-                  role="checkbox"
-                  tabIndex={-1}
-                  key={row.id}
-                  className={`${index % 2 === 0 ? "bg-[#FFEEE7]" : "bg-none"}`}
-                  sx={{
-                    boxShadow: "none",
-                    borderBottom: "none",
-                    paddingTop: "0.5rem",
-                    paddingBottom: "0.5rem",
-                  }}
-                >
-                  {columns.map((column) => {
-                    const value = row[column.id];
+                    {columns.map((column) => {
+                      const value = row[column.id];
 
-                    if (column.id === "selecionado") {
-                      const checked = selectedProducts.some(
-                        (item) => item.id === row.id
-                      );
-                      return (
-                        <TableCell
-                          key={column.id}
-                          align={column.align}
-                          className="rounded-l-full relative"
-                          sx={{
-                            borderBottom: "none",
-                            boxShadow: "none",
-                            paddingTop: "0.5rem",
-                            paddingBottom: "0.5rem",
-                          }}
-                        >
-                          <input
-                            onChange={() => handleSelect(row.id)}
-                            type="checkbox"
-                            checked={checked}
-                            className="peer appearance-none w-5 h-5 border-2 border-gold rounded-full bg-white checked:bg-gold checked:border-gold cursor-pointer relative"
-                            style={{ outline: "none" }}
-                          />
-                          <span
-                            className={`pointer-events-none absolute inset-0 flex items-center justify-center ${
-                              checked ? "" : "hidden"
-                            }`}
-                            style={{ zIndex: 10 }}
+                      if (column.id === "selecionado") {
+                        const checked = selectedProducts.some(
+                          (item) => item.id === row.id
+                        );
+                        return (
+                          <TableCell
+                            key={column.id}
+                            align={column.align}
+                            className="rounded-l-full relative"
+                            sx={{
+                              borderBottom: "none",
+                              boxShadow: "none",
+                              paddingTop: "0.5rem",
+                              paddingBottom: "0.5rem",
+                            }}
                           >
-                            <svg
-                              width="25"
-                              height="25"
-                              viewBox="0 0 20 28"
-                              fill="none"
-                              className="block"
+                            <input
+                              onChange={() => handleSelect(row.id)}
+                              type="checkbox"
+                              checked={checked}
+                              className="peer appearance-none w-5 h-5 border-2 border-gold rounded-full bg-white checked:bg-gold checked:border-gold cursor-pointer relative"
+                              style={{ outline: "none" }}
+                            />
+                            <span
+                              className={`pointer-events-none absolute inset-0 flex items-center justify-center ${checked ? "" : "hidden"
+                                }`}
+                              style={{ zIndex: 10 }}
                             >
-                              <path
-                                d="M5 10.5L9 14.5L15 7.5"
-                                stroke="white"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          </span>
-                        </TableCell>
-                      );
-                    }
+                              <svg
+                                width="25"
+                                height="25"
+                                viewBox="0 0 20 28"
+                                fill="none"
+                                className="block"
+                              >
+                                <path
+                                  d="M5 10.5L9 14.5L15 7.5"
+                                  stroke="white"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            </span>
+                          </TableCell>
+                        );
+                      }
 
-                    if (column.id === "quantidade") {
-                      const selected = selectedProducts.find(
-                        (item) => item.id === row.id
-                      );
-                      return (
-                        <TableCell
-                          key={column.id}
-                          align={column.align}
-                          className="rounded-r-full"
-                          sx={{
-                            borderBottom: "none",
-                            boxShadow: "none",
-                            paddingTop: "0.5rem",
-                            paddingBottom: "0.5rem",
-                          }}
-                        >
-                          <div className="flex items-center justify-evenly w-20 bg-bgNativeHome border border-gold rounded-xl">
-                            <button
-                              disabled={!selected}
-                              onClick={() => handleQuantidade(row.id, 1)}
-                              className="disabled:opacity-50"
-                            >
-                              <FaPlus />
-                            </button>
-                            <div className="bg-white h-full py-1 w-6 flex justify-center rounded-md font-bold text-base">
-                              {selected ? selected.quantidade : 0}
+                      if (column.id === "quantidade") {
+                        const selected = selectedProducts.find(
+                          (item) => item.id === row.id
+                        );
+                        return (
+                          <TableCell
+                            key={column.id}
+                            align={column.align}
+                            className="rounded-r-full"
+                            sx={{
+                              borderBottom: "none",
+                              boxShadow: "none",
+                              paddingTop: "0.5rem",
+                              paddingBottom: "0.5rem",
+                            }}
+                          >
+                            <div className="flex items-center justify-evenly w-20 bg-bgNativeHome border border-gold rounded-xl">
+                              <button
+                                disabled={!selected}
+                                onClick={() => handleQuantidade(row.id, 1)}
+                                className="disabled:opacity-50"
+                              >
+                                <FaPlus />
+                              </button>
+                              <div className="bg-white h-full py-1 w-6 flex justify-center rounded-md font-bold text-base">
+                                {selected ? selected.quantidade : 0}
+                              </div>
+                              <button
+                                disabled={!selected || selected.quantidade <= 1}
+                                className="disabled:opacity-50"
+                                onClick={() => handleQuantidade(row.id, -1)}
+                              >
+                                <FaMinus />
+                              </button>
                             </div>
-                            <button
-                              disabled={!selected || selected.quantidade <= 1}
-                              className="disabled:opacity-50"
-                              onClick={() => handleQuantidade(row.id, -1)}
-                            >
-                              <FaMinus />
-                            </button>
-                          </div>
-                        </TableCell>
-                      );
-                    }
+                          </TableCell>
+                        );
+                      }
 
-                    if (column.id === "valor") {
-                      const selected = selectedProducts.find(
-                        (item) => item.id === row.id
-                      );
+                      if (column.id === "valor") {
+                        const selected = selectedProducts.find(
+                          (item) => item.id === row.id
+                        );
+                        return (
+                          <TableCell
+                            key={column.id}
+                            align={column.align}
+                            sx={{
+                              borderBottom: "none",
+                              boxShadow: "none",
+                              paddingTop: "0.5rem",
+                              paddingBottom: "0.5rem",
+                            }}
+                          >
+                            {"R$" + row.valor.toFixed(2)}
+                          </TableCell>
+                        );
+                      }
+
                       return (
                         <TableCell
                           key={column.id}
@@ -273,34 +288,18 @@ export default function TableSelectProductsFornada() {
                             paddingBottom: "0.5rem",
                           }}
                         >
-                          {"R$" + row.valor.toFixed(2)}
+                          {column.format && typeof value === "number"
+                            ? column.format("R$" + value.toFixed(2))
+                            : value}
                         </TableCell>
                       );
-                    }
-
-                    return (
-                      <TableCell
-                        key={column.id}
-                        align={column.align}
-                        sx={{
-                          borderBottom: "none",
-                          boxShadow: "none",
-                          paddingTop: "0.5rem",
-                          paddingBottom: "0.5rem",
-                        }}
-                      >
-                        {column.format && typeof value === "number"
-                          ? column.format("R$" + value.toFixed(2))
-                          : value}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
+                    })}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
       </div>
     </div>
   );

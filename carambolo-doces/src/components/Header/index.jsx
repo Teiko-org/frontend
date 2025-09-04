@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Search, ShoppingCart, ChevronDown } from "lucide-react";
+import { Search, ChevronDown } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../Button";
 import LoginModal from "../LoginModal";
 import ProfileImageDisplay from "../InputImage/ProfileImageDisplay";
 import { axiosApi } from "../../provider/AxiosApi";
+import IconCart from "../IconCart";
+import { useCart } from "../../contexts/CartContext";
+
 
 function Header() {
 
@@ -50,6 +53,7 @@ function Header() {
   }, [userSigned]);
 
   const navigate = useNavigate();
+  const { totals } = useCart();
 
   return (
     <header className="bg-gradient-to-b from-blue to-darkBlue h-30 max-w-full">
@@ -100,8 +104,13 @@ function Header() {
             }
           </>
 
-          <button className="p-2 bg-transparent rounded-full transform hover:scale-105 transition-transform">
-            {/* <ShoppingCart className="text-gold w-8 h-8" /> */}
+          <button onClick={() => navigate('/carrinho')} className="relative p-2 bg-transparent rounded-full transform hover:scale-105 transition-transform">
+            <IconCart className="w-8 h-8" />
+            {totals.count > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full px-1.5 py-0.5">
+                {totals.count}
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -110,12 +119,12 @@ function Header() {
         <Link to="/" className="hover:text-darkGold">
           HOME
         </Link>
-        <a href="/carambolos" className="hover:text-darkGold flex items-center">
+        <Link to="/carambolos" className="hover:text-darkGold flex items-center">
           CARAMBOLOS <ChevronDown className="ml-1" size={16} />
-        </a>
-        <a href="/fornada" className="hover:text-darkGold">
+        </Link>
+        <Link to="/fornada" className="hover:text-darkGold">
           FORNADA DA SEMANA
-        </a>
+        </Link>
         {/* <a href="#" className="hover:text-darkGold">
           DATAS ESPECIAIS
         </a> */}

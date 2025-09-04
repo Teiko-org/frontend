@@ -9,14 +9,12 @@ import { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
-import { insertNewFornada } from "../../service/fornadaService";
+import { insertNewFornada } from "../../service/fornadaService"
 import KPILastFornada from "../../components/KPILastFornada";
 import KPIThisMonthFornadas from "../../components/KPIThisMonthFornadas";
-import { getFornadaAtiva, getProdutosFornadaComImagens } from "../../service/fornadaService";
-import { FaRegEdit, FaPlus } from "react-icons/fa";
-import TableProductsThisFornada from "../../components/TableProductsThisFornada/TableProductsThisFornada";
+import { getFornadaAtiva } from "../../service/fornadaService";
 
-function FornadaDashboard() {
+function FornadaDateSelector() {
   const navigate = useNavigate();
 
   const [fornada, setFornada] = useState({
@@ -233,9 +231,8 @@ function FornadaDashboard() {
         </header>
 
         <div className="flex flex-col justify-evenly items-center">
-          <p className="pb-5 font-bold text-blue">{fornadaAtual ? (fornadaProxima ? ("Já há uma Fornada cadastrada no momento") : <h1 className="font-bold text-blue">Já há uma Fornada acontecendo no momento</h1>) : (<h1 className="font-bold text-blue">Não há nenhuma fornada acontecendo no momento</h1>)}</p>
+          <p className="pb-5">{fornadaAtual ? (<h1 className="font-bold text-blue">Já há uma Fornada acontecendo no momento</h1>) : (<h1 className="font-bold text-blue">Não há nenhuma fornada acontecendo no momento</h1>)}</p>
           <div className="flex flex-row justify-evenly items-center gap-10">
-            <KPILastFornada />
             <div className="flex flex-col justify-center items-center w-[470px] h-[170px] border-2 border-gold rounded-2xl bg-bgHome gap-5 p-10">
               {!fornadaAtual ? (
                 <>
@@ -269,51 +266,11 @@ function FornadaDashboard() {
               </>)}
 
             </div>
-            <KPIThisMonthFornadas />
-          </div>
-          <div className="flex flex-col w-full items-center gap-5 pt-5">
-
-            {fornadaAtual || fornadaProxima ? (
-              <div className="w-full flex justify-center">
-
-                <TableProductsThisFornada idFornada={fornadaAtual.id || fornadaProxima.id} roundedTop={true} amountLeft={true}/>
-
-              </div>
-            ) : (
-              <TableSelectProductsFornada/>
-            )}
-            <button
-              className="mb-5 flex items-center bg-gradient-to-l from-gold to-darkGold text-lg text-blue border-gold font-bold py-1 px-4 rounded-full shadow-md border-2 focus:outline-none"
-              onClick={fornadaAtual || fornadaProxima ? () => console.log("aaaAAAAAAAAAAAAAAaa") : () => registerFornada()}
-            >
-              {fornadaAtual || fornadaProxima ? (
-                <>
-                  EDITAR FORNADA <FaRegEdit className="inline ml-2" />
-                </>
-              ) : (
-                <>
-                  CADASTRAR FORNADA <FaPlus className="inline ml-2" />
-                </>
-              )}
-            </button>
           </div>
         </div>
       </div>
-
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-      />
     </div>
   );
 }
 
-export default FornadaDashboard;
+export default FornadaDateSelector;
