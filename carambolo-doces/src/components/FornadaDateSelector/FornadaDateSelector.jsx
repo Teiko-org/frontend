@@ -110,8 +110,6 @@ function FornadaDateSelector() {
     }
   };
 
-  // Fornada já cadastrada:
-
   const [fornadaAtual, setFornadaAtual] = useState(null);
   const [fornadaProxima, setFornadaProxima] = useState(null);
 
