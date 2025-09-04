@@ -4,8 +4,10 @@ import { Link, useNavigate } from "react-router-dom";
 import Button from "../Button";
 import LoginModal from "../LoginModal";
 import ProfileImageDisplay from "../InputImage/ProfileImageDisplay";
+import { axiosApi } from "../../provider/AxiosApi";
 import IconCart from "../IconCart";
 import { useCart } from "../../contexts/CartContext";
+
 
 function Header() {
 
@@ -32,8 +34,13 @@ function Header() {
   }, [])
 
   useEffect(() => {
-    const checkAdminStatus = () => {
-      setIsAdmin(!!localStorage.getItem("IS_ADMIN"));
+    const userId = localStorage.getItem("userId");
+
+    const checkAdminStatus = async () => {
+      const userData = await axiosApi.get(`/usuarios/${userId}`)
+
+      console.log('admin: ', userData.data.admin)
+      setIsAdmin(userData.data.admin)
     };
 
     checkAdminStatus();
@@ -43,7 +50,7 @@ function Header() {
     return () => {
       window.removeEventListener("storage", checkAdminStatus);
     };
-  }, []);
+  }, [userSigned]);
 
   const navigate = useNavigate();
   const { totals } = useCart();
