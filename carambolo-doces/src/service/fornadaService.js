@@ -255,6 +255,7 @@ export const insertNewFornada = async (data) => {
     };
     const response = await axiosApi.post('/fornadas', payload);
     return response.data;
+
   } catch (error) {
     console.error("Erro ao cadastrar Fornada:", error);
     throw error;
@@ -262,4 +263,31 @@ export const insertNewFornada = async (data) => {
 };
 
 export const fornadaService = insertNewFornada;
+
+export const updateFornada = async (id, fornadaData) => {
+  try {
+    // Converter as datas para o formato YYYY-MM-DD que o backend espera
+    const payload = {
+      dataInicio: fornadaData.dataInicio,
+      dataFim: fornadaData.dataFim
+    };
+    
+    const response = await axiosApi.put(`/fornadas/${id}`, payload);
+    return response.status === 200;
+  } catch (error) {
+    console.error('Erro ao atualizar fornada:', error);
+    throw error;
+  }
+};
+
+export const encerrarFornada = async (fornadaId) => {
+  try {
+    const response = await axiosApi.delete(`/fornadas/${fornadaId}`);
+    return response.status === 204; // Retorna true se foi bem-sucedido
+  } catch (error) {
+    console.error('Erro ao encerrar fornada:', error);
+    throw error;
+  }
+};
+
 

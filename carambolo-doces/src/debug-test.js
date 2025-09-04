@@ -77,3 +77,4 @@ console.log('🔧 Debug APIs carregado! Use:');
 console.log('- window.debugAPIs.testarTodas() para testar todas as APIs');
 console.log('- window.debugAPIs.testar("/endpoint") para testar uma API específica');
 console.log('- window.debugAPIs.config() para verificar configuração do Axios');
+
