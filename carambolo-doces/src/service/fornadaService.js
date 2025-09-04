@@ -262,6 +262,28 @@ export const insertNewFornada = async (data) => {
   }
 };
 
+export const getMesesAnosFornadas = async () => {
+  try {
+    const response = await axiosApi.get('/fornadas/meses-anos');
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao listar fornadas:', error);
+    throw error;
+  }
+};
+
+export const getFornadasMesAno = async (mes, ano) => {
+  try {
+    const response = await axiosApi.get('/fornadas/da-vez', {
+      params: { mes, ano }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao buscar produto da fornada:', error);
+    throw error;
+  }
+};
+
 export const fornadaService = insertNewFornada;
 
 export const updateFornada = async (id, fornadaData) => {

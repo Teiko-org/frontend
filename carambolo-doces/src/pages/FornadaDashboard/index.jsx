@@ -287,6 +287,9 @@ function FornadaDashboard() {
         setTimeLeft({ days, hours, minutes, seconds });
       } else {
         setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      
+        setFornadaAtual(null);
+        setFornadaData(null);
       }
     };
 
@@ -296,6 +299,13 @@ function FornadaDashboard() {
 
     return () => clearInterval(timer);
   }, [fornadaData]);
+
+  function isFornadaAtiva(fornada) {
+    const now = new Date();
+    const inicio = new Date(fornada.dataInicio);
+    const fim = new Date(fornada.dataFim);
+    return now >= inicio && now <= fim;
+  }
 
   const handleEncerrarFornada = async () => {
     try {

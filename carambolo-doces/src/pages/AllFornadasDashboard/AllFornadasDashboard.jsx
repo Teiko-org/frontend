@@ -10,8 +10,9 @@ import DashboardFornadaData from "../../components/DashboardFornadaData/Dashboar
 import Select from "../../components/Select";
 import TableProductsThisFornada from "../../components/TableProductsThisFornada/TableProductsThisFornada";
 import { useEffect, useState } from "react";
-import { listFornadas, encerrarFornada } from "../../service/fornadaService";
+import { listFornadas, encerrarFornada, getMesesAnosFornadas, getFornadasMesAno } from "../../service/fornadaService";
 import { useNavigate } from "react-router-dom";
+import { IoChevronDown } from "react-icons/io5";
 
 function AllFornadasDashboard() {
     const [fornadas, setFornadas] = useState([]);
@@ -20,8 +21,20 @@ function AllFornadasDashboard() {
     const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
     const navigate = useNavigate();
 
+    // Estados para a nova implementação
+    const [dados, setDados] = useState([]);
+    const [meses, setMeses] = useState([]);
+    const [anos, setAnos] = useState([]);
+    const [fornadasMesAno, setFornadasMesAno] = useState([]);
+
+    const nomesMeses = [
+        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ];
+
     useEffect(() => {
         carregarFornadas();
+        getMesesAnos();
     }, [mesSelecionado, anoSelecionado]);
 
     const carregarFornadas = async () => {
@@ -74,22 +87,78 @@ function AllFornadasDashboard() {
         }
     };
 
-    const meses = [
-        { value: 1, label: 'Janeiro' },
-        { value: 2, label: 'Fevereiro' },
-        { value: 3, label: 'Março' },
-        { value: 4, label: 'Abril' },
-        { value: 5, label: 'Maio' },
-        { value: 6, label: 'Junho' },
-        { value: 7, label: 'Julho' },
-        { value: 8, label: 'Agosto' },
-        { value: 9, label: 'Setembro' },
-        { value: 10, label: 'Outubro' },
-        { value: 11, label: 'Novembro' },
-        { value: 12, label: 'Dezembro' }
-    ];
+    const getMesesAnos = async () => {
+        try {
+            const data = await getMesesAnosFornadas();
+            setDados(data);
 
-    const anos = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
+            const anosUnicos = [...new Set(data.map(item => item.ano))];
+            const mesesUnicos = [...new Set(data.map(item => item.mes))];
+
+            setAnos(anosUnicos.map(ano => ({ label: ano, value: ano })));
+            setMeses(mesesUnicos.map(mes => ({
+                label: nomesMeses[mes - 1],
+                value: mes
+            })));
+        } catch (error) {
+            console.error(error);
+            setMeses([]);
+            setAnos([]);
+        }
+    };
+
+    useEffect(() => {
+        if (anoSelecionado) {
+            const mesesDisponiveis = dados
+                .filter(item => item.ano === anoSelecionado)
+                .map(item => item.mes);
+            const mesesUnicos = [...new Set(mesesDisponiveis)];
+            setMeses(mesesUnicos.map(mes => ({
+                label: nomesMeses[mes - 1],
+                value: mes
+            })));
+
+            if (!mesesUnicos.includes(mesSelecionado)) setMesSelecionado(null);
+
+        } else {
+            const mesesUnicos = [...new Set(dados.map(item => item.mes))];
+            setMeses(mesesUnicos.map(mes => ({
+                label: nomesMeses[mes - 1],
+                value: mes
+            })));
+        }
+    }, [anoSelecionado, dados]);
+
+    useEffect(() => {
+        if (mesSelecionado) {
+            const anosDisponiveis = dados
+                .filter(item => item.mes === mesSelecionado)
+                .map(item => item.ano);
+            const anosUnicos = [...new Set(anosDisponiveis)];
+            setAnos(anosUnicos.map(ano => ({ label: ano, value: ano })));
+            
+            if (!anosUnicos.includes(anoSelecionado)) setAnoSelecionado(null);
+        } else {
+            const anosUnicos = [...new Set(dados.map(item => item.ano))];
+            setAnos(anosUnicos.map(ano => ({ label: ano, value: ano })));
+        }
+    }, [mesSelecionado, dados]);
+
+    useEffect(() => {
+        if (mesSelecionado && anoSelecionado) {
+            getFornadasMesAno(mesSelecionado, anoSelecionado)
+                .then(res => {
+                    console.log(" getFornadasMesAno:", res);
+                    setFornadasMesAno(Array.isArray(res) ? res : []);
+                })
+                .catch(err => {
+                    console.error(err);
+                    setFornadasMesAno([]);
+                });
+        } else {
+            setFornadasMesAno([]);
+        }
+    }, [mesSelecionado, anoSelecionado]);
 
     return (
         <div className="flex h-full bg-bgNativeHome">
@@ -115,24 +184,37 @@ function AllFornadasDashboard() {
                                 <h1 className="text-gold text-[1.5rem]">KPIs das Fornadas</h1>
 
                                 <div className="flex w-1/2 items-center justify-end gap-x-16">
-                                    <Select 
-                                        className="rounded-full" 
-                                        placeholder="Mês" 
-                                        width="25%" 
-                                        rounded="full"
-                                        value={mesSelecionado}
-                                        onChange={(e) => setMesSelecionado(Number(e.target.value))}
-                                        options={meses}
-                                    />
-                                    <Select 
-                                        className="rounded-full" 
-                                        placeholder="Ano" 
-                                        width="25%" 
-                                        rounded="full"
-                                        value={anoSelecionado}
-                                        onChange={(e) => setAnoSelecionado(Number(e.target.value))}
-                                        options={anos.map(ano => ({ value: ano, label: ano.toString() }))}
-                                    />
+                                    <div className="relative w-40">
+                                        <select
+                                            className="rounded-full border-2 border-gold px-4 py-2 pr-8 w-full appearance-none"
+                                            value={anoSelecionado || ""}
+                                            onChange={e => setAnoSelecionado(e.target.value ? Number(e.target.value) : null)}
+                                        >
+                                            <option value="">Ano</option>
+                                            {anos.map(opt => (
+                                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                            ))}
+                                        </select>
+                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gold">
+                                            <IoChevronDown />
+                                        </div>
+                                    </div>
+
+                                    <div className="relative w-40">
+                                        <select
+                                            className="rounded-full border-2 border-gold px-4 py-2 pr-8 w-full appearance-none"
+                                            value={mesSelecionado || ""}
+                                            onChange={e => setMesSelecionado(e.target.value ? Number(e.target.value) : null)}
+                                        >
+                                            <option value="">Mês</option>
+                                            {meses.map(opt => (
+                                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                            ))}
+                                        </select>
+                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gold">
+                                            <IoChevronDown />
+                                        </div>
+                                    </div>
                                 </div>
 
                             </header>
