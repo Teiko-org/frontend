@@ -11,6 +11,17 @@ const BarraLateralDashboard = () => {
     const navigate = useNavigate();
 
     const handleLogout = () => {
+        // Migrar carrinho do usuário para convidado antes de fazer logout
+        const userId = localStorage.getItem("userId");
+        if (userId) {
+            const userCartKey = `CART_ITEMS_USER_${userId}`;
+            const userCart = localStorage.getItem(userCartKey);
+            if (userCart) {
+                localStorage.setItem("CART_ITEMS_GUEST", userCart);
+                console.log("Carrinho do usuário migrado para convidado no logout");
+            }
+        }
+
         localStorage.removeItem("IS_SIGNED");
         localStorage.removeItem("userId");
         localStorage.removeItem("userData");

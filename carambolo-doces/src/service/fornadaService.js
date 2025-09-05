@@ -143,6 +143,40 @@ export const getFornadaAtiva = async () => {
   }
 };
 
+// Nova função para buscar apenas fornadas realmente ativas (não futuras)
+export const getFornadaRealmenteAtiva = async () => {
+  try {
+    const fornadas = await listFornadas();
+
+    if (fornadas.length === 0) return null;
+
+    const hoje = new Date();
+
+    // Filtra apenas fornadas que estão ativas agora (hoje entre dataInicio e dataFim)
+    const fornadasAtivas = fornadas.filter(fornada => {
+      const [yi, mi, di] = String(fornada.dataInicio).split("-").map(Number);
+      const [yf, mf, df] = String(fornada.dataFim).split("-").map(Number);
+      const dataInicio = new Date(yi, mi - 1, di, 0, 0, 0, 0);
+      const dataFim = new Date(yf, mf - 1, df, 23, 59, 59, 999);
+      return hoje >= dataInicio && hoje <= dataFim;
+    });
+
+    if (fornadasAtivas.length > 0) {
+      // Se há fornadas ativas, pega a com dataFim mais distante (que vai durar mais)
+      const fornadaAtiva = fornadasAtivas.sort((a, b) =>
+        new Date(b.dataFim) - new Date(a.dataFim)
+      )[0];
+
+      return fornadaAtiva;
+    }
+
+    return null; // Não há fornada ativa no momento
+  } catch (error) {
+    console.error('Erro ao buscar fornada realmente ativa:', error);
+    throw error;
+  }
+};
+
 export const getProximaFornada = async () => {
   try {
     const response = await axiosApi.get('/fornadas/proxima');

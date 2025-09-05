@@ -37,10 +37,20 @@ function Header() {
     const userId = localStorage.getItem("userId");
 
     const checkAdminStatus = async () => {
-      const userData = await axiosApi.get(`/usuarios/${userId}`)
+      // Verificar se o userId é válido antes de fazer a chamada
+      if (!userId || userId === 'null' || userId === 'undefined') {
+        setIsAdmin(false);
+        return;
+      }
 
-      console.log('admin: ', userData.data.admin)
-      setIsAdmin(userData.data.admin)
+      try {
+        const userData = await axiosApi.get(`/usuarios/${userId}`)
+        console.log('admin: ', userData.data.admin)
+        setIsAdmin(userData.data.admin)
+      } catch (error) {
+        console.error('Erro ao verificar status de admin:', error);
+        setIsAdmin(false);
+      }
     };
 
     checkAdminStatus();

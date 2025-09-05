@@ -14,10 +14,9 @@ import ProtectedRoute from './ProtectedRoute';
 import Dashboard from '../pages/Dashboard';
 import AllFornadasDashboard from '../pages/AllFornadasDashboard/AllFornadasDashboard';
 import ModalCadastroProduto from '../components/ModalCadastroProduto';
-import Products from '../pages/Products/index';
-import OrderKanban from '../pages/OrderKanban/index';
 import CartPage from '../pages/Cart';
 import FornadaMultiOrderPage from '../pages/FornadaOrderPage/Multi';
+import FornadaDateSelector from '../components/FornadaDateSelector/FornadaDateSelector';
 
 const AppRoutes = () => {
   return (
@@ -44,6 +43,9 @@ const AppRoutes = () => {
       <Route path="/carambolos" element={<Carambolos />} />
       <Route path="/fornada" element={<FornadaSemana />} />
       <Route path="/pedido-fornada" element={<FornadaOrderPage />} />
+      <Route path="/pedido-fornada-multiplo" element={<FornadaMultiOrderPage />} />
+      <Route path="/carrinho" element={<CartPage />} />
+      <Route path="/fornada-date-selector" element={<FornadaDateSelector />} />  
       <Route
         path="/dashboard-kanban-pedidos"
         element={
@@ -65,6 +67,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute requireAdmin={true}>
             <FornadaDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/all-fornadas-dashboard"
+        element={
+          <ProtectedRoute requireAdmin={true}>
+            <AllFornadasDashboard />
           </ProtectedRoute>
         }
       />

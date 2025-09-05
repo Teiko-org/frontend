@@ -1,14 +1,37 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "../Button";
 import DataKPIFornada from "../DataKPIFornada/DataKPIFornada";
 import ModalOtherFornadas from "../ModalOtherFornadas/ModalOtherFornadas";
+import { getKPIFornadasMesAtual } from "../../service/kpiService";
 
 function KPIThisMonthFornadas() {
-
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [kpiData, setKpiData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
+
+  useEffect(() => {
+    const fetchKPIData = async () => {
+      try {
+        setLoading(true);
+        const data = await getKPIFornadasMesAtual();
+        setKpiData(data);
+      } catch (error) {
+        console.error("Erro ao carregar KPI das fornadas do mês:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchKPIData();
+  }, []);
+
+  const getCurrentMonthName = () => {
+    const now = new Date();
+    return now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  };
 
   return (
     <div className="m-0 h-fit w-fit g-0 bg-gradient-to-l from-gold to-darkGold rounded-2xl border-1 border-gold shadow-md">
@@ -17,10 +40,12 @@ function KPIThisMonthFornadas() {
       >
 
         <div className="flex justify-center gap-x-1">
-          <span className="font-bold">Fornadas Deste Mês</span>
+          <span className="font-bold">
+            {loading ? "Carregando..." : `Fornadas de ${getCurrentMonthName()}`}
+          </span>
         </div>
 
-        <DataKPIFornada />
+        <DataKPIFornada kpiData={kpiData} />
 
       </div>
 

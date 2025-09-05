@@ -8,7 +8,7 @@ import ArrowButton from "../../components/ButtonArrow";
 import Button from "../../components/Button";
 import BannerPrincipal from "../../components/BannerPrincipal";
 import BannerFornada from "../../components/BannerFornada";
-import { getFornadaAtiva, getProdutosFornadaComImagens } from "../../service/fornadaService";
+import { getFornadaRealmenteAtiva, getFornadaAtiva, getProdutosFornadaComImagens } from "../../service/fornadaService";
 import { findFeaturedDecoracoes } from "../../service/productService";
 import Carousel from "../../components/Carousel";
 import './cardsTransition.css';
@@ -17,21 +17,33 @@ function Home() {
   const [decoracoes, setDecoracoes] = useState([]);
   const [produtosFornada, setProdutosFornada] = useState([]);
   const [fornada, setFornada] = useState(null);
+  const [fornadaParaBanner, setFornadaParaBanner] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDecoracoes = async () => {
       try {
         const data = await findFeaturedDecoracoes();
-        setDecoracoes(data);
+        setDecoracoes(data || []);
       } catch (error) {
-        console.error("Erro ao carregar decorações:", error);
+        // Erro esperado para usuários não logados - não mostrar warning
+        if (error.response?.status === 401) {
+          console.log("ℹ️ Carregando decorações sem autenticação...");
+        } else {
+          console.warn("⚠️ Erro ao carregar decorações:", error.message);
+        }
+        setDecoracoes([]);
       }
     };
     
     const carregarDadosFornada = async () => {
       try {
-        const fornadaAtual = await getFornadaAtiva();
+        // Para o banner: buscar qualquer fornada (ativa ou futura)
+        const fornadaParaBanner = await getFornadaAtiva();
+        setFornadaParaBanner(fornadaParaBanner);
+        
+        // Para os produtos: buscar apenas fornada realmente ativa
+        const fornadaAtual = await getFornadaRealmenteAtiva();
         
         if (fornadaAtual) {
           setFornada(fornadaAtual);
@@ -39,7 +51,15 @@ function Home() {
           setProdutosFornada(produtos.slice(0, 4));
         }
       } catch (error) {
-        console.error("Erro ao carregar dados da fornada:", error);
+        // Erro esperado para usuários não logados - não mostrar warning
+        if (error.response?.status === 401) {
+          console.log("ℹ️ Carregando dados da fornada sem autenticação...");
+        } else {
+          console.warn("⚠️ Erro ao carregar dados da fornada:", error.message);
+        }
+        setFornadaParaBanner(null);
+        setFornada(null);
+        setProdutosFornada([]);
       }
     };
 
@@ -75,10 +95,10 @@ function Home() {
       <BannerPrincipal />
       <div className="h-12"></div>
       
-      {/* Banner de Fornada - só aparece se houver fornada ativa */}
-      {fornada && (
+      {/* Banner de Fornada - aparece se houver fornada (ativa ou futura) */}
+      {fornadaParaBanner && (
         <>
-          <BannerFornada fornada={fornada} />
+          <BannerFornada fornada={fornadaParaBanner} />
           <div className="h-12"></div>
         </>
       )}
@@ -91,9 +111,12 @@ function Home() {
         
         {slides.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-xl text-gray-600 mb-4">
-              Nenhum tema disponível no momento.
-            </p>
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded-lg mx-auto mb-4 w-64"></div>
+              <p className="text-xl text-gray-600 mb-4">
+                Carregando temas disponíveis...
+              </p>
+            </div>
           </div>
         ) : (
           <>
@@ -130,9 +153,12 @@ function Home() {
         
         {produtosFornada.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-xl text-gray-600 mb-4">
-              Nenhuma fornada ativa no momento.
-            </p>
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded-lg mx-auto mb-4 w-64"></div>
+              <p className="text-xl text-gray-600 mb-4">
+                Carregando fornada ativa...
+              </p>
+            </div>
           </div>
         ) : (
           <div className="flex justify-between items-center px-4">

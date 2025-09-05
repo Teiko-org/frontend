@@ -10,6 +10,16 @@ export async function getQtdPedidosTotal() {
   return data; // { total, concluídos, pagos, pendentes, cancelados }
 }
 
+export async function getQtdPedidosBolo() {
+  const { data } = await axiosApi.get("/dashboard/qtdPedidosBolo");
+  return data; // { total, concluídos, pagos, pendentes, cancelados }
+}
+
+export async function getQtdPedidosFornada() {
+  const { data } = await axiosApi.get("/dashboard/qtdPedidosFornada");
+  return data; // { total, concluídos, pagos, pendentes, cancelados }
+}
+
 export async function getProdutosMaisPedidos() {
   const { data } = await axiosApi.get("/dashboard/produtosMaisPedidos");
   return data;

@@ -18,6 +18,7 @@ const columns = [
 export default function TableProductsThisFornada(props) {
 
     const [products, setProducts] = React.useState([]);
+    const [searchTerm, setSearchTerm] = React.useState(props.searchTerm || "");
 
     const getData = async () => {
         try {
@@ -35,6 +36,25 @@ export default function TableProductsThisFornada(props) {
     React.useEffect(() => {
         getData();
     }, [props.idFornada]);
+
+    React.useEffect(() => {
+        setSearchTerm(props.searchTerm || "");
+    }, [props.searchTerm]);
+
+    // Filtrar produtos baseado no termo de busca
+    const filteredProducts = (products || []).filter((product) => {
+        if (!searchTerm) return true;
+        
+        const searchLower = searchTerm.toLowerCase();
+        const matchProduct = product.produto
+            .toLowerCase()
+            .includes(searchLower);
+        const matchCategory = product.categoria
+            .toLowerCase()
+            .includes(searchLower);
+
+        return matchProduct || matchCategory;
+    });
 
     return (
         <div className="flex flex-col w-[90%] h-[320px]">
@@ -102,7 +122,7 @@ export default function TableProductsThisFornada(props) {
                             </TableHead>
 
                             <TableBody>
-                                {products?.map((row, index) => (
+                                {filteredProducts?.map((row, index) => (
                                     <TableRow
                                         hover
                                         role="checkbox"
@@ -134,9 +154,9 @@ export default function TableProductsThisFornada(props) {
                                                     >
                                                         {props.amountLeft ? (
                                                             <div className="flex gap-1 items-center">
-                                                            <div className="flex items-center w-fit bg-bgNativeHome px-2 border-2 border-gold rounded-lg text-base">quantidadeVendida / {row.quantidade}</div>
+                                                            <div className="flex items-center w-fit bg-bgNativeHome px-2 border-2 border-gold rounded-lg text-base">{row.quantidadeVendida || 0} / {row.quantidade}</div>
                                                             Restantes </div>)
-                                                        : <div>quantidadeVendida/{row.quantidade}</div>}
+                                                        : <div>{row.quantidadeVendida || 0}/{row.quantidade}</div>}
                                                     </TableCell>
                                                 );
                                             }

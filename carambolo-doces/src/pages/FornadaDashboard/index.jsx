@@ -10,6 +10,14 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import { insertNewFornada, updateFornada } from "../../service/fornadaService";
+
+// Função para evitar problemas de fuso horário ao converter datas
+const parseLocalDate = (dateStr) => {
+  if (!dateStr) return null;
+  const [y, m, d] = String(dateStr).split("-").map(Number);
+  if (!y || !m || !d) return new Date(dateStr);
+  return new Date(y, m - 1, d, 23, 59, 59, 999);
+};
 import KPILastFornada from "../../components/KPILastFornada";
 import KPIThisMonthFornadas from "../../components/KPIThisMonthFornadas";
 import { getFornadaAtiva, getProdutosFornadaComImagens, getProximaFornada, encerrarFornada } from "../../service/fornadaService";
@@ -26,6 +34,7 @@ function FornadaDashboard() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [editingFornada, setEditingFornada] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const handleDateChange = (field, value) => {
     if (isEditing) {
@@ -44,15 +53,13 @@ function FornadaDashboard() {
   // Função para obter data mínima para o campo "Até" baseado na data de início
   const getMinDateFim = () => {
     if (!fornada.dataInicio) return null;
-    const dataInicio = new Date(fornada.dataInicio);
-    return dataInicio.toISOString().split('T')[0];
+    return fornada.dataInicio; // Já está no formato YYYY-MM-DD
   };
 
   // Função para obter data mínima para o campo "Até" no modo de edição
   const getMinDateFimEdit = () => {
     if (!editingFornada?.dataInicio) return null;
-    const dataInicio = new Date(editingFornada.dataInicio);
-    return dataInicio.toISOString().split('T')[0];
+    return editingFornada.dataInicio; // Já está no formato YYYY-MM-DD
   };
 
   const registerFornada = async () => {
@@ -61,8 +68,9 @@ function FornadaDashboard() {
       return;
     }
 
-    const dataInicio = new Date(fornada.dataInicio);
-    const dataFim = new Date(fornada.dataFim);
+    // As datas já estão no formato YYYY-MM-DD, não precisamos converter
+    const dataInicio = new Date(fornada.dataInicio + 'T00:00:00');
+    const dataFim = new Date(fornada.dataFim + 'T00:00:00');
 
     if (dataInicio > dataFim) {
       toast("A data de início deve ser menor que a data final!", {
@@ -121,8 +129,9 @@ function FornadaDashboard() {
       return;
     }
 
-    const dataInicio = new Date(editingFornada.dataInicio);
-    const dataFim = new Date(editingFornada.dataFim);
+    // As datas já estão no formato YYYY-MM-DD, não precisamos converter
+    const dataInicio = new Date(editingFornada.dataInicio + 'T00:00:00');
+    const dataFim = new Date(editingFornada.dataFim + 'T00:00:00');
 
     if (dataInicio > dataFim) {
       toast("A data de início deve ser menor que a data final!", {
@@ -139,6 +148,15 @@ function FornadaDashboard() {
       });
 
       if (sucesso) {
+        // Verificar se há produtos selecionados para adicionar
+        const selectedProducts = JSON.parse(localStorage.getItem("selectedProducts") || "[]");
+        if (selectedProducts.length > 0) {
+          toast.info("Adicionando produtos à fornada...");
+          await registerFornadaDaVez(editingFornada.id);
+          // Limpar produtos selecionados após adicionar
+          localStorage.removeItem("selectedProducts");
+        }
+        
         toast.success("Fornada atualizada com sucesso!");
         setIsEditing(false);
         setEditingFornada(null);
@@ -205,22 +223,32 @@ function FornadaDashboard() {
   const carregarDadosFornada = async () => {
     try {
       // Buscar fornada atual
-      const fornadaAtiva = await getFornadaAtiva();
-      if (fornadaAtiva) {
-        setFornadaAtual(fornadaAtiva);
-      } else {
+      try {
+        const fornadaAtiva = await getFornadaAtiva();
+        if (fornadaAtiva) {
+          setFornadaAtual(fornadaAtiva);
+        } else {
+          setFornadaAtual(null);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar fornada ativa:", error);
         setFornadaAtual(null);
       }
 
       // Buscar próxima fornada
-      const proximaFornada = await getProximaFornada();
-      if (proximaFornada) {
-        setFornadaProxima(proximaFornada);
-      } else {
+      try {
+        const proximaFornada = await getProximaFornada();
+        if (proximaFornada) {
+          setFornadaProxima(proximaFornada);
+        } else {
+          setFornadaProxima(null);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar próxima fornada:", error);
         setFornadaProxima(null);
       }
     } catch (error) {
-      console.error("Erro ao carregar dados da fornada:", error);
+      console.error("Erro geral ao carregar dados da fornada:", error);
     }
   };
 
@@ -338,15 +366,17 @@ function FornadaDashboard() {
   };
 
   // Determinar o estado atual da tela
-  const hasActiveFornada = fornadaAtual && new Date(fornadaAtual.dataFim) > new Date();
-  const hasScheduledFornada = fornadaProxima && new Date(fornadaProxima.dataInicio) > new Date();
+  const hasActiveFornada = fornadaAtual && parseLocalDate(fornadaAtual.dataFim) > new Date();
+  const hasScheduledFornada = fornadaProxima && parseLocalDate(fornadaProxima.dataInicio) > new Date();
   const hasNoFornada = !hasActiveFornada && !hasScheduledFornada;
 
   // Função auxiliar para formatar data
   const formatDate = (dateString) => {
     if (!dateString) return '';
     try {
-      const date = new Date(dateString);
+      // Evitar problemas de fuso horário - parsear localmente
+      const [year, month, day] = dateString.split('-');
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
       return date.toLocaleDateString('pt-BR');
     } catch (error) {
       console.error('Erro ao formatar data:', error);
@@ -359,8 +389,8 @@ function FornadaDashboard() {
     if (!fornadaData || !fornadaData.dataInicio || !fornadaData.dataFim) return false;
     
     const now = new Date();
-    const dataInicio = new Date(fornadaData.dataInicio);
-    const dataFim = new Date(fornadaData.dataFim);
+    const dataInicio = parseLocalDate(fornadaData.dataInicio);
+    const dataFim = parseLocalDate(fornadaData.dataFim);
     
     // Ajustar para início do dia (00:00:00) e fim do dia (23:59:59)
     dataInicio.setHours(0, 0, 0, 0);
@@ -431,6 +461,7 @@ function FornadaDashboard() {
       );
     }
 
+
     if (hasActiveFornada || hasScheduledFornada) {
       // Fornada programada ou ativa mas fora do intervalo - mostrar datas
       const fornadaToShow = fornadaAtual || fornadaProxima;
@@ -456,27 +487,8 @@ function FornadaDashboard() {
     if (isEditing) {
       // Modo de edição - mostrar seleção de produtos para adicionar
       return (
-        <div className="w-full">
-          <div className="w-full flex justify-center border-2 border-gold rounded-2xl bg-bgHome">
-            <div className="w-full">
-              <header className="flex flex-row justify-between rounded-t-2xl px-6 py-4 items-center bg-gradient-blue h-[3.6875rem] w-full flex-shrink-0">
-                <h1 className="text-gold text-[1.5rem]">Adicionar Produtos à Fornada</h1>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="text"
-                    placeholder="Procurar produto"
-                    className="px-4 py-2 border border-gold rounded-lg focus:outline-none focus:border-blue"
-                  />
-                  <div className="w-6 h-6 text-gold">
-                    🔍
-                  </div>
-                </div>
-              </header>
-              <div className="p-6">
-                <TableSelectProductsFornada />
-              </div>
-            </div>
-          </div>
+        <div className="w-full flex justify-center">
+          <TableSelectProductsFornada />
         </div>
       );
     }
@@ -484,27 +496,8 @@ function FornadaDashboard() {
     if (hasNoFornada) {
       // Sem fornada - mostrar seleção de produtos para nova fornada
       return (
-        <div className="w-full">
-          <div className="w-full flex justify-center border-2 border-gold rounded-2xl bg-bgHome">
-            <div className="w-full">
-              <header className="flex flex-row justify-between rounded-t-2xl px-6 py-4 items-center bg-gradient-blue h-[3.6875rem] w-full flex-shrink-0">
-                <h1 className="text-gold text-[1.5rem]">Selecionar Produtos</h1>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="text"
-                    placeholder="Procurar produto"
-                    className="px-4 py-2 border border-gold rounded-lg focus:outline-none focus:border-blue"
-                  />
-                  <div className="w-6 h-6 text-gold">
-                    🔍
-                  </div>
-                </div>
-              </header>
-              <div className="p-6">
-                <TableSelectProductsFornada />
-              </div>
-            </div>
-          </div>
+        <div className="w-full flex justify-center">
+          <TableSelectProductsFornada />
         </div>
       );
     }
@@ -520,8 +513,9 @@ function FornadaDashboard() {
                 <input
                   type="text"
                   placeholder="Procurar produto"
-                  className="px-4 py-2 border border-gold rounded-lg focus:outline-none focus:border-blue"
-                  disabled
+                  className="px-4 py-2 border border-gold rounded-lg focus:outline-none focus:border-blue transition-all duration-300 ease-in-out focus:scale-105 focus:shadow-md"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
                 <div className="w-6 h-6 text-gold opacity-50">
                   🔍
@@ -533,6 +527,7 @@ function FornadaDashboard() {
                 idFornada={fornadaAtual?.id || fornadaProxima?.id} 
                 roundedTop={false} 
                 amountLeft={true}
+                searchTerm={searchTerm}
               />
             </div>
           </div>
@@ -542,25 +537,25 @@ function FornadaDashboard() {
   };
 
   return (
-    <div className="flex h-full bg-bgNativeHome">
+    <div className="flex min-h-screen bg-bgNativeHome">
       <BarraLateralDashboard />
 
-      <div className="w-full h-full pl-56">
+      <div className="w-full min-h-screen pl-56">
         <header className="w-full">
           <HeaderDashboard title={"Fornada"} />
         </header>
 
-        <div className="flex flex-col justify-evenly items-center">
+        <div className="flex flex-col justify-evenly items-center min-h-[calc(100vh-80px)]">
           {/* Título principal - muda baseado no modo */}
-          <div className="pb-5 font-bold text-blue">
+          <div className="pb-5 font-bold text-blue transition-all duration-300 ease-in-out">
             {isEditing ? (
-              <h1 className="font-bold text-blue">Editar Fornada</h1>
+              <h1 className="font-bold text-blue transition-all duration-300 ease-in-out">Editar Fornada</h1>
             ) : hasNoFornada ? (
-              <h1 className="font-bold text-blue">Não há nenhuma fornada acontecendo no momento</h1>
+              <h1 className="font-bold text-blue transition-all duration-300 ease-in-out">Não há nenhuma fornada acontecendo no momento</h1>
             ) : hasActiveFornada ? (
-              <h1 className="font-bold text-blue">Já há uma Fornada acontecendo no momento</h1>
+              <h1 className="font-bold text-blue transition-all duration-300 ease-in-out">Já há uma Fornada acontecendo no momento</h1>
             ) : hasScheduledFornada ? (
-              <h1 className="font-bold text-blue">Já há uma Fornada cadastrada no momento</h1>
+              <h1 className="font-bold text-blue transition-all duration-300 ease-in-out">Já há uma Fornada cadastrada no momento</h1>
             ) : null}
           </div>
 
@@ -568,8 +563,10 @@ function FornadaDashboard() {
             <KPILastFornada />
             
             {/* Card central - muda baseado no estado e modo */}
-            <div className="flex flex-col justify-center items-center w-[470px] h-[170px] border-2 border-gold rounded-2xl bg-bgHome gap-5 p-10">
-              {renderCardContent()}
+            <div className="flex flex-col justify-center items-center w-[470px] h-[170px] border-2 border-gold rounded-2xl bg-bgHome gap-5 p-10 transition-all duration-500 ease-in-out">
+              <div className="transition-all duration-300 ease-in-out">
+                {renderCardContent()}
+              </div>
             </div>
 
             <KPIThisMonthFornadas />
@@ -577,14 +574,17 @@ function FornadaDashboard() {
 
           <div className="flex flex-col w-full items-center gap-5 pt-5">
             {/* Tabela de produtos baseada no estado e modo */}
-            {renderProductTable()}
+            <div className="transition-all duration-500 ease-in-out w-full">
+              {renderProductTable()}
+            </div>
 
             {/* Botões de ação baseados no estado e modo */}
+            <div className="transition-all duration-300 ease-in-out">
             {isEditing ? (
               // Modo de edição - botões de salvar e cancelar
               <div className="flex gap-4 mb-5">
                 <button
-                  className="flex items-center bg-gradient-to-l from-gold to-darkGold text-blue font-bold py-3 px-6 rounded-lg shadow-md border-2 border-gold focus:outline-none"
+                  className="flex items-center bg-gradient-to-l from-gold to-darkGold text-blue font-bold py-3 px-6 rounded-lg shadow-md border-2 border-gold focus:outline-none transform hover:scale-105 transition-all duration-300 ease-in-out hover:shadow-lg"
                   onClick={handleSaveEdit}
                 >
                   <FaSave className="mr-2" />
@@ -592,7 +592,7 @@ function FornadaDashboard() {
                 </button>
                 
                 <button
-                  className="flex items-center bg-gradient-to-l from-gold to-darkGold text-blue font-bold py-3 px-6 rounded-lg shadow-md border-2 border-gold focus:outline-none"
+                  className="flex items-center bg-gradient-to-l from-gold to-darkGold text-blue font-bold py-3 px-6 rounded-lg shadow-md border-2 border-gold focus:outline-none transform hover:scale-105 transition-all duration-300 ease-in-out hover:shadow-lg"
                   onClick={handleCancelEdit}
                 >
                   <FaTimes className="mr-2" />
@@ -602,7 +602,7 @@ function FornadaDashboard() {
             ) : hasNoFornada ? (
               // Estado 1: Botão para cadastrar nova fornada
               <button
-                className="mb-5 flex items-center bg-gradient-to-l from-gold to-darkGold text-lg text-blue border-gold font-bold py-1 px-4 rounded-full shadow-md border-2 focus:outline-none"
+                className="mb-5 flex items-center bg-gradient-to-l from-gold to-darkGold text-lg text-blue border-gold font-bold py-1 px-4 rounded-full shadow-md border-2 focus:outline-none transform hover:scale-105 transition-all duration-300 ease-in-out hover:shadow-lg"
                 onClick={registerFornada}
               >
                 CADASTRAR FORNADA <FaPlus className="inline ml-2" />
@@ -610,21 +610,22 @@ function FornadaDashboard() {
             ) : (
               // Estados 2 e 3: Botões para editar e encerrar
               <div className="flex gap-4 mb-5">
-                <button
-                  className="flex items-center bg-gradient-to-l from-gold to-darkGold text-lg text-blue border-gold font-bold py-1 px-4 rounded-full shadow-md border-2 focus:outline-none"
-                  onClick={handleEditFornada}
-                >
-                  EDITAR FORNADA <FaRegEdit className="inline ml-2" />
-                </button>
+                              <button
+                className="flex items-center bg-gradient-to-l from-gold to-darkGold text-lg text-blue border-gold font-bold py-1 px-4 rounded-full shadow-md border-2 focus:outline-none transform hover:scale-105 transition-all duration-300 ease-in-out hover:shadow-lg"
+                onClick={handleEditFornada}
+              >
+                EDITAR FORNADA <FaRegEdit className="inline ml-2" />
+              </button>
 
                 <button
-                  className="flex items-center bg-gradient-to-l from-blue to-darkBlue text-lg text-white border-blue font-bold py-1 px-4 rounded-full shadow-md border-2 focus:outline-none"
+                  className="flex items-center bg-gradient-to-l from-blue to-darkBlue text-lg text-white border-blue font-bold py-1 px-4 rounded-full shadow-md border-2 focus:outline-none transform hover:scale-105 transition-all duration-300 ease-in-out hover:shadow-lg"
                   onClick={handleEncerrarFornada}
                 >
                   ENCERRAR FORNADA
                 </button>
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>

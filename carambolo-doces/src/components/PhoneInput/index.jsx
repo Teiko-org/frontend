@@ -2,7 +2,7 @@ import React from 'react';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 
-const PhoneNumberInput = ({ value, onChange }) => {
+const PhoneNumberInput = React.forwardRef(({ value, onChange, ...props }, ref) => {
   const phoneStyle = {
     containerStyle: {
       width: '100%',
@@ -26,6 +26,7 @@ const PhoneNumberInput = ({ value, onChange }) => {
   return (
     <div>
       <PhoneInput
+        ref={ref}
         country={'br'}
         value={value}
         onChange={onChange}
@@ -33,6 +34,7 @@ const PhoneNumberInput = ({ value, onChange }) => {
         inputProps={{
           name: 'phone',
           required: true,
+          ...props
         }}
         masks={{ br: '(..) .....-....' }}
         placeholder="(DDD) (XX) XXXXX-XXXX"
@@ -40,6 +42,6 @@ const PhoneNumberInput = ({ value, onChange }) => {
       />
     </div>
   );
-};
+});
 
 export default PhoneNumberInput;

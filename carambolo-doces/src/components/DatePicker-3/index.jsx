@@ -31,7 +31,7 @@ const CustomDatePicker = ({ label, value, onChange, placeholder = "Selecione a d
       <div className="relative">
         <input
           type="date"
-          className="w-full bg-white border-2 border-gold rounded-lg px-4 py-3 text-gray-700 focus:outline-none focus:border-blue transition-colors duration-200 cursor-pointer"
+          className="w-full bg-white border-2 border-gold rounded-lg px-4 py-3 text-gray-700 focus:outline-none focus:border-blue transition-all duration-300 ease-in-out focus:scale-105 focus:shadow-md cursor-pointer hover:border-blue"
           value={value || ''}
           onChange={handleDateChange}
           min={minDate}

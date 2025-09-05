@@ -74,7 +74,7 @@ function UserPage() {
         // Verifica se o telefone foi alterado
         const telefoneAlterado = tempTelefone !== userData.contato;
         
-        await updateUserData(userId, updatedData, token, telefoneAlterado);
+        await updateUserData(userId, updatedData, telefoneAlterado);
         
         if (telefoneAlterado) {
           // Se telefone foi alterado, redireciona para home (será feito logout)
@@ -102,17 +102,17 @@ function UserPage() {
   };
 
   const handleCancel = () => {
-    setTempNome(userData.nome);
-    setTempTelefone(userData.contato);
-    setTempDataNascimento(userData.dataNascimento);
-    setTempGenero(userData.genero);
+    setTempNome(userData.nome || "");
+    setTempTelefone(userData.contato || "");
+    setTempDataNascimento(userData.dataNascimento || "");
+    setTempGenero(userData.genero || "");
     setIsEditing(false);
   };
 
   const handleChangePassword = async () => {
     const userId = localStorage.getItem("userId");
     try {
-      await changePassword(userId, senhaAtual, novaSenha, token);
+      await changePassword(userId, senhaAtual, novaSenha);
       navigate("/");
     } catch (error) {
     }
@@ -121,7 +121,7 @@ function UserPage() {
   const handleDeleteUser = async () => {
     const userId = localStorage.getItem("userId");
     try {
-      await deleteUser(userId, token);
+      await deleteUser(userId);
       navigate("/");
     } catch (error) {
     }
@@ -179,7 +179,7 @@ function UserPage() {
                   <input
                     type="date"
                     className={`w-full border-2 ${isEditing ? 'border-gold' : 'border-gray-300'} rounded-xl px-4 py-2 pr-10 ${!isEditing ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                    value={isEditing ? tempDataNascimento : userData.dataNascimento}
+                    value={isEditing ? tempDataNascimento : (userData.dataNascimento || "")}
                     onChange={(e) => setTempDataNascimento(e.target.value)}
                     readOnly={!isEditing}
                     max={getToday()}
@@ -192,7 +192,7 @@ function UserPage() {
                   <span className="font-semibold text-blue">Gênero</span>
                   <select
                     className={`w-[200px] border-2 ${isEditing ? 'border-gold' : 'border-gray-300'} rounded-xl px-4 py-2 pr-10 ${!isEditing ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                    value={isEditing ? tempGenero : userData.genero}
+                    value={isEditing ? tempGenero : (userData.genero || "")}
                     onChange={(e) => setTempGenero(e.target.value)}
                     disabled={!isEditing}
                   >

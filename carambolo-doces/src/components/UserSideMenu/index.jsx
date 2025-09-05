@@ -10,7 +10,7 @@ function UserSideMenu() {
   useEffect(() => {
     const loadUserData = async () => {
       const userId = localStorage.getItem("userId");
-      if (userId) {
+      if (userId && userId !== 'null' && userId !== 'undefined') {
         try {
           console.log("Carregando dados do usuário no UserSideMenu...");
           const data = await getUserData(userId);
