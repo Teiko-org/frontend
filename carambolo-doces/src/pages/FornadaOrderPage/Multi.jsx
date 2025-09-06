@@ -8,19 +8,19 @@ import PhoneNumberInput from "../../components/PhoneInput";
 import Select from "../../components/Select";
 import Button from "../../components/Button";
 import { axiosApi } from "../../provider/AxiosApi";
+import { useCart } from "../../contexts/CartContext";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { IoIosInformationCircle } from "react-icons/io";
 import { listUserAddresses } from "../../service/addressService";
 import { getProdutoFornadaById } from "../../service/fornadaService";
-import { useCart } from "../../contexts/CartContext";
 import Carousel from "../../components/Carousel";
 
 export default function FornadaMultiOrderPage() {
+  const { removeByFornadaId, removeItem } = useCart();
   const { state } = useLocation();
   const navigate = useNavigate();
   const itens = state?.itens || [];
-  const { removeItem } = useCart();
 
   const [idx, setIdx] = useState(0);
   useEffect(() => {
@@ -51,7 +51,7 @@ export default function FornadaMultiOrderPage() {
   const [referencia, setReferencia] = useState("");
   const [dataEntrega, setDataEntrega] = useState("");
   const [horario, setHorario] = useState("");
-  const [observacoes, setObservacoes] = useState("");
+  // Removido: observações não são usadas em fornadas
   const [errors, setErrors] = useState({});
   const t = {
     info: (m) => toast.info(m, { containerId: 'global' }),
@@ -233,7 +233,6 @@ export default function FornadaMultiOrderPage() {
           tipoEntrega: deliveryOption.toUpperCase(),
           nomeCliente: nome,
           telefoneCliente: telefone,
-          observacoes,
           enderecoId: enderecoId,
           horarioRetirada: horario,
         };
@@ -243,6 +242,7 @@ export default function FornadaMultiOrderPage() {
         if (resumo?.id) idsResumo.push(resumo.id);
         // remove do carrinho local
         try { removeItem(it.id, it.type); } catch {}
+        try { removeByFornadaId(it.fornadaDaVezId); } catch {}
       }
 
       try {
@@ -382,11 +382,7 @@ export default function FornadaMultiOrderPage() {
             </div>
           </div>
 
-          <div className="mb-4 mt-6">
-            <h2 className="font-semibold tracking-wider text-lg text-blue">OBSERVAÇÕES</h2>
-            <span className="text-blue text-sm">Escreva abaixo tudo relacionado ao seu pedido</span>
-            <textarea className="border-2 border-gold rounded-lg px-4 py-2 w-full mt-2 h-32" value={observacoes} onChange={(e) => setObservacoes(e.target.value)}></textarea>
-          </div>
+          {/* Observações removidas para fornadas */}
 
           <div className="flex justify-between items-center mt-10">
             <div>

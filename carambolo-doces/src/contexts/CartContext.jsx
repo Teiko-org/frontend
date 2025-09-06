@@ -97,6 +97,12 @@ export function CartProvider({ children }) {
     setItems((prev) => prev.filter((p) => !(p.id === id && p.type === type)));
   };
 
+  // Remove itens de fornada pelo fornadaDaVezId (útil após finalizar pedido)
+  const removeByFornadaId = (fornadaDaVezId) => {
+    if (!fornadaDaVezId) return;
+    setItems((prev) => prev.filter((p) => !(p.type === 'Fornada' && p.fornadaDaVezId === fornadaDaVezId)));
+  };
+
   const clearCart = () => setItems([]);
 
   // Função para limpar carrinho de convidado quando usuário faz login
@@ -165,6 +171,7 @@ export function CartProvider({ children }) {
       items, 
       addItem, 
       removeItem, 
+      removeByFornadaId,
       clearCart, 
       updateQuantity, 
       totals, 

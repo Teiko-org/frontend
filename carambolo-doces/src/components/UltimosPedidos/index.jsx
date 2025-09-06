@@ -16,11 +16,42 @@ function UltimosPedidos() {
       try {
         setLoading(true);
         const ultimosPedidos = await getUltimosPedidos();
-        setPedidos(ultimosPedidos); // Carregar todos os pedidos para scroll
+        const now = new Date();
+        const limiteDias = 90; // janela de 90 dias
+        const limiteMs = now.getTime() - limiteDias * 24 * 60 * 60 * 1000;
+        const maxFuturoMs = now.getTime() + 24 * 60 * 60 * 1000; // tolerância de +1 dia
+
+        const validos = (ultimosPedidos || []).filter((p) => {
+          const t = new Date(p.dataPedido).getTime();
+          if (isNaN(t)) return false;
+          if (t < limiteMs) return false;
+          if (t > maxFuturoMs) return false;
+          return true;
+        });
+
+        const ordenados = validos
+          .slice()
+          .sort((a, b) => {
+            const ta = new Date(a.dataPedido).getTime();
+            const tb = new Date(b.dataPedido).getTime();
+            if (!isNaN(tb) && !isNaN(ta)) {
+              if (tb !== ta) return tb - ta;
+              // desempate por id desc se existir
+              const ia = Number(a.id); const ib = Number(b.id);
+              if (!isNaN(ia) && !isNaN(ib)) return ib - ia;
+              return 0;
+            }
+            // fallback: se faltar data, empurra para o fim
+            if (isNaN(ta) && !isNaN(tb)) return 1;
+            if (!isNaN(ta) && isNaN(tb)) return -1;
+            return 0;
+          });
+        const top = ordenados.slice(0, 15);
+        setPedidos(top);
         
         // Carregar detalhes de todos os pedidos
         const detalhesMap = {};
-        for (const pedido of ultimosPedidos) {
+        for (const pedido of top) {
           try {
             let detalhes;
             if (pedido.pedidoBoloId) {
@@ -74,7 +105,7 @@ function UltimosPedidos() {
       <div className="border-2 border-gold rounded-xl overflow-hidden bg-bgHome">
         <div className="bg-gradient-to-b from-[#1C3B57] to-[#0F2A3D] text-gold px-5 py-3">
           <div className="text-xl font-bold tracking-wide">Últimos Pedidos</div>
-          <div className="text-[11px] opacity-90">Lorem ipsum dolor sit amet</div>
+          <div className="text-[11px] opacity-90">Pedidos mais recentes registrados no sistema.</div>
         </div>
         <div className="p-4 h-80 flex items-center justify-center">
           <div className="text-sm text-gray-500">Carregando...</div>
@@ -87,7 +118,7 @@ function UltimosPedidos() {
     <div className="border-2 border-gold rounded-xl overflow-hidden bg-bgHome">
       <div className="bg-gradient-to-b from-[#1C3B57] to-[#0F2A3D] text-gold px-5 py-3">
         <div className="text-xl font-bold tracking-wide">Últimos Pedidos</div>
-        <div className="text-[11px] opacity-90">Lorem ipsum dolor sit amet</div>
+        <div className="text-[11px] opacity-90">Pedidos mais recentes registrados no sistema.</div>
       </div>
       <div className="p-4 h-80 flex flex-col">
         {pedidos.length > 0 ? (
@@ -129,7 +160,7 @@ function UltimosPedidos() {
           fornada={pedidoSelecionado.pedidoFornadaId}
           orderStatus={pedidoSelecionado.status}
           orderSummaryId={pedidoSelecionado.id}
-          onStatusChange={() => {}} // Não precisamos atualizar status no dashboard
+          onStatusChange={() => {}}
         />
       )}
     </div>

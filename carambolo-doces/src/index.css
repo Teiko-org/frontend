@@ -2,6 +2,18 @@
   font-family: "Montserrat", sans-serif;
 }
 
+/* Corrige espaço branco fora do app e padroniza o fundo global */
+html, body, #root {
+  margin: 0;
+  min-height: 100%;
+  background-color: #FFEEE7; /* bgNativeHome */
+}
+
+#root { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* Evitar qualquer margem global no final da página */
+body { padding-bottom: 0 !important; }
+
 .gradient-border {
   position: relative;
   margin: 0;

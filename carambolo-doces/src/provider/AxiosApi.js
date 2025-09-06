@@ -2,12 +2,16 @@ import axios from "axios"
 import { clearAuthData } from "../service/userService.js"
 
 // Função para verificar se a rota é pública (não precisa de autenticação)
-const isPublicRoute = (url) => {
+const isPublicRoute = (url, method = 'GET') => {
     const publicRoutes = [
         '/decoracoes',
-        '/fornadas',
         '/bolos'
     ];
+    
+    // Para fornadas, apenas GET é público, outras operações precisam de autenticação
+    if (url.includes('/fornadas')) {
+        return method === 'GET';
+    }
     
     return publicRoutes.some(route => url.includes(route));
 };
@@ -36,8 +40,10 @@ export const axiosApi = axios.create(
 // Interceptor para configurar cookies corretamente
 axiosApi.interceptors.request.use(
     (config) => {
-        // Para rotas públicas (decoracoes, fornadas, bolos), não enviar cookies
-        if (isPublicRoute(config.url)) {
+        const method = config.method?.toUpperCase() || 'GET';
+        
+        // Para rotas públicas, não enviar cookies
+        if (isPublicRoute(config.url, method)) {
             config.withCredentials = false;
         } 
         // Para rotas de autenticação (login, logout), sempre enviar cookies
@@ -66,9 +72,10 @@ axiosApi.interceptors.response.use(
         if (error.response && error.response.status === 401) {
             const currentPath = window.location.pathname;
             const requestUrl = error.config?.url || '';
+            const requestMethod = error.config?.method?.toUpperCase() || 'GET';
             const publicPaths = ['/login', '/', '/register', '/carambolos'];
             const isPublicPage = publicPaths.some(path => currentPath.startsWith(path));
-            const isPublicRequest = isPublicRoute(requestUrl);
+            const isPublicRequest = isPublicRoute(requestUrl, requestMethod);
             const isAuthRequest = isAuthRoute(requestUrl);
             
             // Se for uma rota pública, não fazer nada (erro esperado)

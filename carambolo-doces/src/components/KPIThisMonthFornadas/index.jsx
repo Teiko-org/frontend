@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import Button from "../Button";
 import DataKPIFornada from "../DataKPIFornada/DataKPIFornada";
 import ModalOtherFornadas from "../ModalOtherFornadas/ModalOtherFornadas";
+import { useNavigate } from "react-router-dom";
 import { getKPIFornadasMesAtual } from "../../service/kpiService";
 
-function KPIThisMonthFornadas() {
+function KPIThisMonthFornadas({ hideConsultar }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [kpiData, setKpiData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
@@ -49,15 +51,13 @@ function KPIThisMonthFornadas() {
 
       </div>
 
-      <button onClick={openModal} className="p-1 w-full font-bold text-blue rounded-2xl border-none focus:outline-none transform hover:scale-105 transition-transform">
-        Consultar Outras Fornadas
-      </button>
-
-      {isModalOpen && (
-        <ModalOtherFornadas
-          onClose={closeModal}
-        />
+      {!hideConsultar && (
+        <button onClick={() => navigate('/all-fornadas-dashboard')} className="p-1 w-full font-bold text-blue rounded-2xl border-none focus:outline-none transform hover:scale-105 transition-transform">
+          Consultar Outras Fornadas
+        </button>
       )}
+
+      {/* Modal antigo desativado em favor da navegação */}
 
     </div>
   );

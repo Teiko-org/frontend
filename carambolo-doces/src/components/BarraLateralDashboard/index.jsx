@@ -3,12 +3,16 @@ import { IoMdClipboard } from "react-icons/io";
 import { BsBag } from "react-icons/bs";
 import { RiFileEditLine } from "react-icons/ri";
 import { BiLogOut } from "react-icons/bi";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FaHome } from "react-icons/fa";
 import { useEffect } from "react";
 
 const BarraLateralDashboard = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const isActive = (paths) => paths.some((p) => location.pathname.startsWith(p));
+    const isActiveExact = (path) => location.pathname === path;
 
     const handleLogout = () => {
         // Migrar carrinho do usuário para convidado antes de fazer logout
@@ -41,10 +45,7 @@ const BarraLateralDashboard = () => {
                     <ul className="text-gold">
                         <li>
                             <Link to="/dashboard">
-                                <div className='flex items-center
-                                    pl-5 py-2 gap-2 ml-3 rounded-l-full
-                                    hover:bg-bgNativeHome hover:text-darkBlue
-                                    transition-colors duration-400 ease-in-out'>
+                                <div className={`flex items-center pl-5 py-2 gap-2 ml-3 rounded-l-full transition-colors duration-400 ease-in-out ${isActiveExact('/dashboard') ? 'bg-bgNativeHome text-darkBlue font-semibold' : 'hover:bg-bgNativeHome hover:text-darkBlue'}`}>
                                     <FaHome /> Dashboard
                                 </div>
                             </Link>
@@ -59,10 +60,7 @@ const BarraLateralDashboard = () => {
                                 </div>
                             </a> */}
                             <Link to="/dashboard-kanban-pedidos">
-                                <div className='flex items-center
-                                    pl-5 py-2 gap-2 ml-3 rounded-l-full
-                                    hover:bg-bgNativeHome hover:text-darkBlue
-                                    transition-colors duration-400 ease-in-out'>
+                                <div className={`flex items-center pl-5 py-2 gap-2 ml-3 rounded-l-full transition-colors duration-400 ease-in-out ${isActiveExact('/dashboard-kanban-pedidos') ? 'bg-bgNativeHome text-darkBlue font-semibold' : 'hover:bg-bgNativeHome hover:text-darkBlue'}`}>
                                     <IoMdClipboard /> Pedidos
                                 </div>
                             </Link>
@@ -77,10 +75,7 @@ const BarraLateralDashboard = () => {
                                 </div>
                             </a> */}
                             <Link to="/produtos">
-                                <div className='flex items-center
-                                    pl-5 py-2 gap-2 ml-3 rounded-l-full
-                                    hover:bg-bgNativeHome hover:text-darkBlue
-                                    transition-colors duration-400 ease-in-out'>
+                                <div className={`flex items-center pl-5 py-2 gap-2 ml-3 rounded-l-full transition-colors duration-400 ease-in-out ${isActiveExact('/produtos') ? 'bg-bgNativeHome text-darkBlue font-semibold' : 'hover:bg-bgNativeHome hover:text-darkBlue'}`}>
                                     <BsBag /> Produtos
                                 </div>
                             </Link>
@@ -95,10 +90,7 @@ const BarraLateralDashboard = () => {
                                 </div>
                             </a> */}
                             <Link to="/fornada-dashboard">
-                                <div className='flex items-center
-                                    pl-5 py-2 gap-2 ml-3 rounded-l-full
-                                    hover:bg-bgNativeHome hover:text-darkBlue
-                                    transition-colors duration-400 ease-in-out'>
+                                <div className={`flex items-center pl-5 py-2 gap-2 ml-3 rounded-l-full transition-colors duration-400 ease-in-out ${isActive(['/fornada-dashboard','/all-fornadas-dashboard']) ? 'bg-bgNativeHome text-darkBlue font-semibold' : 'hover:bg-bgNativeHome hover:text-darkBlue'}`}>
                                     <RiFileEditLine /> Produção
                                 </div>
                             </Link>

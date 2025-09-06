@@ -52,7 +52,7 @@ function PrincipaisClientes() {
       <div className="border-2 border-gold rounded-xl overflow-hidden bg-bgHome">
         <div className="bg-gradient-to-b from-[#1C3B57] to-[#0F2A3D] text-gold px-5 py-3">
           <div className="text-xl font-bold tracking-wide">Principais Clientes</div>
-          <div className="text-[11px] opacity-90">Lorem ipsum dolor sit amet</div>
+          <div className="text-[11px] opacity-90">Clientes com mais pedidos no período recente.</div>
         </div>
         <div className="p-4 h-80 flex items-center justify-center">
           <div className="text-sm text-gray-500">Carregando...</div>
@@ -65,7 +65,7 @@ function PrincipaisClientes() {
     <div className="border-2 border-gold rounded-xl overflow-hidden bg-bgHome">
       <div className="bg-gradient-to-b from-[#1C3B57] to-[#0F2A3D] text-gold px-5 py-3">
         <div className="text-xl font-bold tracking-wide">Principais Clientes</div>
-        <div className="text-[11px] opacity-90">Lorem ipsum dolor sit amet</div>
+        <div className="text-[11px] opacity-90 leading-4">Clientes com mais pedidos no período recente.</div>
       </div>
       <div className="p-4 h-80 flex flex-col">
         {clientes.length > 0 ? (
@@ -73,7 +73,6 @@ function PrincipaisClientes() {
             {clientes.map((cliente, index) => (
               <div key={index} className="bg-bgHome border border-gold/40 rounded-lg p-3 mb-2 last:mb-0">
                 <div className="flex items-center gap-3">
-                  {/* Avatar placeholder */}
                   <div className="w-12 h-12 bg-pink-200 rounded-full flex items-center justify-center">
                     <div className="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center">
                       <svg className="w-5 h-5 text-pink-300" fill="currentColor" viewBox="0 0 20 20">

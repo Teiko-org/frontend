@@ -10,6 +10,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import { insertNewFornada, updateFornada } from "../../service/fornadaService";
+import { validateAndCleanAuth } from "../../service/userService";
 
 // Função para evitar problemas de fuso horário ao converter datas
 const parseLocalDate = (dateStr) => {
@@ -124,6 +125,13 @@ function FornadaDashboard() {
   };
 
   const handleSaveEdit = async () => {
+    // Verificar se o usuário está autenticado
+    if (!validateAndCleanAuth()) {
+      toast.error("Você precisa estar logado para atualizar uma fornada!");
+      navigate('/login');
+      return;
+    }
+
     if (!editingFornada || !editingFornada.dataInicio || !editingFornada.dataFim) {
       toast("Preencha as duas datas!", { type: "error" });
       return;
@@ -336,6 +344,13 @@ function FornadaDashboard() {
   }
 
   const handleEncerrarFornada = async () => {
+    // Verificar se o usuário está autenticado
+    if (!validateAndCleanAuth()) {
+      toast.error("Você precisa estar logado para encerrar uma fornada!");
+      navigate('/login');
+      return;
+    }
+
     try {
       const fornadaId = fornadaAtual?.id || fornadaProxima?.id;
       if (!fornadaId) {

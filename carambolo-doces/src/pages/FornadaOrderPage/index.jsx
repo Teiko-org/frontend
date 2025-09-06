@@ -14,8 +14,10 @@ import { IoIosInformationCircle } from "react-icons/io";
 import { listUserAddresses } from "../../service/addressService";
 import { getProdutoFornadaById } from "../../service/fornadaService";
 import { toast } from "react-toastify";
+import { useCart } from "../../contexts/CartContext";
 
 function FornadaOrderPage() {
+    const { removeByFornadaId } = useCart();
     const location = useLocation();
     const navigate = useNavigate();
     
@@ -59,7 +61,7 @@ function FornadaOrderPage() {
     const [referencia, setReferencia] = useState("");
     const [dataEntrega, setDataEntrega] = useState("");
     const [horario, setHorario] = useState("");
-    const [observacoes, setObservacoes] = useState("");
+    
 
     useEffect(() => {
         const checkUserAndLoadAddresses = async () => {
@@ -259,7 +261,6 @@ function FornadaOrderPage() {
         toast.info("Processando seu pedido...");
         
         try {
-            // Verifica novamente o estoque antes de confirmar o pedido
             const produtoAtualizado = await getProdutoFornadaById(produtoSelecionado.fornadaDaVezId);
             if (produtoAtualizado.quantidade < amount) {
                 toast.error(`Estoque insuficiente! Disponível agora: ${produtoAtualizado.quantidade} unidades`);
@@ -303,7 +304,6 @@ function FornadaOrderPage() {
                 tipoEntrega: deliveryOption.toUpperCase(), 
                 nomeCliente: nome,
                 telefoneCliente: telefone,
-                observacoes: observacoes,
                 enderecoId: enderecoId,
                 horarioRetirada: horario
             };
@@ -328,6 +328,7 @@ function FornadaOrderPage() {
 
             toast.success("Pedido realizado com sucesso!");
             
+            try { removeByFornadaId(doceFornada.fornadaDaVezId); } catch {}
             setTimeout(() => {
                 window.open(linkWhatsApp, "_blank");
                 navigate('/');
@@ -607,18 +608,7 @@ function FornadaOrderPage() {
                         </div>
                     </div>
 
-                    <div className="mb-4 mt-6">
-                        <h2 className="font-semibold tracking-wider text-lg text-blue">
-                            OBSERVAÇÕES
-                        </h2>
-                        <span className="text-blue text-sm">Escreva abaixo tudo relacionado a o que e como você quer o seu Carambolo</span>
-                        <textarea
-                            className="border-2 border-gold rounded-lg px-4 py-2 w-full mt-2 h-32"
-                            placeholder="Descreva abaixo como você quer o seu Carambolo"
-                            value={observacoes}
-                            onChange={e => setObservacoes(e.target.value)}
-                        ></textarea>
-                    </div>
+                    {/* Observações removidas para fornadas */}
 
                     <div className="flex justify-between items-center mt-10">
                         <div>

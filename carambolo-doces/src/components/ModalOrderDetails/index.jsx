@@ -117,7 +117,7 @@ export default function ModalOrderDetails(props) {
                   <h3 className="font-bold text-2xl text-blue  pb-5">
                     Quantidade
                   </h3>
-                  {props?.order?.quantidade} unidades
+                  {props?.order?.quantidade} {props.fornada ? (props?.order?.produtoFornada ? `unidades de ${props.order.produtoFornada}` : 'unidades') : 'fatias/porções'}
                 </div>
               )}
 
@@ -140,12 +140,16 @@ export default function ModalOrderDetails(props) {
                     </span>
                   )}
 
-                  <span className="text-blue font-semibold">Observações</span>
-                  {props?.order?.observacoes
-                    ? props.order.observacoes
-                    : props.order.observacao
-                    ? props.order.observacao
-                    : "Carregando..."}
+                  {props.fornada == null && (
+                    <>
+                      <span className="text-blue font-semibold">Observações</span>
+                      {props?.order?.observacoes
+                        ? props.order.observacoes
+                        : props.order.observacao
+                        ? props.order.observacao
+                        : "Carregando..."}
+                    </>
+                  )}
                 </div>
               </div>
 

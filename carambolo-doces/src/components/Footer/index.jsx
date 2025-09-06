@@ -1,10 +1,11 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { IoLogoWhatsapp } from "react-icons/io";
 import { FaInstagram, FaTiktok, FaMapMarkerAlt } from "react-icons/fa";
 
 function Footer() {
   return (
-    <footer className="bg-gradient-to-b from-blue to-darkBlue text-white py-12 border-t-2 border-gold">
+    <footer className="bg-gradient-to-b from-blue to-darkBlue text-white py-12 border-t-2 border-gold m-0 w-full flex-shrink-0">
       <div className="container mx-auto flex justify-between items-start px-6 space-x-12">
         <div className="flex items-start">
           <img
@@ -17,24 +18,16 @@ function Footer() {
         <div className="flex-1 flex flex-col items-start">
           <ul className="space-y-3">
             <li>
-              <a href="#" className="underline">
-                Home
-              </a>
+              <Link to="/" className="underline">Home</Link>
             </li>
             <li>
-              <a href="#" className="underline">
-                Carambolos
-              </a>
+              <Link to="/carambolos" className="underline">Carambolos</Link>
             </li>
             <li>
-              <a href="#" className="underline">
-                Fornada da Semana
-              </a>
+              <Link to="/fornada" className="underline">Fornada da Semana</Link>
             </li>
             <li>
-              <a href="#" className="underline">
-                Datas Especiais
-              </a>
+              <a href="#" className="underline">Datas Especiais</a>
             </li>
           </ul>
         </div>

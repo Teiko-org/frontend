@@ -308,12 +308,19 @@ export const getMesesAnosFornadas = async () => {
 
 export const getFornadasMesAno = async (mes, ano) => {
   try {
-    const response = await axiosApi.get('/fornadas/da-vez', {
+    // Endpoint correto para filtrar por mês/ano
+    const response = await axiosApi.get('/fornadas/com-itens', {
       params: { mes, ano }
     });
-    return response.data;
+    const data = response.data || [];
+    // Normaliza para o formato usado na listagem (id, dataInicio, dataFim)
+    return data.map((f) => ({
+      id: f.fornadaId ?? f.id,
+      dataInicio: f.dataInicio,
+      dataFim: f.dataFim
+    }));
   } catch (error) {
-    console.error('Erro ao buscar produto da fornada:', error);
+    console.error('Erro ao buscar fornadas por mês/ano:', error);
     throw error;
   }
 };

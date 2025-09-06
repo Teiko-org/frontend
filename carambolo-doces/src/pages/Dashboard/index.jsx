@@ -4,6 +4,7 @@ import BarraLateralDashboard from "../../components/BarraLateralDashboard";
 import HeaderDashboard from "../../components/headerDashboard";
 import PrincipaisClientes from "../../components/PrincipaisClientes";
 import UltimosPedidos from "../../components/UltimosPedidos";
+import { axiosApi } from "../../provider/AxiosApi";
 import {
   getQtdClientesUnicos,
   getQtdPedidosTotal,
@@ -19,6 +20,7 @@ export default function Dashboard() {
   const [kpis, setKpis] = useState({ pedidosBolo: 0, pedidosFornada: 0, clientes: 0 });
   const [pedidosStatus, setPedidosStatus] = useState({});
   const [topProdutos, setTopProdutos] = useState([]);
+  const [topProdutosImgs, setTopProdutosImgs] = useState([]);
   const [ultimosPedidos, setUltimosPedidos] = useState([]);
   const [periodo, setPeriodo] = useState("mes");
   const [tabProdutos, setTabProdutos] = useState("Todos");
@@ -40,7 +42,40 @@ export default function Dashboard() {
         clientes: clientes ?? 0 
       });
       setPedidosStatus({ bolo: pedidosBolo ?? {}, fornada: pedidosFornada ?? {} });
-      setTopProdutos(produtos ?? []);
+      const lista = produtos ?? [];
+      setTopProdutos(lista);
+      // carrega imagens em paralelo sem travar a tela
+      try {
+        const enriquecidos = await Promise.all(
+          (lista || []).map(async (p) => {
+            try {
+              if (p?.tipo === "FORNADA") {
+                const { data } = await axiosApi.get(`/fornadas/produto-fornada/${p.id}`);
+                // suporta tanto DTO com array de strings quanto entidade com objetos { url }
+                const imagens = data?.imagens ?? data?.imagens?.map?.((i) => i?.url) ?? [];
+                const url = Array.isArray(imagens) && imagens.length > 0 ? (imagens[0]?.url ?? imagens[0]) : undefined;
+                return { ...p, imagemUrl: url };
+              }
+              if (p?.tipo === "BOLO") {
+                const { data: bolo } = await axiosApi.get(`/bolos/${p.id}`);
+                const decoracaoId = bolo?.decoracaoId;
+                if (decoracaoId) {
+                  const { data: decoracao } = await axiosApi.get(`/decoracoes/${decoracaoId}`);
+                  const url = decoracao?.imagens?.[0];
+                  return { ...p, imagemUrl: url };
+                }
+                return { ...p, imagemUrl: undefined };
+              }
+              return { ...p };
+            } catch {
+              return { ...p };
+            }
+          })
+        );
+        setTopProdutosImgs(enriquecidos);
+      } catch {
+        setTopProdutosImgs(lista);
+      }
       setUltimosPedidos(ultimos ?? []);
     };
     load();
@@ -53,99 +88,120 @@ export default function Dashboard() {
         getQtdPedidosFornadaPorPeriodo(periodo).catch(() => ({})),
       ]);
       const parse = (obj) => {
-        const labels = Object.keys(obj ?? {}).sort();
-        const concluidos = labels.map((k) => obj[k]?.concluidos ?? 0);
-        const cancelados = labels.map((k) => obj[k]?.cancelados ?? 0);
-        
-        // Converter números de mês para siglas se for período mensal
-        const formattedLabels = periodo === "mes" 
-          ? labels.map(label => {
-              const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
-                                'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        // normalizar chaves e ordenar numericamente
+        const rawLabels = Object.keys(obj ?? {});
+        const sorted = rawLabels.sort((a, b) => Number(a) - Number(b));
+        const concluidos = sorted.map((k) => (obj?.[k]?.concluidos ?? 0));
+        const cancelados = sorted.map((k) => (obj?.[k]?.cancelados ?? 0));
+
+        // labels para exibição
+        const formattedLabels = periodo === "mes"
+          ? sorted.map((label) => {
+              const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
               const monthNum = parseInt(label);
-              return monthNames[monthNum - 1] || label;
+              return monthNames[monthNum - 1] || String(label);
             })
-          : labels;
-        
-        return { labels: formattedLabels, concluidos, cancelados };
+          : sorted.map((l) => String(l));
+
+        // Sempre retornar labels normalizados como strings (para união e eixos)
+        return { labels: periodo === 'mes' ? sorted.map((l)=>String(l)) : sorted.map((l)=>String(l)), concluidos, cancelados, displayLabels: formattedLabels };
       };
-      setSerieBolo(parse(bolo));
-      setSerieFornada(parse(fornada));
+      const parsedBolo = parse(bolo);
+      const parsedFornada = parse(fornada);
+      // Usamos labels normalizados para cálculos e displayLabels apenas no spark tooltip/xaxis se desejar
+      setSerieBolo({ labels: parsedBolo.labels, concluidos: parsedBolo.concluidos, cancelados: parsedBolo.cancelados });
+      setSerieFornada({ labels: parsedFornada.labels, concluidos: parsedFornada.concluidos, cancelados: parsedFornada.cancelados });
     };
     loadSeries();
   }, [periodo]);
 
   // Sparkline para os cards KPI
-  const sparkOptions = useMemo(
-    () => ({
-      chart: { 
-        type: "area", 
-        sparkline: { enabled: true },
-        animations: {
-          enabled: true,
-          easing: 'easeinout',
-          speed: 800,
-          animateGradually: {
-            enabled: true,
-            delay: 150
-          }
-        }
-      },
-      stroke: { width: 3, curve: "smooth" },
-      fill: {
-        type: "gradient",
-        gradient: {
-          shadeIntensity: 1,
-          opacityFrom: 0.7,
-          opacityTo: 0.1,
-          stops: [0, 100]
-        }
-      },
-      tooltip: { 
+  const buildSparkOptions = (labels, isAno) => ({
+    chart: { 
+      type: "area", 
+      sparkline: { enabled: true },
+      animations: {
         enabled: true,
-        theme: 'light',
-        style: {
-          fontSize: '12px',
-          fontFamily: 'Montserrat, sans-serif'
-        },
-        custom: function({series, seriesIndex, dataPointIndex, w}) {
-          const mesNumero = w.globals.labels[dataPointIndex];
-          const valor = series[seriesIndex][dataPointIndex];
-          
-          // Converter número do mês para nome
-          const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
-                            'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-          const mesNome = monthNames[parseInt(mesNumero) - 1] || mesNumero;
-          
-          return `
-            <div style="padding: 10px 14px; background: white; border: 1px solid #D4B076; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.15); min-width: 100px;">
-              <div style="font-weight: 600; color: #333; margin-bottom: 6px; font-size: 13px;">${mesNome}</div>
-              <div style="color: #666; font-size: 14px; font-weight: 500;">${valor} pedidos</div>
-            </div>
-          `;
+        easing: 'easeinout',
+        speed: 800,
+        animateGradually: {
+          enabled: true,
+          delay: 150
         }
-      },
-      colors: ["#C3A36A"],
-      grid: {
-        show: false
-      },
-      xaxis: {
-        categories: serieBolo.labels.slice(-10),
-        labels: {
-          show: false
-        }
-      },
-      yaxis: {
-        show: false
       }
-    }),
-    []
-  );
+    },
+    stroke: { width: 3, curve: "smooth" },
+    fill: {
+      type: "gradient",
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.7,
+        opacityTo: 0.1,
+        stops: [0, 100]
+      }
+    },
+    tooltip: { 
+      enabled: true,
+      theme: 'light',
+      style: {
+        fontSize: '12px',
+        fontFamily: 'Montserrat, sans-serif'
+      },
+      custom: function({series, seriesIndex, dataPointIndex, w}) {
+        const label = w.globals.labels[dataPointIndex];
+        const valor = series[seriesIndex][dataPointIndex];
+        let titulo = label;
+        if (!isAno) {
+          const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+          const mesNome = monthNames[parseInt(label) - 1] || label;
+          titulo = mesNome;
+        }
+        return `
+          <div style="padding: 10px 14px; background: white; border: 1px solid #D4B076; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.15); min-width: 100px;">
+            <div style="font-weight: 600; color: #333; margin-bottom: 6px; font-size: 13px;">${titulo}</div>
+            <div style="color: #666; font-size: 14px; font-weight: 500;">${valor} pedidos</div>
+          </div>
+        `;
+      }
+    },
+    colors: ["#C3A36A"],
+    grid: { show: false },
+    xaxis: { categories: labels.slice(-10), labels: { show: false } },
+    yaxis: { show: false }
+  });
 
-  const pedidosSerieSpark = useMemo(() => [{ data: serieBolo.concluidos.slice(-10) }], [serieBolo]);
-  const clientesSerieSpark = useMemo(() => [{ data: serieFornada.concluidos.slice(-10) }], [serieFornada]);
+  const sparkOptionsBolo = useMemo(() => buildSparkOptions(serieBolo.labels, periodo === 'ano'), [serieBolo.labels, periodo]);
+  const sparkOptionsFornada = useMemo(() => buildSparkOptions(serieFornada.labels, periodo === 'ano'), [serieFornada.labels, periodo]);
+
+  const pedidosSerieSpark = useMemo(() => [{ data: (serieBolo.concluidos || []).slice(-10) }], [serieBolo.concluidos]);
+  const fornadaSerieSpark = useMemo(() => [{ data: (serieFornada.concluidos || []).slice(-10) }], [serieFornada.concluidos]);
 
   // Gráfico principal (Pedidos)
+  const allCategories = useMemo(() => {
+    const set = new Set([...(serieBolo.labels || []), ...(serieFornada.labels || [])]);
+    const arr = Array.from(set);
+    // ordenar numericamente quando possível
+    arr.sort((a, b) => {
+      const na = Number(a); const nb = Number(b);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      return String(a).localeCompare(String(b));
+    });
+    return arr;
+  }, [serieBolo.labels, serieFornada.labels]);
+
+  const alignedSeries = useMemo(() => {
+    const toMap = (labels, values) => {
+      const map = new Map();
+      (labels || []).forEach((l, i) => map.set(String(l), values[i] ?? 0));
+      return map;
+    };
+    const mapBolo = toMap(serieBolo.labels, serieBolo.concluidos);
+    const mapFornada = toMap(serieFornada.labels, serieFornada.concluidos);
+    const bolo = allCategories.map((l) => mapBolo.get(String(l)) ?? 0);
+    const fornada = allCategories.map((l) => mapFornada.get(String(l)) ?? 0);
+    return { bolo, fornada };
+  }, [allCategories, serieBolo.labels, serieBolo.concluidos, serieFornada.labels, serieFornada.concluidos]);
+
   const pedidosOptions = useMemo(
     () => ({
       chart: { 
@@ -171,7 +227,7 @@ export default function Dashboard() {
       },
       dataLabels: { enabled: false },
       xaxis: { 
-        categories: serieBolo.labels,
+        categories: allCategories,
         labels: {
           style: {
             fontFamily: 'Montserrat, sans-serif',
@@ -212,19 +268,22 @@ export default function Dashboard() {
           fontFamily: 'Montserrat, sans-serif'
         },
         custom: function({series, seriesIndex, dataPointIndex, w}) {
-          const mesNumero = w.globals.labels[dataPointIndex];
+          const label = w.globals.labels[dataPointIndex];
           const valor = series[seriesIndex][dataPointIndex];
           const tipo = seriesIndex === 0 ? 'Bolo' : 'Fornada';
           const cor = seriesIndex === 0 ? '#D4B076' : '#1C3B57';
           
-          // Converter número do mês para nome
-          const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 
-                            'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-          const mesNome = monthNames[parseInt(mesNumero) - 1] || mesNumero;
+          // Converter número do mês para nome quando período = mês
+          let titulo = label;
+          if (periodo === 'mes') {
+            const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            const mesNome = monthNames[parseInt(label) - 1] || label;
+            titulo = mesNome;
+          }
           
           return `
             <div style="padding: 14px; background: white; border: 1px solid ${cor}; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); min-width: 140px;">
-              <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px;">${mesNome}</div>
+              <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px;">${titulo}</div>
               <div style="display: flex; align-items: center; gap: 10px;">
                 <div style="width: 12px; height: 12px; background: ${cor}; border-radius: 50%;"></div>
                 <div style="color: #666; font-size: 14px; font-weight: 500;">${valor} pedidos de ${tipo}</div>
@@ -238,14 +297,15 @@ export default function Dashboard() {
         strokeDashArray: 3
       }
     }),
-    [serieBolo.labels]
+    [allCategories, periodo]
   );
 
   const produtosFiltrados = useMemo(() => {
-    if (tabProdutos === "Todos") return topProdutos;
-    if (tabProdutos === "Carambolos") return topProdutos.filter((p) => p.tipo === "BOLO");
-    return topProdutos.filter((p) => p.tipo === "FORNADA");
-  }, [tabProdutos, topProdutos]);
+    const base = topProdutosImgs?.length ? topProdutosImgs : topProdutos;
+    if (tabProdutos === "Todos") return base;
+    if (tabProdutos === "Carambolos") return base.filter((p) => p.tipo === "BOLO");
+    return base.filter((p) => p.tipo === "FORNADA");
+  }, [tabProdutos, topProdutos, topProdutosImgs]);
 
   return (
     <div className="flex flex-row min-h-[100vh] pb-5 overflow-auto bg-bgNativeHome">
@@ -263,9 +323,9 @@ export default function Dashboard() {
               <div className="w-3 h-3 bg-gradient-to-r from-[#D4B076] to-[#A47032] rounded-full"></div>
             </div>
             <div className="text-3xl font-bold text-gray-800 mb-2">{kpis.pedidosBolo || 0}</div>
-            <div className="text-xs text-gray-500 mb-3">Tendência dos últimos meses</div>
+            <div className="text-xs text-gray-500 mb-3">{periodo === 'ano' ? 'Tendência dos últimos anos' : 'Tendência dos últimos meses'}</div>
             <div className="mt-2">
-              <ReactApexChart options={sparkOptions} series={pedidosSerieSpark} type="area" height={60} />
+              <ReactApexChart options={sparkOptionsBolo} series={pedidosSerieSpark} type="area" height={60} />
             </div>
           </div>
           <div className="bg-bgHome border-2 border-gold rounded-xl p-4 shadow gradient-border hover:shadow-lg transition-shadow duration-300">
@@ -274,9 +334,9 @@ export default function Dashboard() {
               <div className="w-3 h-3 bg-gradient-to-r from-[#1C3B57] to-[#0F2A3D] rounded-full"></div>
             </div>
             <div className="text-3xl font-bold text-gray-800 mb-2">{kpis.pedidosFornada || 0}</div>
-            <div className="text-xs text-gray-500 mb-3">Tendência dos últimos meses</div>
+            <div className="text-xs text-gray-500 mb-3">{periodo === 'ano' ? 'Tendência dos últimos anos' : 'Tendência dos últimos meses'}</div>
             <div className="mt-2">
-              <ReactApexChart options={sparkOptions} series={clientesSerieSpark} type="area" height={60} />
+              <ReactApexChart options={sparkOptionsFornada} series={fornadaSerieSpark} type="area" height={60} />
             </div>
           </div>
           <div className="bg-bgHome border-2 border-gold rounded-xl p-4 shadow gradient-border hover:shadow-lg transition-shadow duration-300">
@@ -287,7 +347,7 @@ export default function Dashboard() {
             <div className="text-3xl font-bold text-gray-800 mb-2">{kpis.clientes || 0}</div>
             <div className="text-xs text-gray-500 mb-3">Clientes únicos cadastrados</div>
             <div className="mt-2">
-              <ReactApexChart options={sparkOptions} series={clientesSerieSpark} type="area" height={60} />
+              <ReactApexChart options={sparkOptionsFornada} series={fornadaSerieSpark} type="area" height={60} />
             </div>
           </div>
         </div>
@@ -308,8 +368,8 @@ export default function Dashboard() {
             <ReactApexChart
               options={pedidosOptions}
               series={[
-                { name: "Bolo", data: serieBolo.concluidos },
-                { name: "Fornada", data: serieFornada.concluidos },
+                { name: "Bolo", data: alignedSeries.bolo },
+                { name: "Fornada", data: alignedSeries.fornada },
               ]}
               type="bar"
               height={260}
@@ -353,7 +413,12 @@ export default function Dashboard() {
                 {produtosFiltrados.map((p) => (
                   <div key={`${p.tipo}-${p.id}`} className="grid grid-cols-4 items-center py-2 border-b border-gold/40 text-sm">
                     <div>
-                      <img src="src/assets/image_card.png" alt="produto" className="w-12 h-12 object-cover rounded" />
+                      <img
+                        src={p.imagemUrl || "src/assets/image_card.png"}
+                        alt={p.nome}
+                        className="w-12 h-12 object-cover rounded"
+                        onError={(e) => { e.currentTarget.src = "src/assets/image_card.png"; }}
+                      />
                     </div>
                     <div className="pr-2 truncate">{p.nome}</div>
                     <div className="text-center">{p.quantidade}</div>

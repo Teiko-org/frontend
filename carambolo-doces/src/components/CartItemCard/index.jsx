@@ -36,13 +36,18 @@ export default function CartItemCard({
   selectable = false,
   selected = false,
   onSelectChange,
+  onClick,
 }) {
   const format = (v) => Number(v || 0).toFixed(2).replace(".", ",");
   const total = Number(unitPrice || 0) * Number(quantity || 0);
   const pillColor = statusColor || getStatusColor(statusLabel);
 
   return (
-    <div className={`w-full bg-bgHome border-2 border-gold rounded-2xl p-4 md:p-5 transition-shadow hover:shadow-lg hover:border-darkGold ${className}`} style={{ fontFamily: 'Montserrat, sans-serif' }}>
+    <div
+      className={`w-full bg-bgHome border-2 rounded-2xl p-4 md:p-5 transition-shadow hover:shadow-lg ${selected ? 'border-darkGold ring-2 ring-darkGold' : 'border-gold hover:border-darkGold'} ${className}`}
+      style={{ fontFamily: 'Montserrat, sans-serif', cursor: onClick ? 'pointer' : 'default' }}
+      onClick={onClick}
+    >
       <div className="flex gap-4 md:gap-6 items-start">
         <img
           src={image ?? "src/assets/image_card.png"}
@@ -76,14 +81,14 @@ export default function CartItemCard({
               <div className="text-black text-sm">Quantidade</div>
               <div className="mt-2 flex items-center bg-white rounded-full border-2 border-gold overflow-hidden">
                 <button
-                  onClick={onDecrease}
+                  onClick={(e) => { e.stopPropagation(); onDecrease && onDecrease(e); }}
                   className="px-3 py-1 text-black hover:bg-black/5"
                 >
                   –
                 </button>
                 <span className="px-4 py-1 text-black font-semibold">{quantity}</span>
                 <button
-                  onClick={onIncrease}
+                  onClick={(e) => { e.stopPropagation(); onIncrease && onIncrease(e); }}
                   disabled={disableIncrease}
                   className={`px-3 py-1 text-black hover:bg-black/5 ${disableIncrease ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >

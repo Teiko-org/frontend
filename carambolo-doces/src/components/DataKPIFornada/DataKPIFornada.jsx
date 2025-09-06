@@ -30,26 +30,20 @@ function DataKPIFornada({ kpiData }) {
 
     return (
         <>
-            <p className="w-full flex justify-end text-sm">Vendido | Total</p>
-
             <div className="flex flex-col gap-y-1 items-end justify-center">
-
                 <span className="w-full flex justify-between">Total Vendidos:
                     <span>
                         <span className="text-green">{data.quantidadeVendida}</span> / <span className="text-green">{data.quantidadeDisponivel}</span>
                     </span>
                 </span>
 
-                <span className="w-full flex justify-between">Valor Total:
-                    <span>
-                        <span className="text-green">{formatCurrency(data.totalVendido)}</span> / <span className="text-green">{formatCurrency(data.totalDisponivel)}</span>
-                    </span>
+                <span className="w-full flex justify-between">Valor Vendido:
+                    <span className="text-green">{formatCurrency(data.totalVendido)}</span>
                 </span>
 
                 <span className="w-full flex justify-between">Valor Perdido:
                     <span className="text-red">{formatCurrency(data.valorPerdido)}</span>
                 </span>
-
             </div>
         </>
     );

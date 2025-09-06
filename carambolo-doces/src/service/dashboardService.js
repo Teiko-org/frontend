@@ -63,3 +63,10 @@ export async function getKPIFornadasPorPeriodo(ano, mes) {
 }
 
 
+// Lista apenas bolos mais pedidos (para seção "Carambolos mais pedidos")
+export async function getBolosMaisPedidos() {
+  const { data } = await axiosApi.get("/dashboard/bolosMaisPedidos");
+  return data;
+}
+
+

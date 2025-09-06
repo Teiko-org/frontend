@@ -2,7 +2,7 @@ import Button from "../../components/Button";
 import { getKPIFornada } from "../../service/dashboardService";
 import { useEffect, useState } from "react";
 
-function DashboardFornadaData({ fornada, onConsultar, onEncerrar }) {
+function DashboardFornadaData({ fornada, onConsultar }) {
     const [kpi, setKpi] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -54,9 +54,8 @@ function DashboardFornadaData({ fornada, onConsultar, onEncerrar }) {
                         <span className="text-green pl-5"> {kpi.quantidadeVendida} </span> / 
                         <span className="text-green"> {kpi.quantidadeDisponivel}</span>
                     </p>
-                    <p className="text-sm">Valor Total: 
-                        <span className="text-green pl-5">R$ {kpi.totalVendido?.toFixed(2) || '0,00'} </span> / 
-                        <span className="text-green">R$ {kpi.totalDisponivel?.toFixed(2) || '0,00'}</span>
+                    <p className="text-sm">Valor Vendido: 
+                        <span className="text-green pl-5">R$ {kpi.totalVendido?.toFixed(2) || '0,00'}</span>
                     </p>
                     <p className="text-sm">Valor Perdido: 
                         <span className="text-red pl-5">R$ {kpi.valorPerdido?.toFixed(2) || '0,00'}</span>
@@ -69,15 +68,7 @@ function DashboardFornadaData({ fornada, onConsultar, onEncerrar }) {
                 variant="outline"
                 onClick={() => onConsultar && onConsultar(fornada.id)}
               >
-                Consultar
-              </Button>
-              
-              <Button 
-                className="h-fit bg-red-500 hover:bg-red-600 text-white border-red-600" 
-                variant="outline"
-                onClick={() => onEncerrar && onEncerrar(fornada.id)}
-              >
-                Encerrar
+                Consultar produtos
               </Button>
             </div>
         </div>

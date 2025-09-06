@@ -8,17 +8,25 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import { productsThisFornadasService } from "../../service/productsFornadasService";
 
-const columns = [
-    { id: "produto", label: "PRODUTO", minWidth: 150, align: "left" },
-    { id: "categoria", label: "CATEGORIA", minWidth: 50, align: "left" },
-    { id: "valor", label: "PREÇO", minWidth: 50, align: "left" },
-    { id: "quantidade", label: "QUANTIDADE", minWidth: 50, align: "left" },
-];
-
 export default function TableProductsThisFornada(props) {
 
     const [products, setProducts] = React.useState([]);
     const [searchTerm, setSearchTerm] = React.useState(props.searchTerm || "");
+    const compact = !!props.compact; // modo compacto apenas na tela de "consultar fornadas"
+
+    // Colunas conforme o modo
+    const columns = compact
+        ? [
+            { id: "produto", label: "PRODUTO", minWidth: 240, align: "left" },
+            { id: "valor", label: "PREÇO", minWidth: 80, align: "left" },
+            { id: "quantidade", label: "TOTAL VENDIDO", minWidth: 90, align: "left" },
+          ]
+        : [
+            { id: "produto", label: "PRODUTO", minWidth: 150, align: "left" },
+            { id: "categoria", label: "CATEGORIA", minWidth: 50, align: "left" },
+            { id: "valor", label: "PREÇO", minWidth: 50, align: "left" },
+            { id: "quantidade", label: "QUANTIDADE", minWidth: 50, align: "left" },
+          ];
 
     const getData = async () => {
         try {
@@ -57,7 +65,7 @@ export default function TableProductsThisFornada(props) {
     });
 
     return (
-        <div className="flex flex-col w-[90%] h-[320px]">
+        <div className={`flex flex-col ${compact ? "w-[720px] h-[180px] ml-auto mr-0" : "w-[90%] h-[320px]"}`}>
 
             <div className="flex-1 overflow-hidden">
                 <Paper
@@ -95,7 +103,7 @@ export default function TableProductsThisFornada(props) {
                         }}
                         className={`bg-bgHome p-2 rounded-2xl ${props.roundedTop ? "rounded-t-2xl" : "rounded-t-none"}`}
                     >
-                        <Table stickyHeader aria-label="sticky table">
+                        <Table stickyHeader aria-label="sticky table" size={compact ? "small" : "medium"}>
                             <TableHead>
                                 <TableRow>
                                     {columns.map((column) => (
@@ -108,8 +116,8 @@ export default function TableProductsThisFornada(props) {
                                                 fontWeight: "bold",
                                                 boxShadow: "none",
                                                 borderBottom: "1px solid #C8A882",
-                                                paddingTop: "0.75rem",
-                                                paddingBottom: "0.75rem",
+                                                paddingTop: compact ? "0.35rem" : "0.75rem",
+                                                paddingBottom: compact ? "0.35rem" : "0.75rem",
                                                 position: "sticky",
                                                 top: 0,
                                                 zIndex: 2,
@@ -132,8 +140,8 @@ export default function TableProductsThisFornada(props) {
                                         sx={{
                                             boxShadow: "none",
                                             borderBottom: "none",
-                                            paddingTop: "0.5rem",
-                                            paddingBottom: "0.5rem",
+                                            paddingTop: compact ? "0.25rem" : "0.5rem",
+                                            paddingBottom: compact ? "0.25rem" : "0.5rem",
                                         }}
                                     >
                                         {columns.map((column) => {
@@ -148,15 +156,22 @@ export default function TableProductsThisFornada(props) {
                                                         sx={{
                                                             borderBottom: "none",
                                                             boxShadow: "none",
-                                                            paddingTop: "0.5rem",
-                                                            paddingBottom: "0.5rem",
+                                                            paddingTop: compact ? "0.25rem" : "0.5rem",
+                                                            paddingBottom: compact ? "0.25rem" : "0.5rem",
                                                         }}
                                                     >
-                                                        {props.amountLeft ? (
-                                                            <div className="flex gap-1 items-center">
-                                                            <div className="flex items-center w-fit bg-bgNativeHome px-2 border-2 border-gold rounded-lg text-base">{row.quantidadeVendida || 0} / {row.quantidade}</div>
-                                                            Restantes </div>)
-                                                        : <div>{row.quantidadeVendida || 0}/{row.quantidade}</div>}
+                                                        {compact ? (
+                                                            <div className="pr-2">{row.quantidadeVendida || 0}/{row.quantidade}</div>
+                                                        ) : (
+                                                            props.amountLeft ? (
+                                                                <div className="flex gap-1 items-center">
+                                                                  <div className="flex items-center w-fit bg-bgNativeHome px-2 border-2 border-gold rounded-lg text-base">{row.quantidadeVendida || 0} / {row.quantidade}</div>
+                                                                  Restantes
+                                                                </div>
+                                                            ) : (
+                                                                <div>{row.quantidadeVendida || 0}/{row.quantidade}</div>
+                                                            )
+                                                        )}
                                                     </TableCell>
                                                 );
                                             }
@@ -169,8 +184,8 @@ export default function TableProductsThisFornada(props) {
                                                         sx={{
                                                             borderBottom: "none",
                                                             boxShadow: "none",
-                                                            paddingTop: "0.5rem",
-                                                            paddingBottom: "0.5rem",
+                                                            paddingTop: compact ? "0.25rem" : "0.5rem",
+                                                            paddingBottom: compact ? "0.25rem" : "0.5rem",
                                                         }}
                                                     >
                                                         {"R$" + row.valor.toFixed(2)}
@@ -185,8 +200,8 @@ export default function TableProductsThisFornada(props) {
                                                     sx={{
                                                         borderBottom: "none",
                                                         boxShadow: "none",
-                                                        paddingTop: "0.5rem",
-                                                        paddingBottom: "0.5rem",
+                                                        paddingTop: compact ? "0.25rem" : "0.5rem",
+                                                        paddingBottom: compact ? "0.25rem" : "0.5rem",
                                                     }}
                                                 >
                                                     {column.format && typeof value === "number"

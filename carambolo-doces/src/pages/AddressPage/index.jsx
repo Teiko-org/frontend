@@ -24,7 +24,8 @@ function AddressPage() {
   useEffect(() => {
     const fetchAddresses = async () => {
       try {
-        const userId = localStorage.getItem('USER_ID');
+        // Em toda a app usamos 'userId' (minúsculo) para identificar o usuário logado
+        const userId = localStorage.getItem('userId') || localStorage.getItem('USER_ID');
         
         if (!userId) {
           setEnderecos([]);
