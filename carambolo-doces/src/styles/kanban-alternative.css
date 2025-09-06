@@ -1,0 +1,127 @@
+/* Estilos para o Kanban alternativo */
+
+.kanban-lane {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border: 2px solid #fbbf24;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  min-width: 300px;
+  max-width: 350px;
+  flex-shrink: 0;
+}
+
+.kanban-lane-header {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #1e293b;
+  font-weight: 700;
+  font-size: 16px;
+  padding: 16px;
+  border-radius: 10px 10px 0 0;
+  border-bottom: 2px solid #d97706;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.kanban-lane-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.kanban-lane-count {
+  background: rgba(30, 41, 59, 0.9);
+  color: #fbbf24;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 8px;
+  display: inline-block;
+}
+
+.kanban-lane-body {
+  padding: 16px;
+  background: rgba(248, 250, 252, 0.95);
+  border-radius: 0 0 10px 10px;
+  min-height: 400px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.kanban-card-wrapper {
+  margin-bottom: 12px;
+  cursor: grab;
+  transition: all 0.2s ease-in-out;
+}
+
+.kanban-card-wrapper:hover {
+  transform: translateY(-2px);
+}
+
+.kanban-card-wrapper:active {
+  cursor: grabbing;
+}
+
+.kanban-card-wrapper.dragging {
+  opacity: 0.5;
+  transform: rotate(5deg) scale(1.05);
+}
+
+.kanban-empty-lane {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+/* Scrollbar personalizado */
+.kanban-lane-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.kanban-lane-body::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.kanban-lane-body::-webkit-scrollbar-thumb {
+  background: #fbbf24;
+  border-radius: 4px;
+}
+
+.kanban-lane-body::-webkit-scrollbar-thumb:hover {
+  background: #f59e0b;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .kanban-lane {
+    min-width: 250px;
+    max-width: 300px;
+  }
+  
+  .kanban-lane-header {
+    font-size: 14px;
+    padding: 12px;
+  }
+}
+
+/* Animações */
+@keyframes cardDrop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.kanban-card-wrapper {
+  animation: cardDrop 0.3s ease-out;
+}
+
