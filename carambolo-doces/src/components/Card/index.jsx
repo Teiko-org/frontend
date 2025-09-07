@@ -153,7 +153,7 @@ function Card({ available, type, produto, nome, preco, imagem, boloData, onClick
                         fornadaDaVezId: produto.fornadaDaVezId,
                         maxQuantity: produto.quantidade
                       }, qty);
-                      toast.success("Adicionado ao carrinho", { containerId: 'global' });
+                      toast.success("Adicionado ao carrinho");
                       setQty(1);
                     }}
                   >

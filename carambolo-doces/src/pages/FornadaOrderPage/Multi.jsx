@@ -54,10 +54,10 @@ export default function FornadaMultiOrderPage() {
   // Removido: observações não são usadas em fornadas
   const [errors, setErrors] = useState({});
   const t = {
-    info: (m) => toast.info(m, { containerId: 'global' }),
-    warn: (m) => toast.warn(m, { containerId: 'global' }),
-    error: (m) => toast.error(m, { containerId: 'global' }),
-    success: (m) => toast.success(m, { containerId: 'global' }),
+    info: (m) => toast.info(m),
+    warn: (m) => toast.warn(m),
+    error: (m) => toast.error(m),
+    success: (m) => toast.success(m),
   };
   const clearError = (k) => setErrors((p) => ({ ...p, [k]: false }));
 

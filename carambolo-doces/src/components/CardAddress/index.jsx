@@ -11,8 +11,11 @@ function CardAddress({ endereco, onAddressUpdated, onAddressDeleted }) {
     setIsModalConfirmationAddressDeletionOpen,
   ] = useState(false);
 
-  const openModalConfirmationAddressDeletion = () =>
+  const openModalConfirmationAddressDeletion = () => {
+    console.log("🖱️ CardAddress - Botão de exclusão clicado para endereço ID:", endereco.id);
+    console.log("🖱️ CardAddress - Abrindo modal de confirmação");
     setIsModalConfirmationAddressDeletionOpen(true);
+  };
   const closeModalConfirmationAddressDeletion = () =>
     setIsModalConfirmationAddressDeletionOpen(false);
 
@@ -23,10 +26,15 @@ function CardAddress({ endereco, onAddressUpdated, onAddressDeleted }) {
   const closeModalAddressEdition = () => setIsModalAddressEditionOpen(false);
 
   const handleAddressDeleted = () => {
+    console.log("🔄 CardAddress - handleAddressDeleted chamado para ID:", endereco.id);
     if (onAddressDeleted) {
+      console.log("📤 CardAddress - Chamando onAddressDeleted callback");
       onAddressDeleted(endereco.id);
+    } else {
+      console.warn("⚠️ CardAddress - onAddressDeleted callback não foi fornecido");
     }
-    closeModalConfirmationAddressDeletion();
+    // O modal já foi fechado no ModalConfirmationAddressDeletion
+    // Não precisamos fechar novamente aqui
   };
 
   const handleAddressUpdated = (updatedAddress) => {
@@ -55,19 +63,28 @@ function CardAddress({ endereco, onAddressUpdated, onAddressDeleted }) {
         <span className="font-medium text-2xl">{endereco.nome || `Endereço #${endereco.id}`}</span>
 
         <button
-          onClick={openModalConfirmationAddressDeletion}
-          className="text-red text-3xl"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log("🖱️ Botão de lixeira clicado!");
+            openModalConfirmationAddressDeletion();
+          }}
+          className="text-red text-3xl hover:text-red-600 transition-colors cursor-pointer"
+          type="button"
         >
           <IoTrash />
         </button>
 
-        {isModalConfirmationAddressDeletionOpen && (
-          <ModalConfirmationAddressDeletion
-            onClose={closeModalConfirmationAddressDeletion}
-            endereco={endereco}
-            onConfirmDelete={handleAddressDeleted}
-          />
-        )}
+        {isModalConfirmationAddressDeletionOpen && (() => {
+          console.log("🎭 CardAddress - Renderizando modal de confirmação");
+          return (
+            <ModalConfirmationAddressDeletion
+              onClose={closeModalConfirmationAddressDeletion}
+              endereco={endereco}
+              onConfirmDelete={handleAddressDeleted}
+            />
+          );
+        })()}
       </header>
 
       <div className="h-[312px] flex flex-col py-5 px-6">
