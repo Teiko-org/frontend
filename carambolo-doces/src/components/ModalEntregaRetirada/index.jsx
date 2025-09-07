@@ -44,7 +44,6 @@ export default function ModalEntregaRetirada({
   );
 
   // Estado adicional para retirada
-  const [localRetirada, setLocalRetirada] = useState("");
   const [horarioRetirada, setHorarioRetirada] = useState("");
 
   useEffect(() => {
@@ -314,21 +313,6 @@ export default function ModalEntregaRetirada({
       ) : (
         <>
           {/* CAMPOS RETIRADA */}
-          <div className="flex flex-col mb-4">
-            <label className="text-sm font-semibold mb-1">
-              Local de Retirada
-            </label>
-            <CampoComGradiente>
-              <input
-                type="text"
-                placeholder="Digite o local de retirada"
-                value={localRetirada}
-                onChange={(e) => setLocalRetirada(e.target.value)}
-                className="w-full bg-white rounded px-2 py-1 outline-none"
-              />
-            </CampoComGradiente>
-          </div>
-
           <div className="flex flex-col mb-6">
             <label className="text-sm font-semibold mb-1">
               Horário da Retirada
