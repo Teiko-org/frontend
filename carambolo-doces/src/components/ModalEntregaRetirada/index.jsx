@@ -4,7 +4,7 @@ import { FaCalendarAlt } from "react-icons/fa";
 import CampoComGradiente from "../gradientField";
 import Button from "../Button";
 import ModalBaseForm from "../ModalBaseForm";
-import PhoneNumberInput from "../PhoneInput";
+import PhoneInputCustom from "../PhoneInput/PhoneInputCustom";
 import ModalConfirmarEdicao from "../ModalConfirmarEdicao";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -186,7 +186,7 @@ export default function ModalEntregaRetirada({
         <div className="flex flex-col">
           <label className="text-sm font-semibold mb-1">Telefone</label>
           <CampoComGradiente>
-            <PhoneNumberInput value={telefone} onChange={setTelefone} />
+            <PhoneInputCustom value={telefone} onChange={setTelefone} includeCountryCode={true} />
           </CampoComGradiente>
         </div>
 

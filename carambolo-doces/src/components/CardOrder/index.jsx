@@ -10,7 +10,6 @@ function CardOrder(props) {
   const [detalhesPedido, setDetalhesPedido] = useState({});
 
   const handleOpenModal = () => {
-    console.log("🔓 Abrindo modal para pedido:", props.order.id);
     openModal({
       order: props.order,
       detalhesPedido,
@@ -26,15 +25,12 @@ function CardOrder(props) {
 
   const requests = async () => {
     try {
-      console.log(`🔍 Carregando detalhes - Bolo ID: ${idPedidoBolo}, Fornada ID: ${idPedidoFornada}`);
       let resposta = {};
 
       if (idPedidoBolo > 0) {
         resposta = await orderCakeDetails(idPedidoBolo);
-        console.log("📋 Detalhes do bolo:", resposta);
       } else if (idPedidoFornada > 0) {
         resposta = await orderFornadaDetails(idPedidoFornada);
-        console.log("📋 Detalhes da fornada:", resposta);
       }
 
       setDetalhesPedido(resposta || {});

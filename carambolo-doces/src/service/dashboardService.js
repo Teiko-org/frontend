@@ -25,6 +25,11 @@ export async function getProdutosMaisPedidos() {
   return data;
 }
 
+export async function getProdutosCadastrados() {
+  const { data } = await axiosApi.get("/dashboard/produtosCadastrados");
+  return data;
+}
+
 export async function getUltimosPedidos() {
   const { data } = await axiosApi.get("/dashboard/ultimosPedidos");
   return data;

@@ -4,10 +4,15 @@ import { toast } from 'react-toastify';
 
 export const login = async (phone, password) => {
   try {
-    const response = await axiosApi.post('/usuarios/login', { contato: phone, senha: password }, { withCredentials: true });
+    // Limpa o telefone e adiciona o código do país 55 (Brasil)
+    const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
+    const phoneWithCountryCode = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+    
+    
+    const response = await axiosApi.post('/usuarios/login', { contato: phoneWithCountryCode, senha: password }, { withCredentials: true });
     return response.data;
   } catch (error) {
-    handleAuthError(error, phone);
+    handleAuthError(error, phoneWithCountryCode || phone);
     throw error;
   }
 };
@@ -21,7 +26,6 @@ export const logOff = () => {
       const userCart = localStorage.getItem(userCartKey);
       if (userCart) {
         localStorage.setItem("CART_ITEMS_GUEST", userCart);
-        console.log("Carrinho do usuário migrado para convidado no logout");
       }
     }
 
@@ -42,15 +46,22 @@ export const logOff = () => {
 
 export const register = async (name, password, phone) => {
   try {
-    await axiosApi.post('/usuarios', {
+    // Limpa o telefone e adiciona o código do país 55 (Brasil)
+    const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
+    const phoneWithCountryCode = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+    
+    const requestData = {
       nome: name,
       senha: password,
-      contato: phone
-    });
-
+      contato: phoneWithCountryCode
+    };
+    
+    
+    const response = await axiosApi.post('/usuarios', requestData);
+    
     toast.success('Cadastro criado com sucesso!');
   } catch (error) {
-    handleAuthError(error, phone);
+    handleAuthError(error, phoneWithCountryCode || phone);
     throw error;
   }
 };
@@ -115,7 +126,6 @@ export const getUserData = async (userId) => {
       imagemUrl: response.data.imagemUrl,
     };
 
-    console.log("Dados do usuário carregados:", userData);
     return userData;
   } catch (error) {
     console.error("Erro ao buscar dados do usuário:", error);
@@ -167,7 +177,6 @@ export const clearAuthData = () => {
   // Disparar evento para notificar outros componentes
   window.dispatchEvent(new Event("storage"));
   
-  console.log("🧹 Dados de autenticação limpos com sucesso");
 };
 
 // Função para verificar e limpar dados de autenticação inválidos
@@ -182,7 +191,6 @@ export const validateAndCleanAuth = () => {
   
   // Se os dados parecem inválidos, limpar
   if (userId === 'null' || userId === 'undefined' || userId === '') {
-    console.warn("🔍 Dados de autenticação inválidos detectados. Limpando...");
     clearAuthData();
     return false;
   }
@@ -192,12 +200,6 @@ export const validateAndCleanAuth = () => {
 
 export const uploadProfileImage = async (userId, file) => {
   try {
-    console.log("Iniciando upload de imagem de perfil:", {
-      userId,
-      fileName: file.name,
-      fileSize: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
-      fileType: file.type
-    });
 
     // Validações no frontend
     if (!file.type.startsWith('image/')) {
@@ -217,7 +219,6 @@ export const uploadProfileImage = async (userId, file) => {
       }
     });
 
-    console.log("Upload realizado com sucesso:", response.data);
     toast.success("Imagem de perfil atualizada com sucesso!");
 
     // Disparar evento para atualizar outros componentes

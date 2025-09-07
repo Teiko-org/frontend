@@ -6,7 +6,7 @@ import UserSideMenu from "../../components/UserSideMenu";
 import ModalConfirmationAccountDeletion from "../../components/ModalConfirmationAccountDeletion";
 import { changePassword, deleteUser, getUserData, updateUserData } from "../../service/userService";
 import { useNavigate } from "react-router-dom";
-import PhoneNumberInput from "../../components/PhoneInput";
+import PhoneInputCustom from "../../components/PhoneInput/PhoneInputCustom";
 import CampoComGradiente from "../../components/gradientField";
 
 function UserPage() {
@@ -158,10 +158,11 @@ function UserPage() {
                   <span className="font-semibold text-blue">Telefone</span>
                   {isEditing ? (
                     <CampoComGradiente>
-                      <PhoneNumberInput
+                      <PhoneInputCustom
                         key="phone-editing"
                         value={tempTelefone || ""}
                         onChange={value => setTempTelefone(value)}
+                        includeCountryCode={true}
                       />
                     </CampoComGradiente>
                   ) : (

@@ -4,7 +4,7 @@ import Footer from "../../components/Footer";
 import { useLocation, useNavigate } from "react-router-dom";
 import InputOption from "../../components/InputOption";
 import CampoComGradiente from "../../components/gradientField";
-import PhoneNumberInput from "../../components/PhoneInput";
+import PhoneInputCustom from "../../components/PhoneInput/PhoneInputCustom";
 import Select from "../../components/Select";
 import Button from "../../components/Button";
 import { axiosApi } from "../../provider/AxiosApi";
@@ -319,7 +319,7 @@ export default function FornadaMultiOrderPage() {
               <div className="col-span-4">
                 <label className="block text-blue font-semibold mb-1">Telefone</label>
                 <CampoComGradiente>
-                  <PhoneNumberInput value={telefone} onChange={(v) => setTelefone(v)} className={errors.telefone ? 'border-red-500' : ''} />
+                  <PhoneInputCustom value={telefone} onChange={(v) => setTelefone(v)} includeCountryCode={true} className={errors.telefone ? 'border-red-500' : ''} />
                 </CampoComGradiente>
               </div>
               <div className="col-span-2">

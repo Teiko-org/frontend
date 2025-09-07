@@ -96,6 +96,7 @@ function Home() {
       }
     })();
 
+    // Carregar bolos mais pedidos (estatísticas de pedidos - correto para home)
     (async () => {
       try {
         const top = await getProdutosMaisPedidos();

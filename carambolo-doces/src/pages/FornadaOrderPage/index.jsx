@@ -5,7 +5,7 @@ import InputOption from "../../components/InputOption";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import CampoComGradiente from "../../components/gradientField";
-import PhoneNumberInput from "../../components/PhoneInput";
+import PhoneInputCustom from "../../components/PhoneInput/PhoneInputCustom";
 
 import Select from "../../components/Select";
 import { axiosApi } from "../../provider/AxiosApi";
@@ -456,11 +456,12 @@ function FornadaOrderPage() {
                             <div className="col-span-4">
                                 <label className="block text-blue font-semibold mb-1">Telefone</label>
                                 <CampoComGradiente>
-                                    <PhoneNumberInput
+                                    <PhoneInputCustom
                                         placeholder="(XX) X XXXX-XXXX"
                                         className="border-2 border-gold rounded-lg px-4 py-2 w-full"
                                         value={telefone}
                                         onChange={value => setTelefone(value)}
+                                        includeCountryCode={true}
                                     />
                                 </CampoComGradiente>
                             </div>
