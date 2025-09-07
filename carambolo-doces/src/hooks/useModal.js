@@ -5,7 +5,6 @@ export const useModal = () => {
   const [modalData, setModalData] = useState(null);
 
   const openModal = useCallback((data = null) => {
-    console.log("🔓 useModal: Abrindo modal com dados:", data);
     setModalData(data);
     setIsOpen(true);
     
@@ -14,7 +13,6 @@ export const useModal = () => {
   }, []);
 
   const closeModal = useCallback(() => {
-    console.log("🔒 useModal: Fechando modal");
     setIsOpen(false);
     setModalData(null);
     

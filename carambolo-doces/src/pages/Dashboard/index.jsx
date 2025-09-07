@@ -34,7 +34,7 @@ export default function Dashboard() {
         getQtdClientesUnicos().catch(() => 0),
         getQtdPedidosBolo().catch(() => ({})),
         getQtdPedidosFornada().catch(() => ({})),
-        getProdutosMaisPedidos().catch(() => []),
+        getProdutosMaisPedidos().catch(() => []), // Estatísticas de pedidos - correto para dashboard
         getUltimosPedidos().catch(() => []),
       ]);
       setKpis({ 

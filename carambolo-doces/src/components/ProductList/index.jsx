@@ -17,6 +17,7 @@ import { CiFilter } from "react-icons/ci";
 import ModalFilterProduct from '../ModalFilterProduct';
 import ModalEdicaoProduto from '../ModalEdicaoProduto';
 import { findAllBolo, findAllFornada, handleDeleteBolo, handleVisibilityBolo, handleVisibilityProdutoFornada } from '../../service/productService';
+import { getProdutosCadastrados } from '../../service/dashboardService';
 import { LuSearch } from "react-icons/lu";
 
 const columns = [
@@ -39,13 +40,33 @@ export default function ProductList() {
 
     const fetchProducts = async () => {
         try {
-            const [bolos, produtosFornada] = await Promise.all([
-                findAllBolo(),
-                findAllFornada(),
-            ]);
-            setProducts([...(bolos || []), ...(produtosFornada || [])]);
+            // Usar o novo serviço que retorna apenas produtos cadastrados
+            const produtosCadastrados = await getProdutosCadastrados();
+            // Mapear para a estrutura esperada pelo componente
+            const produtosMapeados = (produtosCadastrados || []).map(produto => ({
+                tipo: produto.tipo,
+                categoria: produto.categoria,
+                descricao: produto.descricao || null,
+                isAtivo: produto.ativo,
+                produto: produto.nome,
+                id: produto.id,
+                valor: produto.preco,
+                quantidade: produto.quantidade || 0
+            }));
+            setProducts(produtosMapeados);
         } catch (error) {
-            console.error(error);
+            console.error("Erro ao carregar produtos cadastrados:", error);
+            // Fallback para o método antigo se o novo falhar
+            try {
+                const [bolos, produtosFornada] = await Promise.all([
+                    findAllBolo(),
+                    findAllFornada(),
+                ]);
+                setProducts([...(bolos || []), ...(produtosFornada || [])]);
+            } catch (fallbackError) {
+                console.error("Erro no fallback:", fallbackError);
+                setProducts([]);
+            }
         }
     };
 

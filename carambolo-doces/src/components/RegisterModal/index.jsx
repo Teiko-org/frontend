@@ -2,7 +2,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import ModalBaseLogin from "../ModalBaseLogin";
 import Button from "../Button";
-import PhoneNumberInput from "../PhoneInput";
+import PhoneInputCustom from "../PhoneInput/PhoneInputCustom";
 import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import { register as registerUser } from "../../service/userService";
@@ -22,7 +22,6 @@ function RegisterModal({ onClose, switchToLogin }) {
       await registerUser(data.name, data.password, data.phone);
       switchToLogin();
     } catch (error) {
-      // Error handling is done in userService
     }
   };
 
@@ -50,17 +49,17 @@ function RegisterModal({ onClose, switchToLogin }) {
         />
         {errors.name && <p className="text-pink text-sm mb-1">{errors.name.message}</p>}
 
-        <div className={`flex flex-col ${errors.phone ? '' : 'mb-4'}`}>
-          <label htmlFor="phone" className="text-white mb-1">Telefone Celular</label>
-          <PhoneNumberInput
-            {...register("phone", { required: "Telefone é obrigatório" })}
-            onChange={(phone) => {
-              setValue('phone', phone, { shouldValidate: true });
-              trigger('phone');
-            }}
-          />
-          {errors.phone && <p className="text-red-600 text-sm mb-1">{errors.phone.message}</p>}
-        </div>
+        <label htmlFor="phone" className="text-white mb-1">Telefone Celular</label>
+        <PhoneInputCustom
+          {...register("phone", { required: "Telefone é obrigatório" })}
+          onChange={(phone) => {
+            setValue('phone', phone, { shouldValidate: true });
+            trigger('phone');
+          }}
+          includeCountryCode={true}
+          className={`w-full ${errors.phone ? 'mb-1' : 'mb-4'}`}
+        />
+        {errors.phone && <p className="text-red-600 text-sm mb-1">{errors.phone.message}</p>}
 
         <label htmlFor="password" className="text-white mb-1">Senha</label>
         <input

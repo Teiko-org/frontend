@@ -5,7 +5,7 @@ import Button from "../../components/Button";
 import Select from "../../components/Select";
 import InputOption from "../../components/InputOption";
 import CustomDatePicker from "../../components/DatePicker";
-import PhoneNumberInput from "../../components/PhoneInput";
+import PhoneInputCustom from "../../components/PhoneInput/PhoneInputCustom";
 import CampoComGradiente from "../../components/gradientField";
 import { searchAddressByCep } from "../../service/viaCepService";
 import { listUserAddresses } from "../../service/addressService";
@@ -234,12 +234,13 @@ const Step4 = () => {
               defaultValue=""
               rules={{ required: "Telefone é obrigatório" }}
               render={({ field }) => (
-                <PhoneNumberInput
+                <PhoneInputCustom
                   value={field.value}
                   onChange={(e) => {
                     field.onChange(e);
                     clearErrors("telefone");
                   }}
+                  includeCountryCode={true}
                 />
               )}
             />

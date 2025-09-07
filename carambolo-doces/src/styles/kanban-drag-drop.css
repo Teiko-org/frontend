@@ -23,7 +23,67 @@
   transform: scale(1.05);
 }
 
-/* Efeitos durante o drag */
+/* Container principal do kanban */
+.kanban-columns-container {
+  min-height: calc(100vh - 200px);
+  max-height: calc(100vh - 120px);
+  height: 100%;
+  padding: 1rem;
+}
+
+/* Coluna do kanban */
+.kanban-column {
+  min-height: calc(100vh - 250px);
+  max-height: calc(100vh - 170px);
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+/* Container da coluna */
+.column-container {
+  transition: all 0.2s ease;
+  border-radius: 0.5rem;
+}
+
+/* Conteúdo da coluna */
+.column-content {
+  min-height: calc(100vh - 300px);
+  max-height: calc(100vh - 220px);
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Scrollbar customizada */
+.column-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.column-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.column-scrollbar::-webkit-scrollbar-thumb {
+  background: #D4B076;
+  border-radius: 3px;
+}
+
+.column-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #B8945F;
+}
+
+/* Wrapper do card */
+.kanban-card-wrapper {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kanban-card-wrapper:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Estado de drag ativo */
 .dragging {
   opacity: 0.5;
   transform: rotate(5deg) scale(1.05);
@@ -46,316 +106,222 @@
   font-size: 12px;
   opacity: 0.6;
   transition: opacity 0.2s ease;
-  pointer-events: none;
+  user-select: none;
+  cursor: grab;
 }
 
 .draggable-indicator:hover {
   opacity: 1;
-  color: #fbbf24;
+  color: #D4B076;
 }
 
 /* Área de drop vazia */
 .empty-drop-zone {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 128px;
-  width: 100%;
-  border: 2px dashed #cbd5e1;
-  border-radius: 8px;
-  color: #6b7280;
-  font-size: 14px;
-  text-align: center;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  border: 2px dashed #9CA3AF;
+  background-color: rgba(156, 163, 175, 0.05);
+  flex: 1;
+  min-height: 200px;
 }
 
 .empty-drop-zone:hover {
-  border-color: #fbbf24;
-  color: #fbbf24;
-  background-color: rgba(251, 191, 36, 0.05);
+  border-color: #D4B076;
+  background-color: rgba(212, 176, 118, 0.1);
 }
 
-/* Feedback visual durante o drag */
-.drag-feedback {
-  position: fixed;
-  pointer-events: none;
-  z-index: 9999;
-  background: rgba(251, 191, 36, 0.1);
-  border: 2px dashed #fbbf24;
-  border-radius: 8px;
-  padding: 8px;
-  font-size: 12px;
-  color: #fbbf24;
-  font-weight: 600;
+
+/* Conteúdo do card */
+.card-content {
+  transition: all 0.2s ease;
+}
+
+.card-content:hover {
+  transform: translateY(-1px);
+}
+
+/* Footer do card */
+.card-footer {
+  transition: all 0.2s ease;
+}
+
+/* Background da página */
+.page-background {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  min-height: 100vh;
+}
+
+/* Header da página */
+.page-header {
+  background: rgba(26, 26, 26, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(212, 176, 118, 0.2);
+}
+
+/* Footer da página */
+.page-footer {
+  background: rgba(26, 26, 26, 0.95);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(212, 176, 118, 0.2);
 }
 
 /* Animações */
-@keyframes cardDrop {
-  0% {
-    transform: scale(0.8);
+@keyframes fadeIn {
+  from {
     opacity: 0;
+    transform: translateY(20px);
   }
-  100% {
-    transform: scale(1);
+  to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
 .kanban-card-wrapper {
-  animation: cardDrop 0.3s ease-out;
+  animation: fadeIn 0.3s ease-out;
 }
 
 /* Responsividade */
 @media (max-width: 768px) {
-  .hover\:scale-105:hover {
-    transform: none;
+  .kanban-columns-container {
+    flex-direction: column;
+    gap: 1rem;
   }
   
-  .empty-drop-zone {
-    height: 100px;
-    font-size: 12px;
+  .kanban-column {
+    min-height: 300px;
+  }
+  
+  .column-content {
+    max-height: 300px;
   }
 }
 
-/* Melhorias de acessibilidade */
-.draggable:focus {
-  outline: 2px solid #fbbf24;
-  outline-offset: 2px;
+@media (min-height: 1200px) {
+  .kanban-columns-container {
+    max-height: 1000px;
+  }
+  
+  .kanban-column {
+    max-height: 950px;
+  }
+  
+  .column-content {
+    max-height: 900px;
+  }
 }
 
-/* Estado de loading durante mudança de status */
-.status-changing {
-  opacity: 0.7;
-  pointer-events: none;
+/* Estados de hover para botões */
+.kanban-card-wrapper button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(212, 176, 118, 0.3);
 }
 
-.status-changing::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 20px;
-  height: 20px;
-  margin: -10px 0 0 -10px;
-  border: 2px solid #fbbf24;
-  border-top: 2px solid transparent;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* ===== ESTILOS ESPECÍFICOS PARA MODAL ===== */
-
-/* Garantir que o modal tenha z-index muito alto */
-.modal-overlay {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  z-index: 99999 !important;
-  background-color: rgba(0, 0, 0, 0.6) !important;
-}
-
-/* Modal container */
-.modal-container {
-  position: relative !important;
-  z-index: 100000 !important;
-  max-height: 90vh !important;
-  overflow-y: auto !important;
-}
-
-/* Prevenir que o modal seja afetado por outros elementos */
-.modal-content {
-  position: relative !important;
-  z-index: 100001 !important;
-  background: white !important;
-  border-radius: 16px !important;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
-}
-
-/* Garantir que o botão de fechar esteja sempre visível */
-.modal-close-button {
-  position: relative !important;
-  z-index: 100002 !important;
-  cursor: pointer !important;
-}
-
-/* Prevenir conflitos de z-index com o kanban */
-.kanban-column {
-  z-index: 1 !important;
-}
-
-.kanban-card {
-  z-index: 2 !important;
-}
-
-/* Garantir que o modal não seja afetado por transformações do parent */
-.modal-fixed {
-  transform: none !important;
-  will-change: auto !important;
-}
-
-/* Prevenir que o modal seja cortado por overflow hidden */
-.modal-overflow-fix {
-  overflow: visible !important;
-  clip: auto !important;
-}
-
-/* ===== ESTILOS PARA SCROLLBAR PERSONALIZADO ===== */
-
-/* Scrollbar personalizado para colunas do kanban */
-.column-scrollbar::-webkit-scrollbar {
-  width: 8px;
-}
-
-.column-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-  border-radius: 4px;
-}
-
-.column-scrollbar::-webkit-scrollbar-thumb {
-  background: linear-gradient(to top, #30344F 0%, #103464 100%);
-  border-radius: 4px;
-  border: 1px solid #A47032;
-}
-
-.column-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to top, #3A4868 0%, #1e3a8a 100%);
-  border-color: #D4B076;
-}
-
-.column-scrollbar::-webkit-scrollbar-thumb:active {
-  background: linear-gradient(to top, #30344F 0%, #1e40af 100%);
-}
-
-/* Scrollbar para Firefox */
-.column-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: #103464 #f1f5f9;
-}
-
-/* ===== MELHORIAS NAS PROPORÇÕES DOS CARDS ===== */
-
-/* Wrapper do card com animação suave */
-.kanban-card-wrapper {
-  animation: cardDrop 0.3s ease-out;
-  margin-bottom: 6px;
-}
-
-.kanban-card-wrapper:last-child {
-  margin-bottom: 0;
-}
-
-/* Hover mais suave nos cards */
-.kanban-card-wrapper:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Indicador de drag mais visível */
-.draggable-indicator {
-  opacity: 0.7;
+/* Transições suaves para todos os elementos interativos */
+.kanban-column * {
   transition: all 0.2s ease;
 }
 
-.draggable-indicator:hover {
-  opacity: 1;
-  transform: scale(1.1);
+/* Estilos específicos para drag and drop */
+.drag-over {
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 2px dashed #3b82f6;
 }
 
-/* Melhor espaçamento entre elementos do card */
-.card-content {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  justify-content: space-between;
+.drag-start {
+  opacity: 0.8;
+  transform: scale(1.02);
 }
 
-/* Footer sempre no final do card */
-.card-footer {
-  margin-top: auto;
-  padding-top: 6px;
-  border-top: 1px solid rgba(164, 112, 50, 0.2);
-}
-
-/* ===== LAYOUT RESPONSIVO E PROPORCIONAL ===== */
-
-/* Garantir que a página ocupe toda a altura da tela */
-.min-h-screen {
+/* Melhorias visuais para o kanban */
+.kanban-board {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   min-height: 100vh;
+  padding: 2rem;
 }
 
-/* Layout flexível para as colunas */
-.kanban-columns-container {
-  display: flex;
-  justify-content: space-evenly;
-  align-items: stretch;
-  gap: 2.5rem;
-  flex: 1;
-  padding: 1.5rem;
+.kanban-column-header {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  color: white;
+  padding: 1rem;
+  border-radius: 0.5rem 0.5rem 0 0;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Coluna com altura proporcional */
-.kanban-column {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
+.kanban-card {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
 }
 
-/* Container da coluna com altura flexível */
-.column-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
+.kanban-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
 }
 
-/* Área de conteúdo da coluna com scroll */
-.column-content {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  min-height: 0;
+.kanban-card.dragging {
+  transform: rotate(5deg) scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
 }
 
-/* Responsividade para telas menores */
-@media (max-width: 1400px) {
-  .kanban-columns-container {
-    gap: 1.5rem;
-    padding: 1rem;
+/* Estilos para diferentes status */
+.status-pendente {
+  border-left: 4px solid #f59e0b;
+}
+
+.status-pago {
+  border-left: 4px solid #10b981;
+}
+
+.status-concluido {
+  border-left: 4px solid #059669;
+}
+
+.status-cancelado {
+  border-left: 4px solid #ef4444;
+}
+
+/* Animações de entrada */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
-@media (max-width: 1200px) {
-  .kanban-columns-container {
-    gap: 1rem;
-    padding: 0.75rem;
+.kanban-card {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Melhorias de acessibilidade */
+.kanban-card:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.draggable-indicator:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Estilos para dispositivos touch */
+@media (hover: none) and (pointer: coarse) {
+  .kanban-card:hover {
+    transform: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
-}
-
-/* Garantir que o background cubra toda a tela */
-.page-background {
-  background-color: #FFEEE7;
-  min-height: 100vh;
-  width: 100%;
-}
-
-/* Header fixo com background */
-.page-header {
-  background-color: #FFEEE7;
-  padding-bottom: 1.25rem;
-  flex-shrink: 0;
-}
-
-/* Footer fixo com background */
-.page-footer {
-  background-color: #FFEEE7;
-  margin-top: auto;
-  flex-shrink: 0;
+  
+  .draggable-indicator {
+    opacity: 1;
+  }
 }
