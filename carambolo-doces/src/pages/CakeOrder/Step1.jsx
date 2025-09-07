@@ -78,6 +78,24 @@ const Step1 = () => {
   }, []);
 
   const onSubmit = (data) => {
+    // Validação adicional para garantir que todos os campos obrigatórios estejam preenchidos
+    if (!data.tamanho) {
+      console.error("Tamanho é obrigatório");
+      return;
+    }
+    if (!data.formato) {
+      console.error("Formato é obrigatório");
+      return;
+    }
+    if (!data.massa) {
+      console.error("Massa é obrigatória");
+      return;
+    }
+    if (!data.recheio) {
+      console.error("Recheio é obrigatório");
+      return;
+    }
+
     const postData = {
       ...data,
       massaId: massaOptions.find((m) => m.value === data.massa)?.id,
@@ -93,7 +111,7 @@ const Step1 = () => {
 
   const handleButtonClick = (field, value) => (event) => {
     event.preventDefault();
-    setValue(field, value);
+    setValue(field, value, { shouldValidate: true });
     clearErrors(field);
   };
 
@@ -223,6 +241,7 @@ const Step1 = () => {
               key={size}
               name="tamanho"
               control={control}
+              defaultValue=""
               rules={{ required: "Tamanho é obrigatório" }}
               render={({ field }) => (
                 <Button
@@ -230,7 +249,7 @@ const Step1 = () => {
                   text={size}
                   onClick={handleButtonClick("tamanho", size)}
                   bgColor={
-                    getValues("tamanho") === size
+                    field.value === size
                       ? "bg-gradient-to-l from-darkGoldButton to-goldButton"
                       : "bg-white"
                   }
@@ -256,6 +275,7 @@ const Step1 = () => {
               key={format}
               name="formato"
               control={control}
+              defaultValue=""
               rules={{ required: "Formato é obrigatório" }}
               render={({ field }) => (
                 <Button
@@ -263,7 +283,7 @@ const Step1 = () => {
                   text={format}
                   onClick={handleButtonClick("formato", format)}
                   bgColor={
-                    getValues("formato") === format
+                    field.value === format
                       ? "bg-gradient-to-l from-darkGoldButton to-goldButton"
                       : "bg-white"
                   }
