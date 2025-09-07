@@ -21,6 +21,7 @@ const Step1 = () => {
     getValues,
     clearErrors,
     watch,
+    trigger,
     formState: { errors },
   } = useFormContext();
 
@@ -29,6 +30,9 @@ const Step1 = () => {
   const [massasComValor, setMassasComValor] = useState([]);
   const [recheiosComValor, setRecheiosComValor] = useState([]);
   const [valorMudou, setValorMudou] = useState(false);
+  const [validationError, setValidationError] = useState("");
+  const [camposPreenchidosAutomaticamente, setCamposPreenchidosAutomaticamente] = useState(false);
+  const [forceRender, setForceRender] = useState(0);
 
   // Valores fixos dos tamanhos (baseado no backend)
   const valoresTamanho = {
@@ -77,7 +81,46 @@ const Step1 = () => {
     fetchRecheios();
   }, []);
 
-  const onSubmit = (data) => {
+  const handleNextStep = async () => {
+    // Limpar erro anterior
+    setValidationError("");
+    
+    // VERIFICAÇÃO CRÍTICA: Se os campos foram preenchidos automaticamente, 
+    // o usuário DEVE interagir com pelo menos um campo para continuar
+    if (camposPreenchidosAutomaticamente) {
+      setValidationError("Por favor, confirme suas escolhas clicando em pelo menos um dos campos (tamanho, formato, massa ou recheio) antes de continuar.");
+      return;
+    }
+    
+    // Obter os valores atuais do formulário
+    const data = getValues();
+    
+    // Forçar validação de todos os campos obrigatórios
+    const isValid = await trigger(['tamanho', 'formato', 'massa', 'recheio']);
+    
+    if (!isValid) {
+      setValidationError("Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+
+    // Validação adicional para garantir que todos os campos obrigatórios estejam preenchidos
+    if (!data.tamanho) {
+      setValidationError("Por favor, selecione um tamanho");
+      return;
+    }
+    if (!data.formato) {
+      setValidationError("Por favor, selecione um formato");
+      return;
+    }
+    if (!data.massa) {
+      setValidationError("Por favor, selecione uma massa");
+      return;
+    }
+    if (!data.recheio) {
+      setValidationError("Por favor, selecione um recheio");
+      return;
+    }
+    
     const postData = {
       ...data,
       massaId: massaOptions.find((m) => m.value === data.massa)?.id,
@@ -93,8 +136,17 @@ const Step1 = () => {
 
   const handleButtonClick = (field, value) => (event) => {
     event.preventDefault();
-    setValue(field, value);
+    console.log(`Botão clicado - Campo: ${field}, Valor: ${value}`);
+    setValue(field, value, { shouldValidate: true, shouldDirty: true });
     clearErrors(field);
+    setValidationError(""); // Limpar mensagem de erro quando usuário selecionar
+    setCamposPreenchidosAutomaticamente(false); // Marcar que usuário interagiu
+    
+    // Verificar se o valor foi definido
+    setTimeout(() => {
+      const currentValue = getValues(field);
+      console.log(`Valor atual do campo ${field}:`, currentValue);
+    }, 100);
   };
 
   const availableRecheios = {
@@ -170,6 +222,15 @@ const Step1 = () => {
     }
   }, [massaSelecionada, setValue]);
 
+  // Forçar re-renderização quando campos são preenchidos automaticamente
+  useEffect(() => {
+    if (camposPreenchidosAutomaticamente) {
+      // Forçar atualização dos valores observados
+      const valores = getValues();
+      console.log("Forçando re-renderização com valores:", valores);
+    }
+  }, [camposPreenchidosAutomaticamente, getValues]);
+
   const filteredRecheios = recheioOptions
     .filter(
       (recheio) =>
@@ -186,33 +247,54 @@ const Step1 = () => {
     const fillFromBolo = (e) => {
       const bolo = e.detail;
       
-      if (bolo.tamanho) {
-        const tamanhoFormatado = bolo.tamanho.replace('TAMANHO_', '') + 'cm';
-        setValue('tamanho', tamanhoFormatado);
-      }
+      // Marcar que os campos foram preenchidos automaticamente
+      setCamposPreenchidosAutomaticamente(true);
       
-      if (bolo.formato) {
-        const formatoFormatado = bolo.formato === 'CIRCULO' ? 'Redondo' : 
-                                 bolo.formato === 'CORACAO' ? 'Coração' : bolo.formato;
-        setValue('formato', formatoFormatado);
-      }
-      
-      if (bolo.massaId) setValue('massa', bolo.massaId);
-      if (bolo.recheioPedidoId) setValue('recheio', bolo.recheioPedidoId);
-      
-      if (bolo.saborMassa) setValue('massa', bolo.saborMassa);
-      if (bolo.saborRecheio) setValue('recheio', bolo.saborRecheio);
-      
-      if (bolo.precoTotal) {
-        setValorEstimado(bolo.precoTotal);
-      }
+      // Usar setTimeout para garantir que o DOM esteja atualizado
+      setTimeout(() => {
+        if (bolo.tamanho) {
+          const tamanhoFormatado = bolo.tamanho.replace('TAMANHO_', '') + 'cm';
+          setValue('tamanho', tamanhoFormatado, { shouldValidate: true, shouldDirty: true });
+        }
+        
+        if (bolo.formato) {
+          const formatoFormatado = bolo.formato === 'CIRCULO' ? 'Redondo' : 
+                                   bolo.formato === 'CORACAO' ? 'Coração' : bolo.formato;
+          setValue('formato', formatoFormatado, { shouldValidate: true, shouldDirty: true });
+        }
+        
+        if (bolo.massaId) {
+          setValue('massa', bolo.massaId, { shouldValidate: true, shouldDirty: true });
+        }
+        if (bolo.recheioPedidoId) {
+          setValue('recheio', bolo.recheioPedidoId, { shouldValidate: true, shouldDirty: true });
+        }
+        
+        if (bolo.saborMassa) {
+          setValue('massa', bolo.saborMassa, { shouldValidate: true, shouldDirty: true });
+        }
+        if (bolo.saborRecheio) {
+          setValue('recheio', bolo.saborRecheio, { shouldValidate: true, shouldDirty: true });
+        }
+        
+        if (bolo.precoTotal) {
+          setValorEstimado(bolo.precoTotal);
+        }
+        
+        // Limpar erros de validação após preenchimento
+        clearErrors(['tamanho', 'formato', 'massa', 'recheio']);
+        
+        // Forçar re-renderização dos componentes
+        setForceRender(prev => prev + 1);
+        
+      }, 100);
     };
     window.addEventListener('fillStep1FromBolo', fillFromBolo);
     return () => window.removeEventListener('fillStep1FromBolo', fillFromBolo);
-  }, [setValue]);
+  }, [setValue, clearErrors]);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={(e) => { e.preventDefault(); handleNextStep(); }}>
       <div className="mb-8">
         <h2 className="font-semibold tracking-wider text-lg text-blue">
           TAMANHO
@@ -220,9 +302,10 @@ const Step1 = () => {
         <div className="flex flex-wrap mt-2 gap-2">
           {sizes.map((size) => (
             <Controller
-              key={size}
+              key={`${size}-${forceRender}`}
               name="tamanho"
               control={control}
+              defaultValue=""
               rules={{ required: "Tamanho é obrigatório" }}
               render={({ field }) => (
                 <Button
@@ -230,7 +313,7 @@ const Step1 = () => {
                   text={size}
                   onClick={handleButtonClick("tamanho", size)}
                   bgColor={
-                    getValues("tamanho") === size
+                    field.value === size
                       ? "bg-gradient-to-l from-darkGoldButton to-goldButton"
                       : "bg-white"
                   }
@@ -253,9 +336,10 @@ const Step1 = () => {
         <div className="flex mt-2 gap-2">
           {formats.map((format) => (
             <Controller
-              key={format}
+              key={`${format}-${forceRender}`}
               name="formato"
               control={control}
+              defaultValue=""
               rules={{ required: "Formato é obrigatório" }}
               render={({ field }) => (
                 <Button
@@ -263,7 +347,7 @@ const Step1 = () => {
                   text={format}
                   onClick={handleButtonClick("formato", format)}
                   bgColor={
-                    getValues("formato") === format
+                    field.value === format
                       ? "bg-gradient-to-l from-darkGoldButton to-goldButton"
                       : "bg-white"
                   }
@@ -292,6 +376,13 @@ const Step1 = () => {
               options={massaOptions}
               placeholder="Selecione a massa"
               width="25%"
+              value={field.value || ""}
+              onChange={(e) => {
+                console.log(`Massa selecionada:`, e.target.value);
+                field.onChange(e);
+                setCamposPreenchidosAutomaticamente(false);
+                setValidationError("");
+              }}
             />
           )}
         />
@@ -315,6 +406,13 @@ const Step1 = () => {
               options={filteredRecheios}
               placeholder="Selecione o Recheio"
               width="100%"
+              value={field.value || ""}
+              onChange={(e) => {
+                console.log(`Recheio selecionado:`, e.target.value);
+                field.onChange(e);
+                setCamposPreenchidosAutomaticamente(false);
+                setValidationError("");
+              }}
             />
           )}
         />
@@ -332,10 +430,19 @@ const Step1 = () => {
         <Button
           text="Continuar"
           className="px-6 py-1"
-          type="submit"
+          type="button"
+          onClick={handleNextStep}
           bgColor="bg-gradient-to-l from-darkGoldButton to-goldButton"
         />
       </div>
+      
+      
+      {/* Mensagem de erro de validação */}
+      {validationError && (
+        <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          {validationError}
+        </div>
+      )}
     </form>
   );
 };

@@ -8,6 +8,7 @@ import PhoneInputCustom from "../PhoneInput/PhoneInputCustom";
 import ModalConfirmarEdicao from "../ModalConfirmarEdicao";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import Select from "../Select";
 import axios from "axios";
 
 export default function ModalEntregaRetirada({
@@ -44,7 +45,6 @@ export default function ModalEntregaRetirada({
   );
 
   // Estado adicional para retirada
-  const [localRetirada, setLocalRetirada] = useState("");
   const [horarioRetirada, setHorarioRetirada] = useState("");
 
   useEffect(() => {
@@ -314,34 +314,20 @@ export default function ModalEntregaRetirada({
       ) : (
         <>
           {/* CAMPOS RETIRADA */}
-          <div className="flex flex-col mb-4">
-            <label className="text-sm font-semibold mb-1">
-              Local de Retirada
-            </label>
-            <CampoComGradiente>
-              <input
-                type="text"
-                placeholder="Digite o local de retirada"
-                value={localRetirada}
-                onChange={(e) => setLocalRetirada(e.target.value)}
-                className="w-full bg-white rounded px-2 py-1 outline-none"
-              />
-            </CampoComGradiente>
-          </div>
-
           <div className="flex flex-col mb-6">
-            <label className="text-sm font-semibold mb-1">
-              Horário da Retirada
-            </label>
-            <CampoComGradiente>
-              <input
-                type="text"
-                placeholder="Ex: 14:00 às 18:00"
-                value={horarioRetirada}
-                onChange={(e) => setHorarioRetirada(e.target.value)}
-                className="w-full bg-white rounded px-2 py-1 outline-none"
-              />
-            </CampoComGradiente>
+            <Select
+              label="Horário da Retirada"
+              options={[
+                { value: "17:00", label: "17:00" },
+                { value: "17:30", label: "17:30" },
+                { value: "18:00", label: "18:00" },
+                { value: "18:30", label: "18:30" },
+                { value: "19:00", label: "19:00" },
+              ]}
+              placeholder="Selecione o horário"
+              value={horarioRetirada}
+              onChange={(e) => setHorarioRetirada(e.target.value)}
+            />
           </div>
         </>
       )}

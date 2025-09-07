@@ -175,7 +175,7 @@ const handleConfirmFinalizar = async () => {
               onSave={(newData) => {
                 // Atualizar as observações no FormContext
                 appendFormData({
-                  observacoes: newData.observacoes || newData
+                  observacoes: newData.observacoes || ""
                 }, 'dadosMontagem');
                 setIsModalDecoracaoOpen(false);
               }}
