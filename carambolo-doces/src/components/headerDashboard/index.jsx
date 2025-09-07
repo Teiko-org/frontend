@@ -1,8 +1,11 @@
-function headerDashboard({title}) {
+function headerDashboard({title, rightContent}) {
   return (
     <div className="flex items-center justify-between w-full pl-5">
-      <div className="flex bg-gradient-blue border-2 border-gold w-[60%] rounded-2xl">
+      <div className="flex bg-gradient-blue border-2 border-gold w-[60%] rounded-2xl items-center justify-between pr-4">
         <span className="text-3xl text-gold font-bold p-2 pl-5">{title}</span>
+        {rightContent && (
+          <div className="mr-2">{rightContent}</div>
+        )}
       </div>
 
       <div className="flex flex-col items-end bg-white bg-opacity-50 rounded-l-full px-16 p-3 mt-4">

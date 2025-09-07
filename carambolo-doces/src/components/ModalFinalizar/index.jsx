@@ -86,10 +86,12 @@ export default function ModalFinalizar({
         <div className="flex justify-center mt-8">
           <Button
             text="Finalizar"
-            onClick={() => {
-              console.log("Finalizando...");
-              onFinalize();
-              navigate("/");
+            onClick={async () => {
+              try {
+                await onFinalize();
+              } finally {
+                navigate("/");
+              }
             }}
             bgColor="bg-gradient-to-l from-gold to-darkGold"
             fontSize="text-base"

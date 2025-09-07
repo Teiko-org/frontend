@@ -8,16 +8,9 @@ function UserSideMenu() {
   const [userData, setUserData] = useState({ imagemUrl: null });
 
   useEffect(() => {
-    let statusLogOn = localStorage.getItem("IS_SIGNED");
-
-    if (!statusLogOn) {
-      navigate("/");
-      return;
-    }
-
     const loadUserData = async () => {
       const userId = localStorage.getItem("userId");
-      if (userId) {
+      if (userId && userId !== 'null' && userId !== 'undefined') {
         try {
           console.log("Carregando dados do usuário no UserSideMenu...");
           const data = await getUserData(userId);
@@ -73,7 +66,7 @@ function UserSideMenu() {
           </button>
 
           <button className="w-[365px] bg-bgNativeHome border-2 border-gold rounded-2xl font-semibold p-3 px-5 text-left"
-          onClick={() => { navigate("/pagina-enderecos") }}>
+            onClick={() => { navigate("/pagina-enderecos") }}>
             Endereços
           </button>
 

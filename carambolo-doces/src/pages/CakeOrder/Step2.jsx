@@ -34,7 +34,7 @@ const Step2 = () => {
           OBSERVAÇÕES
         </h2>
         <span className="text-blue text-sm">
-          Conte com detalhes como você quer o seu Carambolo: tamanho, formato, massa, recheio, cobertura, cores/tema, frase a escrever, referências (link/Instagram), alergias e qualquer detalhe importante. Quanto mais detalhes, mais perfeito ele fica!
+          Explique, usando suas imagens de referência, COMO você quer o seu Carambolo no formato escolhido (redondo, coração etc.). Informe cores/tema, como aplicar cada imagem e onde vai cada adicional (ex.: glitter na borda, lacinhos na base, cereja no topo). Se quiser frase, escreva exatamente como deve aparecer. Quanto mais específico, mais perfeito ele fica!
         </span>
         <Controller
           name="observacoes"

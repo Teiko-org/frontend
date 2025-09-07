@@ -64,7 +64,7 @@ function ColumnOrder(props) {
 
   return (
     <div className="flex flex-col h-full kanban-column">
-      <div className="bg-gradient-blue p-2 w-[200px] border border-gold rounded-t-md border-b-0 text-center text-gold font-bold flex-shrink-0">
+      <div className="bg-gradient-blue p-2 w-[300px] border border-gold rounded-t-md border-b-0 text-center text-gold font-bold flex-shrink-0">
         {props.title}
       </div>
       <div 
@@ -75,7 +75,7 @@ function ColumnOrder(props) {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        <div className="flex flex-col items-center gap-y-3 p-3 w-[300px] h-full max-h-[calc(100vh-200px)] overflow-y-auto overflow-x-hidden border border-gold rounded-md bg-bgHome column-scrollbar column-content">
+        <div className="flex flex-col items-center gap-y-3 p-2 w-[300px] h-[520px] overflow-y-auto overflow-x-hidden border border-gold rounded-md bg-bgHome column-scrollbar column-content">
           {(props.orderFilter || []).map((order) => (
             <div
               key={order.id}

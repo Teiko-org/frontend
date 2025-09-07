@@ -3,23 +3,35 @@ import { IoMdClipboard } from "react-icons/io";
 import { BsBag } from "react-icons/bs";
 import { RiFileEditLine } from "react-icons/ri";
 import { BiLogOut } from "react-icons/bi";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FaHome } from "react-icons/fa";
+import { MdSpaceDashboard } from "react-icons/md";
+import { useEffect } from "react";
 
 const BarraLateralDashboard = () => {
-
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const isActive = (paths) => paths.some((p) => location.pathname.startsWith(p));
+    const isActiveExact = (path) => location.pathname === path;
 
     const handleLogout = () => {
+        const userId = localStorage.getItem("userId");
+        if (userId) {
+            const userCartKey = `CART_ITEMS_USER_${userId}`;
+            const userCart = localStorage.getItem(userCartKey);
+            if (userCart) {
+                localStorage.setItem("CART_ITEMS_GUEST", userCart);
+                console.log("Carrinho do usuário migrado para convidado no logout");
+            }
+        }
 
         localStorage.removeItem("IS_SIGNED");
         localStorage.removeItem("userId");
         localStorage.removeItem("userData");
-        localStorage.removeItem("IS_ADMIN");
 
         window.dispatchEvent(new Event("storage"));
         navigate("/");
-
     };
 
     return (
@@ -32,12 +44,16 @@ const BarraLateralDashboard = () => {
                 <nav className="flex-1">
                     <ul className="text-gold">
                         <li>
+                            <Link to="/">
+                                <div className={`flex items-center pl-5 py-2 gap-2 ml-3 rounded-l-full transition-colors duration-400 ease-in-out ${isActiveExact('/') ? 'bg-bgNativeHome text-darkBlue font-semibold' : 'hover:bg-bgNativeHome hover:text-darkBlue'}`}>
+                                    <FaHome /> Home
+                                </div>
+                            </Link>
+                        </li>
+                        <li>
                             <Link to="/dashboard">
-                                <div className='flex items-center
-                                    pl-5 py-2 gap-2 ml-3 rounded-l-full
-                                    hover:bg-bgNativeHome hover:text-darkBlue
-                                    transition-colors duration-400 ease-in-out'>
-                                    <FaHome /> Dashboard
+                                <div className={`flex items-center pl-5 py-2 gap-2 ml-3 rounded-l-full transition-colors duration-400 ease-in-out ${isActiveExact('/dashboard') ? 'bg-bgNativeHome text-darkBlue font-semibold' : 'hover:bg-bgNativeHome hover:text-darkBlue'}`}>
+                                    <MdSpaceDashboard /> Dashboard
                                 </div>
                             </Link>
                         </li>
@@ -51,10 +67,7 @@ const BarraLateralDashboard = () => {
                                 </div>
                             </a> */}
                             <Link to="/dashboard-kanban-pedidos">
-                                <div className='flex items-center
-                                    pl-5 py-2 gap-2 ml-3 rounded-l-full
-                                    hover:bg-bgNativeHome hover:text-darkBlue
-                                    transition-colors duration-400 ease-in-out'>
+                                <div className={`flex items-center pl-5 py-2 gap-2 ml-3 rounded-l-full transition-colors duration-400 ease-in-out ${isActiveExact('/dashboard-kanban-pedidos') ? 'bg-bgNativeHome text-darkBlue font-semibold' : 'hover:bg-bgNativeHome hover:text-darkBlue'}`}>
                                     <IoMdClipboard /> Pedidos
                                 </div>
                             </Link>
@@ -69,10 +82,7 @@ const BarraLateralDashboard = () => {
                                 </div>
                             </a> */}
                             <Link to="/produtos">
-                                <div className='flex items-center
-                                    pl-5 py-2 gap-2 ml-3 rounded-l-full
-                                    hover:bg-bgNativeHome hover:text-darkBlue
-                                    transition-colors duration-400 ease-in-out'>
+                                <div className={`flex items-center pl-5 py-2 gap-2 ml-3 rounded-l-full transition-colors duration-400 ease-in-out ${isActiveExact('/produtos') ? 'bg-bgNativeHome text-darkBlue font-semibold' : 'hover:bg-bgNativeHome hover:text-darkBlue'}`}>
                                     <BsBag /> Produtos
                                 </div>
                             </Link>
@@ -87,10 +97,7 @@ const BarraLateralDashboard = () => {
                                 </div>
                             </a> */}
                             <Link to="/fornada-dashboard">
-                                <div className='flex items-center
-                                    pl-5 py-2 gap-2 ml-3 rounded-l-full
-                                    hover:bg-bgNativeHome hover:text-darkBlue
-                                    transition-colors duration-400 ease-in-out'>
+                                <div className={`flex items-center pl-5 py-2 gap-2 ml-3 rounded-l-full transition-colors duration-400 ease-in-out ${isActive(['/fornada-dashboard','/all-fornadas-dashboard']) ? 'bg-bgNativeHome text-darkBlue font-semibold' : 'hover:bg-bgNativeHome hover:text-darkBlue'}`}>
                                     <RiFileEditLine /> Produção
                                 </div>
                             </Link>

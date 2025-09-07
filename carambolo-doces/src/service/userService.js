@@ -5,9 +5,6 @@ import { toast } from 'react-toastify';
 export const login = async (phone, password) => {
   try {
     const response = await axiosApi.post('/usuarios/login', { contato: phone, senha: password }, { withCredentials: true });
-    if (response.data.admin != null) {
-      localStorage.setItem("IS_ADMIN", true);
-    }
     return response.data;
   } catch (error) {
     handleAuthError(error, phone);
@@ -17,12 +14,26 @@ export const login = async (phone, password) => {
 
 export const logOff = () => {
   try {
-    axiosApi.post('usuarios/logOut', {})
-    localStorage.removeItem("IS_SIGNED");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("userData");
+    // Migrar carrinho do usuário para convidado antes de fazer logout
+    const userId = localStorage.getItem("userId");
+    if (userId) {
+      const userCartKey = `CART_ITEMS_USER_${userId}`;
+      const userCart = localStorage.getItem(userCartKey);
+      if (userCart) {
+        localStorage.setItem("CART_ITEMS_GUEST", userCart);
+        console.log("Carrinho do usuário migrado para convidado no logout");
+      }
+    }
 
-    window.dispatchEvent(new Event("storage"));
+    // Tentar fazer logout no servidor (pode falhar se o token já estiver inválido)
+    axiosApi.post('usuarios/logOut', {}).catch(() => {
+      console.log("Logout no servidor falhou (token já inválido)");
+    });
+    
+    // Limpar todos os dados de autenticação
+    clearAuthData();
+    
+    console.log("✅ Logout realizado com sucesso");
   } catch (e) {
     toast.error("Falha ao deslogar");
     console.log("Erro ao deslogar: " + e);
@@ -59,7 +70,7 @@ const handleAuthError = (error, phone) => {
   }
 };
 
-export const changePassword = async (userId, senhaAtual, novaSenha, token) => {
+export const changePassword = async (userId, senhaAtual, novaSenha) => {
   try {
     await axiosApi.patch(`/usuarios/${userId}/alterar-senha`, {
       senhaAtual,
@@ -75,7 +86,7 @@ export const changePassword = async (userId, senhaAtual, novaSenha, token) => {
   }
 };
 
-export const deleteUser = async (userId, token) => {
+export const deleteUser = async (userId) => {
   try {
     await axiosApi.delete(`/usuarios/${userId}`);
 
@@ -90,6 +101,11 @@ export const deleteUser = async (userId, token) => {
 
 export const getUserData = async (userId) => {
   try {
+    // Verificar se o userId é válido
+    if (!userId || userId === 'null' || userId === 'undefined') {
+      throw new Error('ID do usuário inválido');
+    }
+
     const response = await axiosApi.get(`/usuarios/${userId}`);
     const userData = {
       nome: response.data.nome,
@@ -107,7 +123,7 @@ export const getUserData = async (userId) => {
   }
 };
 
-export const updateUserData = async (userId, userData, token, shouldLogout = true) => {
+export const updateUserData = async (userId, userData, shouldLogout = true) => {
   try {
     const response = await axiosApi.patch(`/usuarios/${userId}/dados-pessoais`, userData);
 
@@ -139,12 +155,42 @@ export const setAuthData = (userId, token) => {
 };
 
 export const clearAuthData = () => {
+  // Limpar dados do localStorage
   localStorage.removeItem("userId");
   localStorage.removeItem("IS_SIGNED");
+  localStorage.removeItem("userData");
+  
+  // Limpar cookies de autenticação
+  document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  document.cookie = "JSESSIONID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  
+  // Disparar evento para notificar outros componentes
   window.dispatchEvent(new Event("storage"));
+  
+  console.log("🧹 Dados de autenticação limpos com sucesso");
 };
 
-export const uploadProfileImage = async (userId, file, token) => {
+// Função para verificar e limpar dados de autenticação inválidos
+export const validateAndCleanAuth = () => {
+  const isSigned = localStorage.getItem("IS_SIGNED");
+  const userId = localStorage.getItem("userId");
+  
+  // Se não há dados de autenticação, não fazer nada
+  if (!isSigned || !userId) {
+    return false;
+  }
+  
+  // Se os dados parecem inválidos, limpar
+  if (userId === 'null' || userId === 'undefined' || userId === '') {
+    console.warn("🔍 Dados de autenticação inválidos detectados. Limpando...");
+    clearAuthData();
+    return false;
+  }
+  
+  return true;
+};
+
+export const uploadProfileImage = async (userId, file) => {
   try {
     console.log("Iniciando upload de imagem de perfil:", {
       userId,

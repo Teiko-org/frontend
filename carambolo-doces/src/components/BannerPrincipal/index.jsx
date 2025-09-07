@@ -1,7 +1,9 @@
 import React from 'react';
 import { FaArrowRight } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const BannerPrincipal = () => {
+  const navigate = useNavigate();
   return (
     <section className="relative h-[450px] bg-cover bg-center" style={{ backgroundImage: 'url(src/assets/img_banner.png)' }}>
       <div className="absolute inset-0 flex items-center justify-end px-24">
@@ -18,7 +20,7 @@ const BannerPrincipal = () => {
             </p>
           </div>
           <div className="absolute inset-0 flex justify-center items-end pb-10">
-            <button className="flex items-center space-x-2 justify-center bg-gradient-to-l from-gold to-darkGold text-blue font-bold border-gold border-2 py-2 px-6 rounded-full shadow-lg">
+            <button onClick={() => navigate('/carambolos')} className="flex items-center space-x-2 justify-center bg-gradient-to-l from-gold to-darkGold text-blue font-bold border-gold border-2 py-2 px-6 rounded-full shadow-lg">
               <span className="uppercase">Ver Temas</span>
               <span>
                 <FaArrowRight />

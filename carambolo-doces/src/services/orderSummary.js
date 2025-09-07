@@ -13,8 +13,13 @@ const orderSummary = async () => {
                 return response.data;
             } catch (authError) {
                 console.warn('Erro com autenticação, tentando sem token:', authError);
+                // Fallback: tenta sem autenticação
+                const response = await axiosApi.get('/resumo-pedido');
+                return response.data;
             }
         }
+        
+        // Se não há token, faz requisição sem autenticação
         const response = await axiosApi.get('/resumo-pedido');
         return response.data;
     } catch (error) {

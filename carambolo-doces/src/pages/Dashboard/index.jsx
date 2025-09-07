@@ -2,9 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import ReactApexChart from "react-apexcharts";
 import BarraLateralDashboard from "../../components/BarraLateralDashboard";
 import HeaderDashboard from "../../components/headerDashboard";
+import PrincipaisClientes from "../../components/PrincipaisClientes";
+import UltimosPedidos from "../../components/UltimosPedidos";
+import { axiosApi } from "../../provider/AxiosApi";
 import {
   getQtdClientesUnicos,
   getQtdPedidosTotal,
+  getQtdPedidosBolo,
+  getQtdPedidosFornada,
   getProdutosMaisPedidos,
   getUltimosPedidos,
   getQtdPedidosBoloPorPeriodo,
@@ -12,26 +17,64 @@ import {
 } from "../../service/dashboardService";
 
 export default function Dashboard() {
-  const [kpis, setKpis] = useState({ pedidos: 0, clientes: 0 });
+  const [kpis, setKpis] = useState({ pedidosBolo: 0, pedidosFornada: 0, clientes: 0 });
   const [pedidosStatus, setPedidosStatus] = useState({});
   const [topProdutos, setTopProdutos] = useState([]);
+  const [topProdutosImgs, setTopProdutosImgs] = useState([]);
   const [ultimosPedidos, setUltimosPedidos] = useState([]);
   const [periodo, setPeriodo] = useState("mes");
+  const [tipoGrafico, setTipoGrafico] = useState("Bolo");
   const [tabProdutos, setTabProdutos] = useState("Todos");
   const [serieBolo, setSerieBolo] = useState({ labels: [], concluidos: [], cancelados: [] });
   const [serieFornada, setSerieFornada] = useState({ labels: [], concluidos: [], cancelados: [] });
 
   useEffect(() => {
     const load = async () => {
-      const [clientes, pedidos, produtos, ultimos] = await Promise.all([
+      const [clientes, pedidosBolo, pedidosFornada, produtos, ultimos] = await Promise.all([
         getQtdClientesUnicos().catch(() => 0),
-        getQtdPedidosTotal().catch(() => ({})),
+        getQtdPedidosBolo().catch(() => ({})),
+        getQtdPedidosFornada().catch(() => ({})),
         getProdutosMaisPedidos().catch(() => []),
         getUltimosPedidos().catch(() => []),
       ]);
-      setKpis({ pedidos: pedidos?.total ?? 0, clientes: clientes ?? 0 });
-      setPedidosStatus(pedidos ?? {});
-      setTopProdutos(produtos ?? []);
+      setKpis({ 
+        pedidosBolo: pedidosBolo?.total ?? 0, 
+        pedidosFornada: pedidosFornada?.total ?? 0, 
+        clientes: clientes ?? 0 
+      });
+      setPedidosStatus({ bolo: pedidosBolo ?? {}, fornada: pedidosFornada ?? {} });
+      const lista = produtos ?? [];
+      setTopProdutos(lista);
+      try {
+        const enriquecidos = await Promise.all(
+          (lista || []).map(async (p) => {
+            try {
+              if (p?.tipo === "FORNADA") {
+                const { data } = await axiosApi.get(`/fornadas/produto-fornada/${p.id}`);
+                const imagens = data?.imagens ?? data?.imagens?.map?.((i) => i?.url) ?? [];
+                const url = Array.isArray(imagens) && imagens.length > 0 ? (imagens[0]?.url ?? imagens[0]) : undefined;
+                return { ...p, imagemUrl: url };
+              }
+              if (p?.tipo === "BOLO") {
+                const { data: bolo } = await axiosApi.get(`/bolos/${p.id}`);
+                const decoracaoId = bolo?.decoracaoId;
+                if (decoracaoId) {
+                  const { data: decoracao } = await axiosApi.get(`/decoracoes/${decoracaoId}`);
+                  const url = decoracao?.imagens?.[0];
+                  return { ...p, imagemUrl: url };
+                }
+                return { ...p, imagemUrl: undefined };
+              }
+              return { ...p };
+            } catch {
+              return { ...p };
+            }
+          })
+        );
+        setTopProdutosImgs(enriquecidos);
+      } catch {
+        setTopProdutosImgs(lista);
+      }
       setUltimosPedidos(ultimos ?? []);
     };
     load();
@@ -44,49 +87,203 @@ export default function Dashboard() {
         getQtdPedidosFornadaPorPeriodo(periodo).catch(() => ({})),
       ]);
       const parse = (obj) => {
-        const labels = Object.keys(obj ?? {}).sort();
-        const concluidos = labels.map((k) => obj[k]?.concluidos ?? 0);
-        const cancelados = labels.map((k) => obj[k]?.cancelados ?? 0);
-        return { labels, concluidos, cancelados };
+        const rawLabels = Object.keys(obj ?? {});
+        const sorted = rawLabels.sort((a, b) => Number(a) - Number(b));
+        const concluidos = sorted.map((k) => (obj?.[k]?.concluidos ?? 0));
+        const cancelados = sorted.map((k) => (obj?.[k]?.cancelados ?? 0));
+
+        const formattedLabels = periodo === "mes"
+          ? sorted.map((label) => {
+              const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+              const monthNum = parseInt(label);
+              return monthNames[monthNum - 1] || String(label);
+            })
+          : sorted.map((l) => String(l));
+
+        return { labels: periodo === 'mes' ? sorted.map((l)=>String(l)) : sorted.map((l)=>String(l)), concluidos, cancelados, displayLabels: formattedLabels };
       };
-      setSerieBolo(parse(bolo));
-      setSerieFornada(parse(fornada));
+      const parsedBolo = parse(bolo);
+      const parsedFornada = parse(fornada);
+      setSerieBolo({ labels: parsedBolo.labels, concluidos: parsedBolo.concluidos, cancelados: parsedBolo.cancelados });
+      setSerieFornada({ labels: parsedFornada.labels, concluidos: parsedFornada.concluidos, cancelados: parsedFornada.cancelados });
     };
     loadSeries();
   }, [periodo]);
 
-  // Sparkline para os cards KPI
-  const sparkOptions = useMemo(
-    () => ({
-      chart: { type: "area", sparkline: { enabled: true } },
-      stroke: { width: 2, curve: "smooth" },
-      tooltip: { enabled: false },
-      colors: ["#C3A36A"],
-    }),
-    []
-  );
+  const buildSparkOptions = (labels, isAno) => ({
+    chart: { 
+      type: "area", 
+      sparkline: { enabled: true },
+      animations: {
+        enabled: true,
+        easing: 'easeinout',
+        speed: 800,
+        animateGradually: {
+          enabled: true,
+          delay: 150
+        }
+      }
+    },
+    stroke: { width: 3, curve: "smooth" },
+    fill: {
+      type: "gradient",
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.7,
+        opacityTo: 0.1,
+        stops: [0, 100]
+      }
+    },
+    tooltip: { 
+      enabled: true,
+      theme: 'light',
+      style: {
+        fontSize: '12px',
+        fontFamily: 'Montserrat, sans-serif'
+      },
+      custom: function({series, seriesIndex, dataPointIndex, w}) {
+        const label = w.globals.labels[dataPointIndex];
+        const valor = series[seriesIndex][dataPointIndex];
+        let titulo = label;
+        if (!isAno) {
+          const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+          const mesNome = monthNames[parseInt(label) - 1] || label;
+          titulo = mesNome;
+        }
+        return `
+          <div style="padding: 10px 14px; background: white; border: 1px solid #D4B076; border-radius: 8px; box-shadow: 0 3px 10px rgba(0,0,0,0.15); min-width: 100px;">
+            <div style="font-weight: 600; color: #333; margin-bottom: 6px; font-size: 13px;">${titulo}</div>
+            <div style="color: #666; font-size: 14px; font-weight: 500;">${valor} pedidos</div>
+          </div>
+        `;
+      }
+    },
+    colors: ["#C3A36A"],
+    grid: { show: false },
+    xaxis: { categories: labels.slice(-10), labels: { show: false } },
+    yaxis: { show: false }
+  });
 
-  const pedidosSerieSpark = useMemo(() => [{ data: serieBolo.concluidos.slice(-10) }], [serieBolo]);
-  const clientesSerieSpark = useMemo(() => [{ data: serieFornada.concluidos.slice(-10) }], [serieFornada]);
+  const sparkOptionsBolo = useMemo(() => buildSparkOptions(serieBolo.labels, periodo === 'ano'), [serieBolo.labels, periodo]);
+  const sparkOptionsFornada = useMemo(() => buildSparkOptions(serieFornada.labels, periodo === 'ano'), [serieFornada.labels, periodo]);
 
-  // Gráfico principal (Pedidos)
+  const pedidosSerieSpark = useMemo(() => [{ data: (serieBolo.concluidos || []).slice(-10) }], [serieBolo.concluidos]);
+  const fornadaSerieSpark = useMemo(() => [{ data: (serieFornada.concluidos || []).slice(-10) }], [serieFornada.concluidos]);
+
+  const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+  const categoriesDisplay = useMemo(() => {
+    const labels = tipoGrafico === 'Bolo' ? (serieBolo.labels || []) : (serieFornada.labels || []);
+    if (periodo === 'mes') {
+      return labels.map((l) => monthNames[parseInt(l) - 1] || String(l));
+    }
+    return labels.map((l) => String(l));
+  }, [tipoGrafico, serieBolo.labels, serieFornada.labels, periodo]);
+
+  const serieConcluidos = useMemo(() => (
+    tipoGrafico === 'Bolo' ? (serieBolo.concluidos || []) : (serieFornada.concluidos || [])
+  ), [tipoGrafico, serieBolo.concluidos, serieFornada.concluidos]);
+
+  const serieCancelados = useMemo(() => (
+    tipoGrafico === 'Bolo' ? (serieBolo.cancelados || []) : (serieFornada.cancelados || [])
+  ), [tipoGrafico, serieBolo.cancelados, serieFornada.cancelados]);
+
   const pedidosOptions = useMemo(
     () => ({
-      chart: { type: "bar", toolbar: { show: false } },
-      plotOptions: { bar: { columnWidth: "45%", borderRadius: 6 } },
+      chart: { 
+        type: "bar", 
+        toolbar: { show: false },
+        animations: {
+          enabled: true,
+          easing: 'easeinout',
+          speed: 800,
+          animateGradually: {
+            enabled: true,
+            delay: 150
+          }
+        }
+      },
+      plotOptions: { 
+        bar: { 
+          columnWidth: "45%", 
+          borderRadius: 6,
+          borderRadiusApplication: 'end',
+          borderRadiusWhenStacked: 'last'
+        } 
+      },
       dataLabels: { enabled: false },
-      xaxis: { categories: serieBolo.labels },
+      xaxis: { 
+        categories: categoriesDisplay,
+        labels: {
+          style: {
+            fontFamily: 'Montserrat, sans-serif',
+            fontSize: '12px',
+            colors: '#666'
+          }
+        }
+      },
+      yaxis: {
+        labels: {
+          style: {
+            fontFamily: 'Montserrat, sans-serif',
+            fontSize: '12px',
+            colors: '#666'
+          },
+          formatter: function(val) {
+            return val + " pedidos"
+          }
+        }
+      },
       colors: ["#D4B076", "#1C3B57"],
-      legend: { position: "top" },
+      legend: { 
+        position: "top",
+        fontFamily: 'Montserrat, sans-serif',
+        fontSize: '14px',
+        fontWeight: 600,
+        markers: {
+          width: 8,
+          height: 8,
+          radius: 4
+        }
+      },
+      tooltip: {
+        enabled: true,
+        theme: 'light',
+        style: {
+          fontSize: '12px',
+          fontFamily: 'Montserrat, sans-serif'
+        },
+        custom: function({series, seriesIndex, dataPointIndex, w}) {
+          const label = w.globals.labels[dataPointIndex];
+          const valor = series[seriesIndex][dataPointIndex];
+          const serieNome = seriesIndex === 0 ? 'Concluídos' : 'Cancelados';
+          const cor = seriesIndex === 0 ? '#D4B076' : '#1C3B57';
+
+          return `
+            <div style="padding: 14px; background: white; border: 1px solid ${cor}; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); min-width: 140px;">
+              <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px;">${label}</div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 12px; height: 12px; background: ${cor}; border-radius: 50%;"></div>
+                <div style="color: #666; font-size: 14px; font-weight: 500;">${valor} ${serieNome} (${tipoGrafico})</div>
+              </div>
+            </div>
+          `;
+        }
+      },
+      grid: {
+        borderColor: '#f1f1f1',
+        strokeDashArray: 3
+      }
     }),
-    [serieBolo.labels]
+    [categoriesDisplay, periodo, tipoGrafico]
   );
 
   const produtosFiltrados = useMemo(() => {
-    if (tabProdutos === "Todos") return topProdutos;
-    if (tabProdutos === "Carambolos") return topProdutos.filter((p) => p.tipo === "BOLO");
-    return topProdutos.filter((p) => p.tipo === "FORNADA");
-  }, [tabProdutos, topProdutos]);
+    const base = topProdutosImgs?.length ? topProdutosImgs : topProdutos;
+    if (tabProdutos === "Todos") return base;
+    if (tabProdutos === "Carambolos") return base.filter((p) => p.tipo === "BOLO");
+    return base.filter((p) => p.tipo === "FORNADA");
+  }, [tabProdutos, topProdutos, topProdutosImgs]);
 
   return (
     <div className="flex flex-row min-h-[100vh] pb-5 overflow-auto bg-bgNativeHome">
@@ -98,25 +295,37 @@ export default function Dashboard() {
 
         {/* KPI Cards */}
         <div className="w-[92%] grid grid-cols-3 gap-6">
-          <div className="bg-bgHome border-2 border-gold rounded-xl p-3 shadow gradient-border">
-            <div className="text-xs">Pedidos</div>
-            <div className="text-2xl font-bold">{kpis.pedidos || 0}</div>
+          <div className="bg-bgHome border-2 border-gold rounded-xl p-4 shadow gradient-border hover:shadow-lg transition-shadow duration-300">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs text-gray-600 font-medium">Pedidos de Bolo</div>
+              <div className="w-3 h-3 bg-gradient-to-r from-[#D4B076] to-[#A47032] rounded-full"></div>
+            </div>
+            <div className="text-3xl font-bold text-gray-800 mb-2">{kpis.pedidosBolo || 0}</div>
+            <div className="text-xs text-gray-500 mb-3">{periodo === 'ano' ? 'Tendência dos últimos anos' : 'Tendência dos últimos meses'}</div>
             <div className="mt-2">
-              <ReactApexChart options={sparkOptions} series={pedidosSerieSpark} type="area" height={60} />
+              <ReactApexChart options={sparkOptionsBolo} series={pedidosSerieSpark} type="area" height={60} />
             </div>
           </div>
-          <div className="bg-bgHome border-2 border-gold rounded-xl p-3 shadow gradient-border">
-            <div className="text-xs">Pedidos</div>
-            <div className="text-2xl font-bold">{kpis.pedidos || 0}</div>
+          <div className="bg-bgHome border-2 border-gold rounded-xl p-4 shadow gradient-border hover:shadow-lg transition-shadow duration-300">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs text-gray-600 font-medium">Pedidos de Fornada</div>
+              <div className="w-3 h-3 bg-gradient-to-r from-[#1C3B57] to-[#0F2A3D] rounded-full"></div>
+            </div>
+            <div className="text-3xl font-bold text-gray-800 mb-2">{kpis.pedidosFornada || 0}</div>
+            <div className="text-xs text-gray-500 mb-3">{periodo === 'ano' ? 'Tendência dos últimos anos' : 'Tendência dos últimos meses'}</div>
             <div className="mt-2">
-              <ReactApexChart options={sparkOptions} series={pedidosSerieSpark} type="area" height={60} />
+              <ReactApexChart options={sparkOptionsFornada} series={fornadaSerieSpark} type="area" height={60} />
             </div>
           </div>
-          <div className="bg-bgHome border-2 border-gold rounded-xl p-3 shadow gradient-border">
-            <div className="text-xs">Clientes</div>
-            <div className="text-2xl font-bold">{kpis.clientes || 0}</div>
+          <div className="bg-bgHome border-2 border-gold rounded-xl p-4 shadow gradient-border hover:shadow-lg transition-shadow duration-300">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-xs text-gray-600 font-medium">Clientes Únicos</div>
+              <div className="w-3 h-3 bg-gradient-to-r from-[#C3A36A] to-[#A47032] rounded-full"></div>
+            </div>
+            <div className="text-3xl font-bold text-gray-800 mb-2">{kpis.clientes || 0}</div>
+            <div className="text-xs text-gray-500 mb-3">Clientes únicos cadastrados</div>
             <div className="mt-2">
-              <ReactApexChart options={sparkOptions} series={clientesSerieSpark} type="area" height={60} />
+              <ReactApexChart options={sparkOptionsFornada} series={fornadaSerieSpark} type="area" height={60} />
             </div>
           </div>
         </div>
@@ -126,19 +335,25 @@ export default function Dashboard() {
           <div className="bg-gradient-to-b from-[#1C3B57] to-[#0F2A3D] text-gold px-5 py-3 flex items-center justify-between">
             <div>
               <div className="text-xl font-bold tracking-wide">Pedidos</div>
-              <div className="text-[11px] opacity-90">Acompanhe o pulso das vendas em tempo real.</div>
+              <div className="text-[11px] opacity-90">Concluídos x Cancelados · Filtrar por tipo</div>
             </div>
-            <select className="bg-bgHome text-darkBlue px-3 py-1 rounded-full border-2 border-gold shadow" value={periodo} onChange={(e) => setPeriodo(e.target.value)}>
-              <option value="mes">Mês</option>
-              <option value="ano">Ano</option>
-            </select>
+            <div className="flex items-center gap-2">
+              <select className="bg-bgHome text-darkBlue px-3 py-1 rounded-full border-2 border-gold shadow" value={tipoGrafico} onChange={(e) => setTipoGrafico(e.target.value)}>
+                <option value="Bolo">Bolo</option>
+                <option value="Fornada">Fornada</option>
+              </select>
+              <select className="bg-bgHome text-darkBlue px-3 py-1 rounded-full border-2 border-gold shadow" value={periodo} onChange={(e) => setPeriodo(e.target.value)}>
+                <option value="mes">Mês</option>
+                <option value="ano">Ano</option>
+              </select>
+            </div>
           </div>
           <div className="bg-bgHome p-4 min-h-[320px]">
             <ReactApexChart
               options={pedidosOptions}
               series={[
-                { name: "Bolo", data: serieBolo.concluidos },
-                { name: "Fornada", data: serieFornada.concluidos },
+                { name: "Concluídos", data: serieConcluidos },
+                { name: "Cancelados", data: serieCancelados },
               ]}
               type="bar"
               height={260}
@@ -171,18 +386,23 @@ export default function Dashboard() {
                 </button>
               ))}
             </div>
-            <div className="p-3">
-              <div className="grid grid-cols-4 text-xs font-semibold border-b border-gold pb-2">
+            <div className="p-3 h-80 flex flex-col">
+              <div className="grid grid-cols-4 text-xs font-semibold border-b border-gold pb-2 flex-shrink-0">
                 <div>Imagem</div>
                 <div>Nome</div>
                 <div className="text-center">Quantidade</div>
                 <div className="text-right">Valor</div>
               </div>
-              <div className="max-h-52 overflow-auto">
+              <div className="flex-1 overflow-auto custom-scrollbar pr-3">
                 {produtosFiltrados.map((p) => (
                   <div key={`${p.tipo}-${p.id}`} className="grid grid-cols-4 items-center py-2 border-b border-gold/40 text-sm">
                     <div>
-                      <img src="src/assets/image_card.png" alt="produto" className="w-12 h-12 object-cover rounded" />
+                      <img
+                        src={p.imagemUrl || "src/assets/image_card.png"}
+                        alt={p.nome}
+                        className="w-12 h-12 object-cover rounded"
+                        onError={(e) => { e.currentTarget.src = "src/assets/image_card.png"; }}
+                      />
                     </div>
                     <div className="pr-2 truncate">{p.nome}</div>
                     <div className="text-center">{p.quantidade}</div>
@@ -194,49 +414,13 @@ export default function Dashboard() {
           </div>
 
           {/* Principais Clientes */}
-          <div className="col-span-3 border-2 border-gold rounded-xl overflow-hidden bg-bgHome self-start">
-            <div className="bg-gradient-to-b from-[#1C3B57] to-[#0F2A3D] text-gold px-5 py-3">
-              <div className="text-xl font-bold tracking-wide">Principais Clientes</div>
-              <div className="text-[11px] opacity-90">Quem mais confia no nosso sabor.</div>
-            </div>
-            <div className="p-3 text-sm">
-              {(() => {
-                const map = new Map();
-                ultimosPedidos.forEach((p) => {
-                  const key = p.telefoneDoCliente || p.nomeDoCliente;
-                  map.set(key, (map.get(key) || 0) + 1);
-                });
-                const arr = Array.from(map.entries()).sort((a, b) => b[1] - a[1]).slice(0, 3);
-                return arr.length ? (
-                  arr.map(([k, v]) => (
-                    <div key={k} className="border border-gold/40 rounded-lg p-3 mb-2">
-                      <div className="font-semibold">{k}</div>
-                      <div className="text-xs">Total de Pedidos: {v}</div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-xs text-gray-500">Sem dados</div>
-                );
-              })()}
-            </div>
+          <div className="col-span-3 self-start">
+            <PrincipaisClientes />
           </div>
 
           {/* Últimos Pedidos */}
-          <div className="col-span-3 border-2 border-gold rounded-xl overflow-hidden bg-bgHome self-start">
-            <div className="bg-gradient-to-b from-[#1C3B57] to-[#0F2A3D] text-gold px-5 py-3">
-              <div className="text-xl font-bold tracking-wide">Últimos Pedidos</div>
-              <div className="text-[11px] opacity-90">Pedidos que acabaram de sair do forno.</div>
-            </div>
-            <div className="p-3 text-sm">
-              {ultimosPedidos.slice(0, 5).map((p) => (
-                <div key={p.id} className="border border-gold/40 rounded-lg p-3 mb-2">
-                  <div className="font-semibold truncate">{p.nomeDoCliente}</div>
-                  <div className="text-xs">{p.telefoneDoCliente}</div>
-                  <div className="text-xs">{p.tipoProduto === "FORNADA" ? "Retirada" : String(p.tipoDoPedido || "").toLowerCase()}</div>
-                  <div className="text-xs font-semibold">R${Number(p.valorPedido).toFixed(2)}</div>
-                </div>
-              ))}
-            </div>
+          <div className="col-span-3 self-start">
+            <UltimosPedidos />
           </div>
         </div>
       </div>

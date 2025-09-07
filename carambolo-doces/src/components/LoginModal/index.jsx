@@ -6,10 +6,12 @@ import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import { login, getUserData } from "../../service/userService";
+import { useCart } from "../../contexts/CartContext";
 
 function LoginModal({ onClose }) {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const { migrateGuestCartToUser } = useCart();
 
   const onSubmit = async (data) => {
     try {
@@ -20,6 +22,9 @@ function LoginModal({ onClose }) {
 
       const userData = await getUserData(response.userId || response.id);
       localStorage.setItem("userData", JSON.stringify(userData));
+
+      // Migrar carrinho de convidado para usuário logado
+      migrateGuestCartToUser();
 
       window.dispatchEvent(new Event("storage"));
       onClose();

@@ -42,7 +42,7 @@ const ProfileImageUpload = ({ currentImageUrl, userId, onImageUpdate }) => {
     
     setIsUploading(true);
     try {
-      const updatedUser = await uploadProfileImage(userId, selectedFile, token);
+      const updatedUser = await uploadProfileImage(userId, selectedFile);
       
       if (onImageUpdate) {
         onImageUpdate(updatedUser.imagemUrl);

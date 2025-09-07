@@ -3,7 +3,7 @@ import { X, Upload } from "lucide-react";
 import { RiFileTextLine } from "react-icons/ri";
 import Button from "../Button";
 import InputOption from "../InputOption";
-import axios from "axios";
+import { axiosApi } from "../../provider/AxiosApi";
 import { toast } from "react-toastify";
 
 export default function ModalCadastroProduto() {
@@ -37,7 +37,7 @@ export default function ModalCadastroProduto() {
 
     const fetchDecoracoes = async () => {
         try {
-            const response = await axios.get("http://localhost:8080/decoracoes",);
+            const response = await axiosApi.get("/decoracoes");
             setDecoracoesDisponiveis(response.data);
             return;
         } catch (error) {
@@ -67,29 +67,29 @@ export default function ModalCadastroProduto() {
         setFilePreview(null);
 
         if (categoria === "Carambolo") {
-            axios
-                .get("http://localhost:8080/bolos/massa")
+            axiosApi
+                .get("/bolos/massa")
                 .then((res) => setMassasDisponiveis(res.data))
                 .catch((err) => console.error("Erro ao buscar massas:", err));
 
-            axios
-                .get("http://localhost:8080/bolos/recheio-exclusivo")
+            axiosApi
+                .get("/bolos/recheio-exclusivo")
                 .then((res) => setRecheiosDisponiveis(res.data))
                 .catch((err) => console.error("Erro ao buscar recheios:", err));
         }
 
-        axios
-            .get("http://localhost:8080/bolos/cobertura")
+        axiosApi
+            .get("/bolos/cobertura")
             .then((res) => setCoberturasDisponiveis(res.data))
             .catch((err) => console.error("Erro ao buscar coberturas:", err));
 
-        axios
-            .get("http://localhost:8080/bolos/formatos")
+        axiosApi
+            .get("/bolos/formatos")
             .then(res => setFormatosDisponiveis(res.data))
             .catch(err => console.error("Erro ao buscar formatos:", err));
 
-        axios
-            .get("http://localhost:8080/bolos/tamanhos")
+        axiosApi
+            .get("/bolos/tamanhos")
             .then(res => setTamanhosDisponiveis(res.data))
             .catch(err => console.error("Erro ao buscar tamanhos:", err));
 
@@ -105,7 +105,11 @@ export default function ModalCadastroProduto() {
         }
 
         const formData = new FormData();
-        observacao.forEach((obs) => formData.append("observacao", obs));
+        if (observacao && observacao.length > 0) {
+            formData.append("observacao", observacao.join(", "));
+        } else {
+            formData.append("observacao", "");
+        }
         formData.append("nome", nomeDecoracao);
         if (file) formData.append("imagens", file);
         if (categoriaDecoracao && categoria === "Decoracao") {
@@ -113,34 +117,9 @@ export default function ModalCadastroProduto() {
         }
 
         try {
-            let config = { headers: {} };
-            
-       
-            try {
-                config.headers.Authorization = `Bearer ${token}`;
-                const response = await axios.post("http://localhost:8080/decoracoes", formData, config);
-                toast.success("Decoração cadastrada com sucesso!");
-
-                await fetchDecoracoes();
-
-                setNomeDecoracao("");
-                setObservacao([]);
-                setFile(null);
-                setFilePreview(null);
-                setCategoriaDecoracao("");
-
-                if (categoria === "Decoracao" && !naoFecharModal) {
-                    setIsOpen(false);
-                }
-
-                return response.data.id;
-            } catch (authError) {
-                // Fallback to no auth
-            }
-            
-            
-            delete config.headers.Authorization;
-            const response = await axios.post("http://localhost:8080/decoracoes", formData, config);
+            const response = await axiosApi.post("/decoracoes", formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
             toast.success("Decoração cadastrada com sucesso!");
             
             await fetchDecoracoes();
@@ -178,7 +157,7 @@ export default function ModalCadastroProduto() {
         };
 
         try {
-            await axios.post("http://localhost:8080/bolos", data);
+            await axiosApi.post("/bolos", data);
             return;
         } catch (error) {
             toast.error("Erro ao cadastrar produto!");
@@ -208,12 +187,7 @@ export default function ModalCadastroProduto() {
         };
 
         try {
-            const token = localStorage.getItem('JWT_TOKEN');
-            let config = { headers: { "Content-Type": "application/json" } };
-            if (token && token.trim() !== '') {
-                config.headers.Authorization = `Bearer ${token}`;
-            }
-            await axios.put(`http://localhost:8080/decoracoes/${decoracaoIdSelecionada}`, payload, config);
+            await axiosApi.put(`/decoracoes/${decoracaoIdSelecionada}`, payload);
 
             toast.success("Pré-decoração adicionada à Home!");
             setIsOpen(false);
@@ -237,7 +211,7 @@ export default function ModalCadastroProduto() {
         }
 
         try {
-            const response = await axios.post("http://localhost:8080/fornadas/produto-fornada", formData, {
+            const response = await axiosApi.post("/fornadas/produto-fornada", formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             toast.success("Fornada cadastrada com sucesso!");

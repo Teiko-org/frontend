@@ -238,6 +238,27 @@ export const FormProvider = ({ children }) => {
       const coberturaId = await getOrCreateCobertura();
       const recheioPedidoId = await getOrCreateRecheioPedido(dadosMontagem.recheioId);
 
+      let decoracaoCriadaId = null;
+      try {
+        if (Array.isArray(imagens) && imagens.length > 0) {
+          const formData = new FormData();
+          formData.append("nome", "Referência do Cliente");
+          formData.append("observacao", dadosMontagem.observacoes || "");
+          formData.append("categoria", "REFERENCIA_CLIENTE");
+          imagens.forEach((arquivo) => {
+            // `imagens` armazena objetos File (vindos do Step2)
+            formData.append("imagens", arquivo);
+          });
+
+          const resp = await axiosApi.post("/decoracoes", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+          decoracaoCriadaId = resp?.data?.id ?? null;
+        }
+      } catch (e) {
+        console.error("Erro ao enviar imagens de referência:", e);
+      }
+
       const tamanhoMapeado = mapTamanhoToEnum(dadosMontagem.tamanho);
       const formatoMapeado = mapFormatoToEnum(dadosMontagem.formato);
 
@@ -255,7 +276,7 @@ export const FormProvider = ({ children }) => {
         recheioPedidoId: recheioPedidoId,
         massaId: dadosMontagem.massaId,
         coberturaId: coberturaId,
-        decoracaoId: null,
+        decoracaoId: decoracaoCriadaId,
         formato: formatoMapeado,
         tamanho: tamanhoMapeado,
         categoria: "PERSONALIZADO"
@@ -266,7 +287,7 @@ export const FormProvider = ({ children }) => {
       const pedidoData = {
         boloId: boloId,
         usuarioId: null,
-        observacao: dadosEntrega.observacoes || "",
+        observacao: dadosMontagem.observacoes || "",
         dataPrevisaoEntrega: dadosEntrega.data.replace(/\//g, '-'),
         dataUltimaAtualizacao: new Date().toISOString(),
         tipoEntrega: dadosEntrega.deliveryOption?.toUpperCase() || "ENTREGA",

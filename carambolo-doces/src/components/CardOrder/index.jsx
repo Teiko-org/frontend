@@ -64,8 +64,8 @@ function CardOrder(props) {
 
   return (
     <>
-      <div className="flex flex-col justify-center gap-1 p-3 w-[280px] h-[110px] border border-gold rounded-md bg-bgNativeHome relative group card-content">
-        {/* Indicador de que pode ser arrastado */}
+      <div className="flex flex-col justify-center gap-1 p-3 w-[280px] min-h-[110px] border border-gold rounded-md bg-bgNativeHome relative group card-content">
+        {/* Indicador de que pode ser arrastado - funcionalidade do kanban */}
         <div className="absolute top-2 right-2 text-gray-400 group-hover:text-gold transition-colors duration-200 text-sm draggable-indicator">
           ⋮⋮
         </div>
