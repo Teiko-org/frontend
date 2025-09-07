@@ -83,6 +83,8 @@ export default function CartPage() {
                       rightSuffix={`x${item.quantity}`}
                       totalText="Valor Total Estimado:"
                       disclaimer="Esse valor não inclui o valor do frete."
+                      selected={!!selectedIds[`${item.type}-${item.id}`]}
+                      onClick={() => setSelectedIds((prev) => ({ ...prev, [`${item.type}-${item.id}`]: !prev[`${item.type}-${item.id}`] }))}
                     />
                   </div>
                 </div>
@@ -159,14 +161,18 @@ export default function CartPage() {
                   fontSize="text-sm"
                   className="py-1 px-3"
                   onClick={() => {
-                    const selecionados = localItems.filter((it) => selectedIds[`${it.type}-${it.id}`]);
-                    if (selecionados.length === 0 && localItems.length === 0) {
+                    // Se houver itens marcados, usa apenas os selecionados; caso contrário, usa todos os itens do carrinho
+                    const selecionadosMarcados = localItems.filter((it) => selectedIds[`${it.type}-${it.id}`]);
+                    const itensParaPagar = selecionadosMarcados.length > 0 ? selecionadosMarcados : localItems;
+
+                    if (itensParaPagar.length === 0) {
                       toast.warn('Adicione um item da Fornada antes de confirmar.');
                       navigate('/fornada');
                       return;
                     }
-                    if (selecionados.length <= 1) {
-                      const item = selecionados[0] || localItems[0];
+
+                    if (itensParaPagar.length === 1) {
+                      const item = itensParaPagar[0];
                       navigate('/pedido-fornada', { state: { produto: {
                         produto: item.name,
                         valor: item.price,
@@ -175,7 +181,7 @@ export default function CartPage() {
                         quantidade: item.maxQuantity === Infinity ? 9999 : item.maxQuantity
                       }, quantidade: item.quantity } });
                     } else {
-                      navigate('/pedido-fornada-multiplo', { state: { itens: selecionados, redirectToForm: true } });
+                      navigate('/pedido-fornada-multiplo', { state: { itens: itensParaPagar, redirectToForm: true } });
                     }
                   }}
                 />

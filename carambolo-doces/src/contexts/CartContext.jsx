@@ -3,9 +3,16 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState 
 const CartContext = createContext(null);
 
 export function CartProvider({ children }) {
+  // Função para obter a chave do carrinho baseada no usuário
+  const getCartKey = () => {
+    const userId = localStorage.getItem("userId");
+    return userId ? `CART_ITEMS_USER_${userId}` : "CART_ITEMS_GUEST";
+  };
+
   const [items, setItems] = useState(() => {
     try {
-      const saved = localStorage.getItem("CART_ITEMS");
+      const cartKey = getCartKey();
+      const saved = localStorage.getItem(cartKey);
       return saved ? JSON.parse(saved) : [];
     } catch (_) {
       return [];
@@ -13,13 +20,45 @@ export function CartProvider({ children }) {
   });
   const hasMountedRef = useRef(false);
 
+  // Função para carregar carrinho do usuário atual
+  const loadUserCart = () => {
+    try {
+      const cartKey = getCartKey();
+      const saved = localStorage.getItem(cartKey);
+      const cartItems = saved ? JSON.parse(saved) : [];
+      setItems(cartItems);
+      console.log(`Carrinho carregado para chave: ${cartKey}, itens:`, cartItems);
+    } catch (error) {
+      console.error("Erro ao carregar carrinho:", error);
+      setItems([]);
+    }
+  };
+
+  // Carregar carrinho quando o usuário mudar
+  useEffect(() => {
+    const handleStorageChange = () => {
+      loadUserCart();
+    };
+
+    // Escutar mudanças no localStorage
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Carregar carrinho inicial
+    loadUserCart();
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   useEffect(() => {
     if (!hasMountedRef.current) {
       hasMountedRef.current = true;
       return;
     }
     try {
-      localStorage.setItem("CART_ITEMS", JSON.stringify(items));
+      const cartKey = getCartKey();
+      localStorage.setItem(cartKey, JSON.stringify(items));
     } catch (_) {
     }
   }, [items]);
@@ -58,7 +97,58 @@ export function CartProvider({ children }) {
     setItems((prev) => prev.filter((p) => !(p.id === id && p.type === type)));
   };
 
+  // Remove itens de fornada pelo fornadaDaVezId (útil após finalizar pedido)
+  const removeByFornadaId = (fornadaDaVezId) => {
+    if (!fornadaDaVezId) return;
+    setItems((prev) => prev.filter((p) => !(p.type === 'Fornada' && p.fornadaDaVezId === fornadaDaVezId)));
+  };
+
   const clearCart = () => setItems([]);
+
+  // Função para limpar carrinho de convidado quando usuário faz login
+  const clearGuestCart = () => {
+    try {
+      localStorage.removeItem("CART_ITEMS_GUEST");
+    } catch (_) {
+    }
+  };
+
+  // Função para migrar carrinho de convidado para usuário logado
+  const migrateGuestCartToUser = () => {
+    try {
+      const guestCart = localStorage.getItem("CART_ITEMS_GUEST");
+      if (guestCart) {
+        const guestItems = JSON.parse(guestCart);
+        if (guestItems.length > 0) {
+          // Adicionar itens do carrinho de convidado ao carrinho do usuário
+          guestItems.forEach(item => {
+            addItem(item, item.quantity);
+          });
+          // Limpar carrinho de convidado
+          clearGuestCart();
+          console.log("Carrinho de convidado migrado para usuário logado");
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao migrar carrinho de convidado:", error);
+    }
+  };
+
+  // Função para migrar carrinho de usuário para convidado (logout)
+  const migrateUserCartToGuest = () => {
+    try {
+      const currentCartKey = getCartKey();
+      const currentItems = localStorage.getItem(currentCartKey);
+      
+      if (currentItems) {
+        // Salvar carrinho atual como carrinho de convidado
+        localStorage.setItem("CART_ITEMS_GUEST", currentItems);
+        console.log("Carrinho do usuário migrado para convidado");
+      }
+    } catch (error) {
+      console.error("Erro ao migrar carrinho para convidado:", error);
+    }
+  };
 
   const updateQuantity = (id, type, quantity) => {
     setItems((prev) =>
@@ -77,7 +167,19 @@ export function CartProvider({ children }) {
   }, [items]);
 
   const value = useMemo(
-    () => ({ items, addItem, removeItem, clearCart, updateQuantity, totals }),
+    () => ({ 
+      items, 
+      addItem, 
+      removeItem, 
+      removeByFornadaId,
+      clearCart, 
+      updateQuantity, 
+      totals, 
+      clearGuestCart, 
+      migrateGuestCartToUser,
+      migrateUserCartToGuest,
+      loadUserCart 
+    }),
     [items, totals]
   );
 

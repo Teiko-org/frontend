@@ -1,7 +1,7 @@
 import React from 'react';
 import { IoCalendarOutline } from "react-icons/io5";
 
-const CustomDatePicker = ({ label, value, onChange, placeholder = "Selecione a data" }) => {
+const CustomDatePicker = ({ label, value, onChange, placeholder = "Selecione a data", min }) => {
 
   const getToday = () => {
     const today = new Date();
@@ -18,6 +18,9 @@ const CustomDatePicker = ({ label, value, onChange, placeholder = "Selecione a d
     }
   };
 
+  // Usar a prop min se fornecida, senão usar a data de hoje
+  const minDate = min || getToday();
+
   return (
     <div className="flex flex-col">
       {label && (
@@ -28,10 +31,10 @@ const CustomDatePicker = ({ label, value, onChange, placeholder = "Selecione a d
       <div className="relative">
         <input
           type="date"
-          className="w-full bg-white border-2 border-gold rounded-lg px-4 py-3 text-gray-700 focus:outline-none focus:border-blue transition-colors duration-200 cursor-pointer"
+          className="w-full bg-white border-2 border-gold rounded-lg px-4 py-3 text-gray-700 focus:outline-none focus:border-blue transition-all duration-300 ease-in-out focus:scale-105 focus:shadow-md cursor-pointer hover:border-blue"
           value={value || ''}
           onChange={handleDateChange}
-          min={getToday()}
+          min={minDate}
           placeholder={placeholder}
         />
       </div>

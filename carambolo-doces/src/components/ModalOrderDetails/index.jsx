@@ -117,7 +117,7 @@ export default function ModalOrderDetails(props) {
                   <h3 className="font-bold text-2xl text-blue  pb-5">
                     Quantidade
                   </h3>
-                  {props?.order?.quantidade} unidades
+                  {props?.order?.quantidade} {props.fornada ? (props?.order?.produtoFornada ? `unidades de ${props.order.produtoFornada}` : 'unidades') : 'fatias/porções'}
                 </div>
               )}
 
@@ -128,24 +128,36 @@ export default function ModalOrderDetails(props) {
                 <div className="flex flex-col">
                   {props.fornada == null && (
                     <span className="italic pb-8">
-                      {props?.order?.decoracao && !imgError ? (
-                        <img
-                          src={props?.order?.decoracao}
-                          onError={() => setImgError(true)}
-                          alt="Imagem de decoração do pedido"
-                        />
-                      ) : (
-                        "Nenhuma imagem de referência adicionada"
-                      )}
+                      {(() => {
+                        const imgSrc =
+                          props?.order?.decoracao ||
+                          props?.order?.decoracaoUrl ||
+                          props?.order?.imagemDecoracao ||
+                          (Array.isArray(props?.order?.imagens) && props.order.imagens[0]) ||
+                          (Array.isArray(props?.order?.imagensDecoracao) && props.order.imagensDecoracao[0]);
+                        if (imgSrc && !imgError) {
+                          return (
+                            <img
+                              src={imgSrc}
+                              onError={() => setImgError(true)}
+                              alt="Imagem de decoração do pedido"
+                            />
+                          );
+                        }
+                        return "Nenhuma imagem de referência adicionada";
+                      })()}
                     </span>
                   )}
 
-                  <span className="text-blue font-semibold">Observações</span>
-                  {props?.order?.observacoes
-                    ? props.order.observacoes
-                    : props.order.observacao
-                    ? props.order.observacao
-                    : "Carregando..."}
+                  {props.fornada == null && (
+                    <>
+                      <span className="text-blue font-semibold">Observações</span>
+                      {props?.order?.observacoes ||
+                       props?.order?.observacao ||
+                       props?.order?.descricaoDecoracao ||
+                       "Nenhuma observação"}
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -155,14 +167,21 @@ export default function ModalOrderDetails(props) {
                     Adicionais
                   </h3>
                   <div className="flex gap-2">
-                    {props?.order?.adicionais?.split(",").map((item, index) => (
-                      <span
-                        key={index}
-                        className="bg-gradient-to-l from-darkGoldButton to-goldButton border-2 border-gold rounded px-2 py-1 text-blue font-bold"
-                      >
-                        {item}
-                      </span>
-                    )) ?? "Carregando..."}
+                    {(() => {
+                      const add = props?.order?.adicionais;
+                      let list = [];
+                      if (Array.isArray(add)) list = add;
+                      else if (typeof add === 'string' && add.trim().length > 0) list = add.split(',');
+                      if (list.length === 0) return <span className="text-blue">Nenhum adicional</span>;
+                      return list.map((item, index) => (
+                        <span
+                          key={index}
+                          className="bg-gradient-to-l from-darkGoldButton to-goldButton border-2 border-gold rounded px-2 py-1 text-blue font-bold"
+                        >
+                          {String(item).trim()}
+                        </span>
+                      ));
+                    })()}
                   </div>
                 </div>
               )}

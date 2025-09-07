@@ -44,11 +44,17 @@ export default function TableSelectProductsFornada() {
   };
 
   const filteredProducts = (products || []).filter((product) => {
-    const matchSearch = product.produto
+    if (!searchTerm) return true;
+    
+    const searchLower = searchTerm.toLowerCase();
+    const matchProduct = product.produto
       .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+      .includes(searchLower);
+    const matchCategory = product.categoria
+      .toLowerCase()
+      .includes(searchLower);
 
-    return matchSearch;
+    return matchProduct || matchCategory;
   });
 
   React.useEffect(() => {

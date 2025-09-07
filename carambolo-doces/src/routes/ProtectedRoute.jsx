@@ -8,7 +8,7 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
-    if (!userId) {
+    if (!userId || userId === 'null' || userId === 'undefined') {
       setAuthorized(false);
       setLoading(false);
       return;
@@ -28,7 +28,8 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
         }
         setLoading(false);
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error('Erro na autenticação:', error);
         setAuthorized(false);
         setLoading(false);
       });

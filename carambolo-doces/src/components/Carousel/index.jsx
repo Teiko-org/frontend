@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { BsFillArrowRightCircleFill, BsFillArrowLeftCircleFill } from "react-icons/bs";
 
-export default function Carousel({ slides, autoPlay = true, interval = 4000, showIndicators = false, imageHeightClass = 'h-[270px]', itemsPerView = 3, showTitles = true }) {
+export default function Carousel({ slides, autoPlay = true, interval = 4000, showIndicators = false, imageHeightClass = 'h-[270px]', itemsPerView = 3, showTitles = true, onSlideClick }) {
   const [current, setCurrent] = useState(0);
   const cardWidthPercent = itemsPerView === 1 ? 85 : 24;
   const timerRef = useRef(null);
@@ -12,6 +12,12 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
 
   const next = () => {
     setCurrent((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+  };
+
+  const handleSlideClick = (slide) => {
+    if (onSlideClick) {
+      onSlideClick(slide);
+    }
   };
 
   useEffect(() => {
@@ -50,7 +56,8 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
               style={{ width: `${cardWidthPercent}%` }}
             >
               <div
-                className={`relative rounded-lg overflow-hidden border border-gold bg-white transition-all duration-500 ${cardClasses}`}
+                className={`relative rounded-lg overflow-hidden border border-gold bg-white transition-all duration-500 ${cardClasses} ${onSlideClick ? 'cursor-pointer' : ''}`}
+                onClick={() => handleSlideClick(slide)}
               >
                 <img
                   src={slide.image}

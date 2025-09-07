@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Card from "../../components/Card";
@@ -7,14 +8,26 @@ import Button from "../../components/Button";
 import { getBolosComImagens } from "../../service/boloService";
 
 function Carambolos() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const categoriaSelecionada = location.state?.categoriaSelecionada;
+  
   const [bolosPorCategoria, setBolosPorCategoria] = React.useState({});
   const [pageByCategory, setPageByCategory] = React.useState({});
+  const [loading, setLoading] = React.useState(true);
+  const [scrollToCategory, setScrollToCategory] = React.useState(null);
   const CARDS_PER_PAGE = 4;
+  
+  // Refs para as seções de categoria
+  const categoryRefs = useRef({});
 
   React.useEffect(() => {
     const fetchBolos = async () => {
       try {
+        setLoading(true);
         const data = await getBolosComImagens();
+        
+        // Comportamento original: agrupa por categoria
         const agrupados = data.reduce((acc, bolo) => {
           const categoria = bolo.categoria || 'Outros';
           if (!acc[categoria]) acc[categoria] = [];
@@ -22,45 +35,39 @@ function Carambolos() {
           return acc;
         }, {});
         
-        if (Object.keys(agrupados).length === 0) {
-          const categoriasDefault = [
-            'CARAMBOLOS MAIS PEDIDOS',
-            'CARAMBOLOS VINTAGE', 
-            'CARAMBOLOS BIRTHDAY',
-            'CARAMBOLOS ESTAMPADOS',
-            'MONTE O SEU CARAMBOLO'
-          ];
-          categoriasDefault.forEach(cat => {
-            agrupados[cat] = [];
-          });
-        }
-        
         setBolosPorCategoria(agrupados);
+        
         const initialPages = {};
         Object.keys(agrupados).forEach(cat => { initialPages[cat] = 0; });
         setPageByCategory(initialPages);
+        
+        // Se uma categoria foi selecionada, marca para scroll
+        if (categoriaSelecionada && agrupados[categoriaSelecionada]) {
+          setScrollToCategory(categoriaSelecionada);
+        }
       } catch (error) {
         console.error("Erro ao carregar bolos:", error);
-        const categoriasDefault = [
-          'CARAMBOLOS MAIS PEDIDOS',
-          'CARAMBOLOS VINTAGE', 
-          'CARAMBOLOS BIRTHDAY',
-          'CARAMBOLOS ESTAMPADOS',
-          'MONTE O SEU CARAMBOLO'
-        ];
-        const agrupados = {};
-        categoriasDefault.forEach(cat => {
-          agrupados[cat] = [];
-        });
-        setBolosPorCategoria(agrupados);
-        
-        const initialPages = {};
-        categoriasDefault.forEach(cat => { initialPages[cat] = 0; });
-        setPageByCategory(initialPages);
+        setBolosPorCategoria({});
+      } finally {
+        setLoading(false);
       }
     };
+    
     fetchBolos();
-  }, []);
+  }, [categoriaSelecionada]);
+
+  // Effect para fazer scroll para a categoria selecionada
+  React.useEffect(() => {
+    if (scrollToCategory && categoryRefs.current[scrollToCategory]) {
+      setTimeout(() => {
+        categoryRefs.current[scrollToCategory].scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+        setScrollToCategory(null);
+      }, 100);
+    }
+  }, [scrollToCategory, bolosPorCategoria]);
 
   const handlePrev = (categoria) => {
     setPageByCategory(prev => ({
@@ -79,6 +86,14 @@ function Carambolos() {
     }));
   };
 
+  if (loading) {
+    return (
+      <div className="bg-bgNativeHome min-h-screen flex items-center justify-center">
+        <div className="text-2xl text-blue">Carregando bolos...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-bgNativeHome">
       <Header />
@@ -86,12 +101,23 @@ function Carambolos() {
         <h2 className="text-start text-4xl font-bold mb-6 ml-24">
           CARAMBOLOS PRÉ-DECORADOS
         </h2>
-        {Object.keys(bolosPorCategoria).map((categoria) =>
-          renderSection(
-            categoria,
-            bolosPorCategoria[categoria],
-            pageByCategory[categoria] || 0,
-            (dir) => dir === 'left' ? handlePrev(categoria) : handleNext(categoria, bolosPorCategoria[categoria].length)
+        
+        {Object.keys(bolosPorCategoria).length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-xl text-gray-600 mb-4">
+              Nenhum bolo cadastrado no momento.
+            </p>
+          </div>
+        ) : (
+          Object.keys(bolosPorCategoria).map((categoria) =>
+            renderSection(
+              categoria,
+              bolosPorCategoria[categoria],
+              pageByCategory[categoria] || 0,
+              (dir) => dir === 'left' ? handlePrev(categoria) : handleNext(categoria, bolosPorCategoria[categoria].length),
+              categoriaSelecionada === categoria,
+              categoryRefs
+            )
           )
         )}
       </section>
@@ -100,7 +126,7 @@ function Carambolos() {
   );
 }
 
-const renderSection = (title, bolos, page, onArrowClick) => {
+const renderSection = (title, bolos, page, onArrowClick, isSelected, categoryRefs) => {
   const CARDS_PER_PAGE = 4;
   const startIdx = page * CARDS_PER_PAGE;
   const endIdx = startIdx + CARDS_PER_PAGE;
@@ -108,8 +134,13 @@ const renderSection = (title, bolos, page, onArrowClick) => {
   
   return (
     <React.Fragment key={title}>
-      <section className="pb-16 bg-bgHome border-t border-b border-gold">
-        <h2 className="text-center text-3xl font-medium mb-6 mt-6">{title}</h2>
+      <section 
+        ref={el => categoryRefs.current[title] = el}
+        className={`pb-16 bg-bgHome border-t border-b border-gold ${isSelected ? 'ring-4 ring-gold ring-opacity-50' : ''}`}
+      >
+        <h2 className="text-center text-3xl font-medium mb-6 mt-6">
+          {title}
+        </h2>
         <div className="flex justify-between items-center px-4">
           <ArrowButton 
             direction="left" 
@@ -128,12 +159,9 @@ const renderSection = (title, bolos, page, onArrowClick) => {
                 />
               ))
             ) : (
-              <>
-                <Card key={`${title}-placeholder-1`} type="Bolo" />
-                <Card key={`${title}-placeholder-2`} type="Bolo" />
-                <Card key={`${title}-placeholder-3`} type="Bolo" />
-                <Card key={`${title}-placeholder-4`} type="Bolo" />
-              </>
+              <div className="text-center py-8 text-gray-500">
+                Nenhum bolo disponível nesta categoria.
+              </div>
             )}
           </div>
           <ArrowButton 

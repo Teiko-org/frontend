@@ -30,6 +30,7 @@ const columns = [
 
 export default function ProductList() {
     const [products, setProducts] = React.useState([]);
+    const [updatingMap, setUpdatingMap] = React.useState({});
     const [searchTerm, setSearchTerm] = React.useState('');
     const [isFilterModalOpen, setFilterModalOpen] = React.useState(false);
     const [produtoSelecionado, setProdutoSelecionado] = React.useState(null);
@@ -38,8 +39,11 @@ export default function ProductList() {
 
     const fetchProducts = async () => {
         try {
-            const bolos = await findAllBolo();
-            setProducts(bolos);
+            const [bolos, produtosFornada] = await Promise.all([
+                findAllBolo(),
+                findAllFornada(),
+            ]);
+            setProducts([...(bolos || []), ...(produtosFornada || [])]);
         } catch (error) {
             console.error(error);
         }
@@ -49,21 +53,31 @@ export default function ProductList() {
         fetchProducts();
     }, []);
 
-    const handleVisibility = (id, category) => {
-        const productToChange = products.filter((product) => product.id == id && product.categoria == category);
+    const handleVisibility = async (row) => {
+        if (!row) return;
+        const key = `${row.tipo}-${row.id}`;
+        if (updatingMap[key]) return; // evitar cliques repetidos
+        setUpdatingMap((prev) => ({ ...prev, [key]: true }));
+        const novoStatus = !Boolean(row.isAtivo);
+        // otimista
+        setProducts((prev) => prev.map(p => (p.id === row.id && p.tipo === row.tipo) ? { ...p, isAtivo: novoStatus } : p));
 
-        if (productToChange[0].isAtivo == true) {
-            productToChange[0].isAtivo = false
-        } else {
-            productToChange[0].isAtivo = true
-        }
+        const tipo = (row.tipo || '').toUpperCase();
+        const ok = tipo === 'BOLO'
+            ? await handleVisibilityBolo(row.id, novoStatus)
+            : await handleVisibilityProdutoFornada(row.id, novoStatus);
 
-        if ((productToChange[0].categoria ?? '').toLowerCase().includes("carambolo")) {
-            handleVisibilityBolo(productToChange, id);
+        if (!ok) {
+            setProducts((prev) => prev.map(p => (p.id === row.id && p.tipo === row.tipo) ? { ...p, isAtivo: !novoStatus } : p));
         } else {
-            handleVisibilityProdutoFornada(productToChange, id)
+            try {
+                window.dispatchEvent(new CustomEvent('carambolo:visibility-changed', {
+                    detail: { tipo, id: row.id, isAtivo: novoStatus }
+                }));
+            } catch {}
+            fetchProducts();
         }
-        fetchProducts();
+        setUpdatingMap((prev) => { const next = { ...prev }; delete next[key]; return next; });
     }
 
     const filteredProducts = products.filter(product => {
@@ -79,8 +93,8 @@ export default function ProductList() {
         const matchCategory = !categoryFilter || categoryFilter === '--' || product.categoria === categoryFilter;
         const matchPrice = product.valor >= priceDe && product.valor <= priceAte;
         const matchQuantity = product.quantidade >= qtdDe && product.quantidade <= qtdAte;
-        const isFornada = categoryToSearch.includes('fornada');
-        const isBolo = !isFornada;
+        const isBolo = (product.tipo || '').toUpperCase() === 'BOLO';
+        const isFornada = !isBolo;
 
         let matchStatus = true;
 
@@ -142,7 +156,7 @@ export default function ProductList() {
                                     hover
                                     role="checkbox"
                                     tabIndex={-1}
-                                    key={`${row.id}-${row.categoria}`}
+                                    key={`${(row.tipo || 'PROD')}-${row.id}-${index}`}
                                     className={`${index % 2 === 0 ? 'bg-[#FFE7DD]' : ' bg-[#FFEEE7]'} h-10`}
                                     sx={{ boxShadow: "none", borderBottom: "none" }}
                                 >
@@ -151,8 +165,8 @@ export default function ProductList() {
                                             return (
                                                 <TableCell key={column.id} align={column.align} className='rounded-l-full' sx={{ boxShadow: "none", borderBottom: "none", padding: 0, paddingLeft: '1.25rem' }}>
                                                     {row.isAtivo
-                                                        ? <LuEye className='w-5 cursor-pointer text-[#A47032] text-[1.625rem]' onClick={() => handleVisibility(row.id, row.categoria)} />
-                                                        : <LuEyeClosed className='w-5 cursor-pointer text-[#A47032] text-[1.625rem]' onClick={() => handleVisibility(row.id, row.categoria)} />}
+                                                        ? <LuEye className={`w-5 cursor-pointer text-[#A47032] text-[1.625rem] ${updatingMap[`${row.tipo}-${row.id}`] ? 'opacity-50 pointer-events-none' : ''}`} onClick={() => handleVisibility(row)} />
+                                                        : <LuEyeClosed className={`w-5 cursor-pointer text-[#A47032] text-[1.625rem] ${updatingMap[`${row.tipo}-${row.id}`] ? 'opacity-50 pointer-events-none' : ''}`} onClick={() => handleVisibility(row)} />}
                                                 </TableCell>
                                             );
                                         }
@@ -182,9 +196,8 @@ export default function ProductList() {
                                         }
 
                                         if (column.id === 'status') {
-                                            const categoryToSearch = (row.categoria ?? '').toLowerCase();
-                                            const isFornada = categoryToSearch.includes('fornada');
-                                            const isBolo = !isFornada;
+                                            const isBolo = (row.tipo || '').toUpperCase() === 'BOLO';
+                                            const isFornada = !isBolo;
                                             
                                             let statusText = '';
                                             if (isBolo) {
@@ -236,7 +249,9 @@ export default function ProductList() {
 
             {isModalEdicaoOpen && (
                 <ModalEdicaoProduto
+                    isOpen={isModalEdicaoOpen}
                     produto={produtoSelecionado}
+                    onProdutoEditado={fetchProducts}
                     onClose={() => {
                         setModalEdicaoOpen(false);
                         setProdutoSelecionado(null);
