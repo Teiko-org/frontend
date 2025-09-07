@@ -436,13 +436,6 @@ const Step1 = () => {
         />
       </div>
       
-      {/* Mensagem informativa quando campos são preenchidos automaticamente */}
-        {camposPreenchidosAutomaticamente && (
-          <div className="mt-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded">
-            <strong>⚠️ Atenção:</strong> Os campos foram preenchidos automaticamente com base no bolo selecionado. 
-            <strong>Você deve clicar em pelo menos um dos campos (tamanho, formato, massa ou recheio) para confirmar suas escolhas antes de continuar.</strong>
-          </div>
-        )}
       
       {/* Mensagem de erro de validação */}
       {validationError && (
