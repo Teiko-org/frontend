@@ -40,8 +40,8 @@ export default function ModalOrderDetails(props) {
   const [imgError, setImgError] = useState(false);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex justify-center pt-10 pb-5">
-      <div className="shadow-xl relative border bg-bgNativeHome border-[#d6a87c] w-[1000px] min-h-[150px] flex flex-col rounded-2xl">
+    <div className="fixed inset-0 z-[9999] bg-black bg-opacity-60 flex justify-center pt-10 pb-5 modal-overlay modal-fixed">
+      <div className="shadow-xl relative border bg-bgNativeHome border-[#d6a87c] w-[1000px] min-h-[150px] flex flex-col rounded-2xl modal-container modal-content modal-overflow-fix">
         <header className="flex justify-between bg-gradient-blue border-2 border-gold px-10 py-7 rounded-t-2xl">
           <div className="pl-10">
             <h1 className="text-3xl font-bold text-gold">
@@ -57,7 +57,7 @@ export default function ModalOrderDetails(props) {
 
           <button
             onClick={props.onClose}
-            className="text-red text-3xl font-bold hover:scale-105"
+            className="text-red text-3xl font-bold hover:scale-105 modal-close-button"
           >
             ✕
           </button>

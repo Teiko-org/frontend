@@ -1,0 +1,361 @@
+/* Estilos para o sistema de drag and drop do Kanban */
+
+/* Cursor para elementos arrastáveis */
+.cursor-grab {
+  cursor: grab;
+}
+
+.cursor-grab:active {
+  cursor: grabbing;
+}
+
+/* Transições suaves */
+.transition-transform {
+  transition: transform 0.2s ease-in-out;
+}
+
+.transition-all {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Efeitos de hover */
+.hover\:scale-105:hover {
+  transform: scale(1.05);
+}
+
+/* Efeitos durante o drag */
+.dragging {
+  opacity: 0.5;
+  transform: rotate(5deg) scale(1.05);
+  z-index: 1000;
+}
+
+/* Área de drop ativa */
+.drop-zone-active {
+  border: 2px solid #fbbf24 !important;
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.3) !important;
+  transform: scale(1.05);
+}
+
+/* Indicador visual de que o item pode ser arrastado */
+.draggable-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: #9ca3af;
+  font-size: 12px;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.draggable-indicator:hover {
+  opacity: 1;
+  color: #fbbf24;
+}
+
+/* Área de drop vazia */
+.empty-drop-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 128px;
+  width: 100%;
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #6b7280;
+  font-size: 14px;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.empty-drop-zone:hover {
+  border-color: #fbbf24;
+  color: #fbbf24;
+  background-color: rgba(251, 191, 36, 0.05);
+}
+
+/* Feedback visual durante o drag */
+.drag-feedback {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  background: rgba(251, 191, 36, 0.1);
+  border: 2px dashed #fbbf24;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 12px;
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+/* Animações */
+@keyframes cardDrop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.kanban-card-wrapper {
+  animation: cardDrop 0.3s ease-out;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .hover\:scale-105:hover {
+    transform: none;
+  }
+  
+  .empty-drop-zone {
+    height: 100px;
+    font-size: 12px;
+  }
+}
+
+/* Melhorias de acessibilidade */
+.draggable:focus {
+  outline: 2px solid #fbbf24;
+  outline-offset: 2px;
+}
+
+/* Estado de loading durante mudança de status */
+.status-changing {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.status-changing::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid #fbbf24;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ===== ESTILOS ESPECÍFICOS PARA MODAL ===== */
+
+/* Garantir que o modal tenha z-index muito alto */
+.modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 99999 !important;
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Modal container */
+.modal-container {
+  position: relative !important;
+  z-index: 100000 !important;
+  max-height: 90vh !important;
+  overflow-y: auto !important;
+}
+
+/* Prevenir que o modal seja afetado por outros elementos */
+.modal-content {
+  position: relative !important;
+  z-index: 100001 !important;
+  background: white !important;
+  border-radius: 16px !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Garantir que o botão de fechar esteja sempre visível */
+.modal-close-button {
+  position: relative !important;
+  z-index: 100002 !important;
+  cursor: pointer !important;
+}
+
+/* Prevenir conflitos de z-index com o kanban */
+.kanban-column {
+  z-index: 1 !important;
+}
+
+.kanban-card {
+  z-index: 2 !important;
+}
+
+/* Garantir que o modal não seja afetado por transformações do parent */
+.modal-fixed {
+  transform: none !important;
+  will-change: auto !important;
+}
+
+/* Prevenir que o modal seja cortado por overflow hidden */
+.modal-overflow-fix {
+  overflow: visible !important;
+  clip: auto !important;
+}
+
+/* ===== ESTILOS PARA SCROLLBAR PERSONALIZADO ===== */
+
+/* Scrollbar personalizado para colunas do kanban */
+.column-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.column-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+.column-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(to top, #30344F 0%, #103464 100%);
+  border-radius: 4px;
+  border: 1px solid #A47032;
+}
+
+.column-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to top, #3A4868 0%, #1e3a8a 100%);
+  border-color: #D4B076;
+}
+
+.column-scrollbar::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(to top, #30344F 0%, #1e40af 100%);
+}
+
+/* Scrollbar para Firefox */
+.column-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #103464 #f1f5f9;
+}
+
+/* ===== MELHORIAS NAS PROPORÇÕES DOS CARDS ===== */
+
+/* Wrapper do card com animação suave */
+.kanban-card-wrapper {
+  animation: cardDrop 0.3s ease-out;
+  margin-bottom: 6px;
+}
+
+.kanban-card-wrapper:last-child {
+  margin-bottom: 0;
+}
+
+/* Hover mais suave nos cards */
+.kanban-card-wrapper:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Indicador de drag mais visível */
+.draggable-indicator {
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.draggable-indicator:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* Melhor espaçamento entre elementos do card */
+.card-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+}
+
+/* Footer sempre no final do card */
+.card-footer {
+  margin-top: auto;
+  padding-top: 6px;
+  border-top: 1px solid rgba(164, 112, 50, 0.2);
+}
+
+/* ===== LAYOUT RESPONSIVO E PROPORCIONAL ===== */
+
+/* Garantir que a página ocupe toda a altura da tela */
+.min-h-screen {
+  min-height: 100vh;
+}
+
+/* Layout flexível para as colunas */
+.kanban-columns-container {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: stretch;
+  gap: 2.5rem;
+  flex: 1;
+  padding: 1.5rem;
+}
+
+/* Coluna com altura proporcional */
+.kanban-column {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Container da coluna com altura flexível */
+.column-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Área de conteúdo da coluna com scroll */
+.column-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 1400px) {
+  .kanban-columns-container {
+    gap: 1.5rem;
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 1200px) {
+  .kanban-columns-container {
+    gap: 1rem;
+    padding: 0.75rem;
+  }
+}
+
+/* Garantir que o background cubra toda a tela */
+.page-background {
+  background-color: #FFEEE7;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Header fixo com background */
+.page-header {
+  background-color: #FFEEE7;
+  padding-bottom: 1.25rem;
+  flex-shrink: 0;
+}
+
+/* Footer fixo com background */
+.page-footer {
+  background-color: #FFEEE7;
+  margin-top: auto;
+  flex-shrink: 0;
+}
