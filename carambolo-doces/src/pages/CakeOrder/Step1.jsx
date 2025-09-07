@@ -274,7 +274,6 @@ const Step1 = () => {
           setValue('massa', bolo.saborMassa, { shouldValidate: true, shouldDirty: true });
         }
         if (bolo.saborRecheio) {
-          console.log("Preenchendo recheio (sabor):", bolo.saborRecheio);
           setValue('recheio', bolo.saborRecheio, { shouldValidate: true, shouldDirty: true });
         }
         
@@ -288,11 +287,6 @@ const Step1 = () => {
         // Forçar re-renderização dos componentes
         setForceRender(prev => prev + 1);
         
-        // Verificar valores após preenchimento
-        setTimeout(() => {
-          const valores = getValues();
-          console.log("Valores após preenchimento automático:", valores);
-        }, 100);
       }, 100);
     };
     window.addEventListener('fillStep1FromBolo', fillFromBolo);
