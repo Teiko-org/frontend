@@ -109,25 +109,26 @@ export default function ModalEntregaRetirada({
   const handleSave = () => {
     const dados = {
       telefone,
-      data,
+      data: data ? data.toLocaleDateString('pt-BR') : '',
       nome,
-      tipoEntrega,
+      deliveryOption: tipoEntrega === "entrega" ? "Entrega" : "Retirada",
     };
 
     if (tipoEntrega === "entrega") {
       dados.cep = cep;
-      dados.uf = uf;
+      dados.estado = uf;
       dados.cidade = cidade;
       dados.bairro = bairro;
       dados.rua = rua;
       dados.numero = numero;
       dados.complemento = complemento;
     } else {
-      dados.localRetirada = localRetirada;
-      dados.horarioRetirada = horarioRetirada;
+      dados.horario = horarioRetirada;
     }
 
-    // onSave(dados);
+    if (onSave) {
+      onSave(dados);
+    }
     setIsModalOpen(true);
   };
 

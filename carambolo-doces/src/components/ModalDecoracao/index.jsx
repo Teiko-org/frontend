@@ -31,7 +31,9 @@ export default function ModalDecoration({
   };
 
   const handleSave = () => {
-    // onSave({ observations, references });
+    if (onSave) {
+      onSave({ observations, references });
+    }
     setIsModalOpen(true);
   };
 

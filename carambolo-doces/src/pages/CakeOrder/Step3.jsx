@@ -12,16 +12,8 @@ const Step3 = () => {
   const handleNext = (data) => {
     const { adicionais } = data;
 
-    const selecionados = Object.entries(adicionais)
-      .filter(([_, v]) => v)
-      .map(([k]) => k.toUpperCase());
-
-    const observacoesAnteriores = getValues("observacoes") || "";
-    const observacoesAtualizadas = `${observacoesAnteriores} Adicionais: ${selecionados.join(
-      ", "
-    )}`;
-
-    appendFormData({ observacoes: observacoesAtualizadas }, "dadosMontagem");
+    // Salvar os adicionais separadamente, não nas observações
+    appendFormData({ adicionais }, "dadosMontagem");
 
     nextStep();
   };

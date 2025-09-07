@@ -3,12 +3,14 @@ import { FormContext } from "../../contexts/FormContext";
 import Button from "../../components/Button";
 import ModalMontagem from "../../components/ModalMontagem";
 import ModalDecoracao from "../../components/ModalDecoracao";
+import ModalAdicionais from "../../components/ModalAdicionais";
 import ModalEntregaRetirada from "../../components/ModalEntregaRetirada";
 import ModalFinalizar from "../../components/ModalFinalizar";
+import ModalImagensReferencia from "../../components/ModalImagensReferencia";
 import { FaEdit } from "react-icons/fa";
 
 const Step5 = () => {
-  const { prevStep, submitForm, formData, valorEstimado } = useContext(FormContext);
+  const { prevStep, submitForm, formData, valorEstimado, appendFormData, setFormData } = useContext(FormContext);
   
   if (!formData) {
     console.error("formData não está definido");
@@ -17,13 +19,15 @@ const Step5 = () => {
 
   const formDataEntries = {
     ...formData, 
-    adicionais: Array.isArray(formData.adicionais) ? formData.adicionais : []
+    imagens: Array.isArray(formData.imagens) ? formData.imagens : []
   };
 
   const [isModalMontagemOpen, setIsModalMontagemOpen] = useState(false);
   const [isModalDecoracaoOpen, setIsModalDecoracaoOpen] = useState(false);
+  const [isModalAdicionaisOpen, setIsModalAdicionaisOpen] = useState(false);
   const [isModalEntregaRetiradaOpen, setIsModalEntregaRetiradaOpen] = useState(false);
   const [isModalFinalizarOpen, setIsModalFinalizarOpen] = useState(false);
+  const [isModalImagensReferenciaOpen, setIsModalImagensReferenciaOpen] = useState(false);
 
   const formatString = (str) =>
     str.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
@@ -117,6 +121,15 @@ const handleConfirmFinalizar = async () => {
               selectedMass={formDataEntries.massa}
               selectedFilling={formDataEntries.recheio}
               onSave={(newData) => {
+                // Atualizar os dados de montagem no FormContext
+                appendFormData({
+                  tamanho: newData.size,
+                  formato: newData.shape,
+                  massa: newData.mass,
+                  recheio: newData.filling,
+                  massaId: newData.mass, // Assumindo que o ID é o mesmo que o valor
+                  recheioId: newData.filling // Assumindo que o ID é o mesmo que o valor
+                }, 'dadosMontagem');
                 setIsModalMontagemOpen(false);
               }}
             />
@@ -155,7 +168,18 @@ const handleConfirmFinalizar = async () => {
             onClick={() => setIsModalDecoracaoOpen(true)}
           />
           {isModalDecoracaoOpen && (
-            <ModalDecoracao onClose={() => setIsModalDecoracaoOpen(false)} />
+            <ModalDecoracao 
+              isOpen={isModalDecoracaoOpen}
+              onClose={() => setIsModalDecoracaoOpen(false)}
+              initialObservations={formDataEntries.observacoes}
+              onSave={(newData) => {
+                // Atualizar as observações no FormContext
+                appendFormData({
+                  observacoes: newData.observacoes || newData
+                }, 'dadosMontagem');
+                setIsModalDecoracaoOpen(false);
+              }}
+            />
           )}
         </div>
         <div className="flex flex-col">
@@ -163,6 +187,114 @@ const handleConfirmFinalizar = async () => {
           {decoracaoData}
         </div>
       </div>
+
+      {/* ADICIONAIS */}
+      <div className="mb-5 pb-4 border-b border-gray-300">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="font-bold text-lg text-blue">ADICIONAIS</h3>
+          <FaEdit
+            className="text-gold cursor-pointer"
+            onClick={() => setIsModalAdicionaisOpen(true)}
+          />
+        </div>
+        <div className="flex flex-wrap gap-6">
+          {[
+            { label: "CEREJA", name: "cereja", checked: formDataEntries.adicionais?.cereja || false },
+            { label: "GLITTER", name: "glitter", checked: formDataEntries.adicionais?.glitter || false },
+            { label: "PEROLADO", name: "perolado", checked: formDataEntries.adicionais?.perolado || false },
+            { label: "LACINHOS", name: "lacinhos", checked: formDataEntries.adicionais?.lacinhos || false },
+          ].map((item) => (
+            <div key={item.name} className="flex items-center gap-2 text-blue text-sm font-semibold">
+              <span
+                className="w-5 h-5 rounded-sm p-[1px]"
+                style={{
+                  background: "linear-gradient(180deg, #A47032 0%, #D4B076 100%)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <span
+                  className="w-full h-full rounded-[1px] flex items-center justify-center"
+                  style={{
+                    background: item.checked
+                      ? "linear-gradient(180deg, #A47032 0%, #D4B076 100%)"
+                      : "#fff",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  {item.checked && (
+                    <svg
+                      className="w-3 h-3 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </span>
+              </span>
+              {item.label}
+            </div>
+          ))}
+        </div>
+        
+        {isModalAdicionaisOpen && (
+          <ModalAdicionais
+            isOpen={isModalAdicionaisOpen}
+            onClose={() => setIsModalAdicionaisOpen(false)}
+            initialAddons={{
+              cereja: formDataEntries.adicionais?.cereja || false,
+              glitter: formDataEntries.adicionais?.glitter || false,
+              perolado: formDataEntries.adicionais?.perolado || false,
+              lacinhos: formDataEntries.adicionais?.lacinhos || false,
+            }}
+            onSave={(newData) => {
+              // Atualizar os adicionais no FormContext
+              appendFormData({ adicionais: newData }, 'dadosMontagem');
+              setIsModalAdicionaisOpen(false);
+            }}
+          />
+        )}
+      </div>
+
+      {/* IMAGENS DE REFERÊNCIA */}
+      {formDataEntries.imagens && formDataEntries.imagens.length > 0 && (
+        <div className="mb-5 pb-4 border-b border-gray-300">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="font-bold text-lg text-blue">IMAGENS DE REFERÊNCIA</h3>
+            <FaEdit
+              className="text-gold cursor-pointer"
+              onClick={() => setIsModalImagensReferenciaOpen(true)}
+            />
+            {isModalImagensReferenciaOpen && (
+              <ModalImagensReferencia
+                isOpen={isModalImagensReferenciaOpen}
+                onClose={() => setIsModalImagensReferenciaOpen(false)}
+                initialImages={formDataEntries.imagens}
+                onSave={(newImages) => {
+                  // Atualizar as imagens no FormContext
+                  // Substituir as imagens existentes pelas novas
+                  const imageFiles = newImages.map(img => img.file || img);
+                  setFormData(imageFiles, 'imagens');
+                  setIsModalImagensReferenciaOpen(false);
+                }}
+              />
+            )}
+          </div>
+          <div className="flex flex-col">
+            <div className="flex flex-wrap gap-2 mt-2">
+              {formDataEntries.imagens.map((imagem, index) => (
+                <div key={index} className="text-sm text-gray-600">
+                  {imagem.name || imagem.file?.name || `Imagem ${index + 1}`}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ENTREGA/RETIRADA */}
       <div className="mb-5 pb-4 border-b border-gray-300">
@@ -174,7 +306,24 @@ const handleConfirmFinalizar = async () => {
           />
           {isModalEntregaRetiradaOpen && (
             <ModalEntregaRetirada
+              isOpen={isModalEntregaRetiradaOpen}
               onClose={() => setIsModalEntregaRetiradaOpen(false)}
+              selectedData={formDataEntries.data}
+              selectedTelefone={formDataEntries.telefone}
+              selectedNome={formDataEntries.nome}
+              selectedCep={formDataEntries.cep}
+              selectedUf={formDataEntries.estado}
+              selectedCidade={formDataEntries.cidade}
+              selectedBairro={formDataEntries.bairro}
+              selectedRua={formDataEntries.rua}
+              selectedNumero={formDataEntries.numero}
+              selectedComplemento={formDataEntries.complemento}
+              selectedTipoEntrega={formDataEntries.deliveryOption}
+              onSave={(newData) => {
+                // Atualizar os dados de entrega no FormContext
+                appendFormData(newData, 'dadosEntrega');
+                setIsModalEntregaRetiradaOpen(false);
+              }}
             />
           )}
         </div>

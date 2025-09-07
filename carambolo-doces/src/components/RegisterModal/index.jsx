@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import ModalBaseLogin from "../ModalBaseLogin";
 import Button from "../Button";
@@ -17,11 +17,23 @@ function RegisterModal({ onClose, switchToLogin }) {
     trigger
   } = useForm();
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const onSubmit = async (data) => {
+    if (isSubmitting) return; // Previne múltiplos envios
+    
+    setIsSubmitting(true);
     try {
+      // Tentar cadastrar o usuário
+      // Se o telefone já existir, o backend retornará erro 409
+      // que será tratado pelo userService com uma mensagem clara
       await registerUser(data.name, data.password, data.phone);
       switchToLogin();
     } catch (error) {
+      console.error('Erro no cadastro:', error);
+      // O erro já é tratado pelo userService com toast
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -89,7 +101,8 @@ function RegisterModal({ onClose, switchToLogin }) {
         {errors.confirmPassword && <p className="text-red-600 text-sm mb-1">{errors.confirmPassword.message}</p>}
 
         <Button
-          text="Cadastrar"
+          text={isSubmitting ? "Cadastrando..." : "Cadastrar"}
+          disabled={isSubmitting}
           bgColor="bg-gradient-to-l from-gold to-darkGold"
           textColor="text-black"
           type="submit"

@@ -127,26 +127,33 @@ export default function ModalOrderDetails(props) {
                 </div>
                 <div className="flex flex-col">
                   {props.fornada == null && (
-                    <span className="italic pb-8">
+                    <div className="italic pb-8">
                       {(() => {
-                        const imgSrc =
-                          props?.order?.decoracao ||
-                          props?.order?.decoracaoUrl ||
-                          props?.order?.imagemDecoracao ||
-                          (Array.isArray(props?.order?.imagens) && props.order.imagens[0]) ||
-                          (Array.isArray(props?.order?.imagensDecoracao) && props.order.imagensDecoracao[0]);
-                        if (imgSrc && !imgError) {
+                        const imagens = 
+                          props?.order?.imagensDecoracao ||
+                          (Array.isArray(props?.order?.imagens) ? props.order.imagens : []) ||
+                          (props?.order?.decoracao ? [props.order.decoracao] : []) ||
+                          (props?.order?.decoracaoUrl ? [props.order.decoracaoUrl] : []) ||
+                          (props?.order?.imagemDecoracao ? [props.order.imagemDecoracao] : []);
+                        
+                        if (imagens && imagens.length > 0) {
                           return (
-                            <img
-                              src={imgSrc}
-                              onError={() => setImgError(true)}
-                              alt="Imagem de decoração do pedido"
-                            />
+                            <div className="flex flex-wrap gap-4">
+                              {imagens.map((imgSrc, index) => (
+                                <img
+                                  key={index}
+                                  src={imgSrc}
+                                  onError={() => setImgError(true)}
+                                  alt={`Imagem de decoração ${index + 1}`}
+                                  className="max-w-xs max-h-48 object-contain border border-gray-300 rounded"
+                                />
+                              ))}
+                            </div>
                           );
                         }
                         return "Nenhuma imagem de referência adicionada";
                       })()}
-                    </span>
+                    </div>
                   )}
 
                   {props.fornada == null && (
@@ -213,7 +220,7 @@ export default function ModalOrderDetails(props) {
                   {props?.order?.tipoEntrega === "RETIRADA" && (
                     <div>
                       <span className="font-semibold text-blue">Horário:</span>
-                      {props?.order?.horarioRetirada}
+                      {props?.order?.horarioRetirada || "Não especificado"}
                     </div>
                   )}
                 </div>

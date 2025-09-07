@@ -56,19 +56,33 @@ export const register = async (name, password, phone) => {
       contato: phoneWithCountryCode
     };
     
-    
     const response = await axiosApi.post('/usuarios', requestData);
     
     toast.success('Cadastro criado com sucesso!');
+    return response.data;
   } catch (error) {
     handleAuthError(error, phoneWithCountryCode || phone);
     throw error;
   }
 };
 
+// Função para verificar se um telefone já está cadastrado
+// Nota: Esta função foi removida pois estava causando problemas com o endpoint de login
+// A validação de telefone duplicado agora é feita apenas no momento do cadastro
+// através do tratamento do erro 409 retornado pelo backend
+
 const handleAuthError = (error, phone) => {
   if (error.response && error.response.status === 409) {
-    toast.error(`Usuário com contato ${phone} já existente`);
+    // Formatar o telefone para exibição mais amigável
+    const formattedPhone = phone ? formatPhoneForDisplay(phone) : 'este telefone';
+    toast.error(
+      `Este telefone (${formattedPhone}) já está cadastrado. Tente fazer login ou use outro número.`,
+      {
+        autoClose: 6000,
+        closeOnClick: true,
+        pauseOnHover: true,
+      }
+    );
   } else if (error.response && error.response.status === 500) {
     toast.error('Tivemos problemas para processar seu cadastro. Tente novamente mais tarde!');
   } else if (error.response && error.response.status === 401) {
@@ -79,6 +93,25 @@ const handleAuthError = (error, phone) => {
     toast.error('Erro de autenticação. Tente novamente.');
     console.error('Erro de autenticação', error);
   }
+};
+
+// Função auxiliar para formatar telefone para exibição
+const formatPhoneForDisplay = (phone) => {
+  if (!phone) return '';
+  
+  // Remove todos os caracteres não numéricos
+  const cleanPhone = phone.replace(/\D/g, '');
+  
+  // Se tem código do país 55 (Brasil), formata como (XX) XXXXX-XXXX
+  if (cleanPhone.startsWith('55') && cleanPhone.length >= 12) {
+    const ddd = cleanPhone.substring(2, 4);
+    const firstPart = cleanPhone.substring(4, 9);
+    const secondPart = cleanPhone.substring(9, 13);
+    return `(${ddd}) ${firstPart}-${secondPart}`;
+  }
+  
+  // Para outros formatos, retorna como está
+  return phone;
 };
 
 export const changePassword = async (userId, senhaAtual, novaSenha) => {

@@ -60,14 +60,24 @@ function AddressPage() {
   };
 
   const handleAddressDeleted = (deletedAddressId) => {
+    console.log("🗑️ AddressPage - handleAddressDeleted chamado para ID:", deletedAddressId);
+    console.log("📋 AddressPage - Endereços antes da exclusão:", enderecos.length);
+    
     setEnderecos(prevEnderecos => {
       const updatedAddresses = prevEnderecos.filter(endereco => endereco.id !== deletedAddressId);
+      console.log("📋 AddressPage - Endereços após filtro:", updatedAddresses.length);
+      
       const newTotalPages = Math.ceil(updatedAddresses.length / addressesPerPage);
+      console.log("📄 AddressPage - Nova quantidade de páginas:", newTotalPages);
+      
       if (currentPage >= newTotalPages && newTotalPages > 0) {
+        console.log("📄 AddressPage - Ajustando página atual para:", newTotalPages - 1);
         setCurrentPage(newTotalPages - 1);
       } else if (updatedAddresses.length === 0) {
+        console.log("📄 AddressPage - Nenhum endereço restante, voltando para página 0");
         setCurrentPage(0);
       }
+      
       return updatedAddresses;
     });
   };

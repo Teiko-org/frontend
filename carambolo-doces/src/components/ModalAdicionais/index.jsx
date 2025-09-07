@@ -3,15 +3,15 @@ import ModalBaseForm from "../ModalBaseForm";
 import ModalConfirmarEdicao from "../ModalConfirmarEdicao";
 import Button from "../Button";
 
-export default function ModalAdicionais({ isOpen, onClose, onSave }) {
+export default function ModalAdicionais({ isOpen, onClose, onSave, initialAddons = {} }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const closeModal = () => setIsModalOpen(false);
 
   const [addons, setAddons] = useState({
-    cherry: true,
-    glitter: true,
-    pearl: true,
-    bows: false,
+    cereja: initialAddons.cereja || false,
+    glitter: initialAddons.glitter || false,
+    perolado: initialAddons.perolado || false,
+    lacinhos: initialAddons.lacinhos || false,
   });
 
   const handleCheckboxChange = (e) => {
@@ -23,7 +23,9 @@ export default function ModalAdicionais({ isOpen, onClose, onSave }) {
   };
 
   const handleSave = () => {
-    // onSave(addons);
+    if (onSave) {
+      onSave(addons);
+    }
     setIsModalOpen(true);
   };
 
@@ -31,10 +33,10 @@ export default function ModalAdicionais({ isOpen, onClose, onSave }) {
     <ModalBaseForm isOpen={isOpen} onClose={onClose} title="ADICIONAIS">
       <div className="flex flex-wrap gap-6 mb-4 mt-7">
         {[
-          { label: "CEREJA", name: "cherry" },
+          { label: "CEREJA", name: "cereja" },
           { label: "GLITTER", name: "glitter" },
-          { label: "PEROLADO", name: "pearl" },
-          { label: "LACINHOS", name: "bows" },
+          { label: "PEROLADO", name: "perolado" },
+          { label: "LACINHOS", name: "lacinhos" },
         ].map((item) => (
           <label
             key={item.name}

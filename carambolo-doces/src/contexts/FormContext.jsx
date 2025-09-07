@@ -33,6 +33,22 @@ export const FormProvider = ({ children }) => {
     }
   };
 
+  const setFormData = (data, category) => {
+    switch (category) {
+      case 'dadosEntrega':
+        setDadosEntrega(data);
+        break;
+      case 'imagens':
+        setImagens(Array.isArray(data) ? data : []);
+        break;
+      case 'dadosMontagem':
+        setDadosMontagem(data);
+        break;
+      default:
+        break;
+    }
+  };
+
   const mapTamanhoToEnum = (tamanho) => {
     const mapping = {
       "11cm": "TAMANHO_5",
@@ -254,9 +270,12 @@ export const FormProvider = ({ children }) => {
             headers: { "Content-Type": "multipart/form-data" },
           });
           decoracaoCriadaId = resp?.data?.id ?? null;
+          console.log("✅ Decoração criada com sucesso:", decoracaoCriadaId);
         }
       } catch (e) {
-        console.error("Erro ao enviar imagens de referência:", e);
+        console.error("❌ Erro ao enviar imagens de referência:", e);
+        console.log("⚠️ Continuando sem decoração...");
+        // Continua o processo mesmo se a decoração falhar
       }
 
       const tamanhoMapeado = mapTamanhoToEnum(dadosMontagem.tamanho);
@@ -282,18 +301,40 @@ export const FormProvider = ({ children }) => {
         categoria: "PERSONALIZADO"
       };
 
+      console.log("🍰 Criando bolo com dados:", boloData);
       const boloId = await registerBolo(boloData);
+      console.log("✅ Bolo criado com ID:", boloId);
+
+      // Preparar observação com adicionais
+      let observacaoCompleta = dadosMontagem.observacoes || "";
+      
+      // Adicionar adicionais à observação se existirem
+      if (dadosMontagem.adicionais) {
+        const adicionaisSelecionados = [];
+        if (dadosMontagem.adicionais.cereja) adicionaisSelecionados.push("CEREJA");
+        if (dadosMontagem.adicionais.glitter) adicionaisSelecionados.push("GLITTER");
+        if (dadosMontagem.adicionais.perolado) adicionaisSelecionados.push("PEROLADO");
+        if (dadosMontagem.adicionais.lacinhos) adicionaisSelecionados.push("LACINHOS");
+        
+        if (adicionaisSelecionados.length > 0) {
+          const adicionaisTexto = `Adicionais: ${adicionaisSelecionados.join(", ")}`;
+          observacaoCompleta = observacaoCompleta 
+            ? `${observacaoCompleta}\n${adicionaisTexto}`
+            : adicionaisTexto;
+        }
+      }
 
       const pedidoData = {
         boloId: boloId,
         usuarioId: null,
-        observacao: dadosMontagem.observacoes || "",
+        observacao: observacaoCompleta,
         dataPrevisaoEntrega: dadosEntrega.data.replace(/\//g, '-'),
         dataUltimaAtualizacao: new Date().toISOString(),
         tipoEntrega: dadosEntrega.deliveryOption?.toUpperCase() || "ENTREGA",
         nomeCliente: dadosEntrega.nome,
         telefoneCliente: dadosEntrega.telefone,
-        enderecoId: enderecoId
+        enderecoId: enderecoId,
+        horarioRetirada: dadosEntrega.deliveryOption === "Retirada" ? dadosEntrega.horario : null
       };
 
       const pedidoId = await registerPedidoBolo(pedidoData);
@@ -341,7 +382,7 @@ export const FormProvider = ({ children }) => {
   const formDataEntries = {
     ...dadosEntrega,
     ...dadosMontagem,
-    adicionais: imagens,
+    imagens: imagens,
   };
 
   return (
@@ -351,6 +392,7 @@ export const FormProvider = ({ children }) => {
         nextStep, 
         prevStep, 
         appendFormData, 
+        setFormData,
         submitForm, 
         formData: formDataEntries,
         valorEstimado,
