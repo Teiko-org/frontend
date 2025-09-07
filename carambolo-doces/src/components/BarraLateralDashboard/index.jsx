@@ -98,7 +98,7 @@ const BarraLateralDashboard = () => {
                             </a> */}
                             <Link to="/fornada-dashboard">
                                 <div className={`flex items-center pl-5 py-2 gap-2 ml-3 rounded-l-full transition-colors duration-400 ease-in-out ${isActive(['/fornada-dashboard','/all-fornadas-dashboard']) ? 'bg-bgNativeHome text-darkBlue font-semibold' : 'hover:bg-bgNativeHome hover:text-darkBlue'}`}>
-                                    <RiFileEditLine /> Produção
+                                    <RiFileEditLine /> Fornada
                                 </div>
                             </Link>
                         </li>
