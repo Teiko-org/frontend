@@ -16,7 +16,6 @@ function FornadaSemana() {
       try {
         setLoading(true);
         
-        // Buscar qualquer fornada (ativa, futura ou próxima) para o banner
         const fornadaAtual = await getFornadaAtiva();
         
         if (!fornadaAtual) {
@@ -28,7 +27,6 @@ function FornadaSemana() {
         
         setFornada(fornadaAtual);
         
-        // Buscar produtos apenas se a fornada estiver realmente ativa
         const hoje = new Date();
         const [yi, mi, di] = String(fornadaAtual.dataInicio).split("-").map(Number);
         const [yf, mf, df] = String(fornadaAtual.dataFim).split("-").map(Number);
@@ -38,14 +36,14 @@ function FornadaSemana() {
         
         if (isFornadaAtiva) {
           const produtosFornada = await getProdutosFornadaComImagens(fornadaAtual.id);
-          setProdutos(produtosFornada);
+          const visiveis = (produtosFornada || []).filter((p) => (p.isAtivo ?? true) === true);
+          setProdutos(visiveis);
         } else {
           setProdutos([]);
         }
         
       } catch (error) {
         console.error("Erro ao carregar produtos da fornada:", error);
-        // Não mostrar toast de erro para usuários não logados
         if (error.response?.status !== 401) {
           toast.error("Erro ao carregar os produtos da fornada");
         }

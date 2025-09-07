@@ -3,17 +3,21 @@ import { clearAuthData } from "../service/userService.js"
 
 // Função para verificar se a rota é pública (não precisa de autenticação)
 const isPublicRoute = (url, method = 'GET') => {
-    const publicRoutes = [
-        '/decoracoes',
-        '/bolos'
-    ];
-    
+    const methodUpper = (method || 'GET').toUpperCase();
+    // Essas rotas são públicas somente para GET
+    const publicGetOnly = ['/decoracoes', '/bolos'];
+
     // Para fornadas, apenas GET é público, outras operações precisam de autenticação
     if (url.includes('/fornadas')) {
-        return method === 'GET';
+        return methodUpper === 'GET';
     }
-    
-    return publicRoutes.some(route => url.includes(route));
+
+    // Qualquer método diferente de GET nessas rotas não é público
+    if (publicGetOnly.some(route => url.includes(route))) {
+        return methodUpper === 'GET';
+    }
+
+    return false;
 };
 
 // Função para verificar se a rota é de autenticação (precisa de cookies)

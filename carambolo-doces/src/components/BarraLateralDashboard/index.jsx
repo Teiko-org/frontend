@@ -5,6 +5,7 @@ import { RiFileEditLine } from "react-icons/ri";
 import { BiLogOut } from "react-icons/bi";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FaHome } from "react-icons/fa";
+import { MdSpaceDashboard } from "react-icons/md";
 import { useEffect } from "react";
 
 const BarraLateralDashboard = () => {
@@ -15,7 +16,6 @@ const BarraLateralDashboard = () => {
     const isActiveExact = (path) => location.pathname === path;
 
     const handleLogout = () => {
-        // Migrar carrinho do usuário para convidado antes de fazer logout
         const userId = localStorage.getItem("userId");
         if (userId) {
             const userCartKey = `CART_ITEMS_USER_${userId}`;
@@ -44,9 +44,16 @@ const BarraLateralDashboard = () => {
                 <nav className="flex-1">
                     <ul className="text-gold">
                         <li>
+                            <Link to="/">
+                                <div className={`flex items-center pl-5 py-2 gap-2 ml-3 rounded-l-full transition-colors duration-400 ease-in-out ${isActiveExact('/') ? 'bg-bgNativeHome text-darkBlue font-semibold' : 'hover:bg-bgNativeHome hover:text-darkBlue'}`}>
+                                    <FaHome /> Home
+                                </div>
+                            </Link>
+                        </li>
+                        <li>
                             <Link to="/dashboard">
                                 <div className={`flex items-center pl-5 py-2 gap-2 ml-3 rounded-l-full transition-colors duration-400 ease-in-out ${isActiveExact('/dashboard') ? 'bg-bgNativeHome text-darkBlue font-semibold' : 'hover:bg-bgNativeHome hover:text-darkBlue'}`}>
-                                    <FaHome /> Dashboard
+                                    <MdSpaceDashboard /> Dashboard
                                 </div>
                             </Link>
                         </li>

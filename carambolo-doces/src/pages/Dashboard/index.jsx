@@ -23,6 +23,7 @@ export default function Dashboard() {
   const [topProdutosImgs, setTopProdutosImgs] = useState([]);
   const [ultimosPedidos, setUltimosPedidos] = useState([]);
   const [periodo, setPeriodo] = useState("mes");
+  const [tipoGrafico, setTipoGrafico] = useState("Bolo");
   const [tabProdutos, setTabProdutos] = useState("Todos");
   const [serieBolo, setSerieBolo] = useState({ labels: [], concluidos: [], cancelados: [] });
   const [serieFornada, setSerieFornada] = useState({ labels: [], concluidos: [], cancelados: [] });
@@ -44,14 +45,12 @@ export default function Dashboard() {
       setPedidosStatus({ bolo: pedidosBolo ?? {}, fornada: pedidosFornada ?? {} });
       const lista = produtos ?? [];
       setTopProdutos(lista);
-      // carrega imagens em paralelo sem travar a tela
       try {
         const enriquecidos = await Promise.all(
           (lista || []).map(async (p) => {
             try {
               if (p?.tipo === "FORNADA") {
                 const { data } = await axiosApi.get(`/fornadas/produto-fornada/${p.id}`);
-                // suporta tanto DTO com array de strings quanto entidade com objetos { url }
                 const imagens = data?.imagens ?? data?.imagens?.map?.((i) => i?.url) ?? [];
                 const url = Array.isArray(imagens) && imagens.length > 0 ? (imagens[0]?.url ?? imagens[0]) : undefined;
                 return { ...p, imagemUrl: url };
@@ -88,13 +87,11 @@ export default function Dashboard() {
         getQtdPedidosFornadaPorPeriodo(periodo).catch(() => ({})),
       ]);
       const parse = (obj) => {
-        // normalizar chaves e ordenar numericamente
         const rawLabels = Object.keys(obj ?? {});
         const sorted = rawLabels.sort((a, b) => Number(a) - Number(b));
         const concluidos = sorted.map((k) => (obj?.[k]?.concluidos ?? 0));
         const cancelados = sorted.map((k) => (obj?.[k]?.cancelados ?? 0));
 
-        // labels para exibição
         const formattedLabels = periodo === "mes"
           ? sorted.map((label) => {
               const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
@@ -103,19 +100,16 @@ export default function Dashboard() {
             })
           : sorted.map((l) => String(l));
 
-        // Sempre retornar labels normalizados como strings (para união e eixos)
         return { labels: periodo === 'mes' ? sorted.map((l)=>String(l)) : sorted.map((l)=>String(l)), concluidos, cancelados, displayLabels: formattedLabels };
       };
       const parsedBolo = parse(bolo);
       const parsedFornada = parse(fornada);
-      // Usamos labels normalizados para cálculos e displayLabels apenas no spark tooltip/xaxis se desejar
       setSerieBolo({ labels: parsedBolo.labels, concluidos: parsedBolo.concluidos, cancelados: parsedBolo.cancelados });
       setSerieFornada({ labels: parsedFornada.labels, concluidos: parsedFornada.concluidos, cancelados: parsedFornada.cancelados });
     };
     loadSeries();
   }, [periodo]);
 
-  // Sparkline para os cards KPI
   const buildSparkOptions = (labels, isAno) => ({
     chart: { 
       type: "area", 
@@ -176,31 +170,23 @@ export default function Dashboard() {
   const pedidosSerieSpark = useMemo(() => [{ data: (serieBolo.concluidos || []).slice(-10) }], [serieBolo.concluidos]);
   const fornadaSerieSpark = useMemo(() => [{ data: (serieFornada.concluidos || []).slice(-10) }], [serieFornada.concluidos]);
 
-  // Gráfico principal (Pedidos)
-  const allCategories = useMemo(() => {
-    const set = new Set([...(serieBolo.labels || []), ...(serieFornada.labels || [])]);
-    const arr = Array.from(set);
-    // ordenar numericamente quando possível
-    arr.sort((a, b) => {
-      const na = Number(a); const nb = Number(b);
-      if (!isNaN(na) && !isNaN(nb)) return na - nb;
-      return String(a).localeCompare(String(b));
-    });
-    return arr;
-  }, [serieBolo.labels, serieFornada.labels]);
+  const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
-  const alignedSeries = useMemo(() => {
-    const toMap = (labels, values) => {
-      const map = new Map();
-      (labels || []).forEach((l, i) => map.set(String(l), values[i] ?? 0));
-      return map;
-    };
-    const mapBolo = toMap(serieBolo.labels, serieBolo.concluidos);
-    const mapFornada = toMap(serieFornada.labels, serieFornada.concluidos);
-    const bolo = allCategories.map((l) => mapBolo.get(String(l)) ?? 0);
-    const fornada = allCategories.map((l) => mapFornada.get(String(l)) ?? 0);
-    return { bolo, fornada };
-  }, [allCategories, serieBolo.labels, serieBolo.concluidos, serieFornada.labels, serieFornada.concluidos]);
+  const categoriesDisplay = useMemo(() => {
+    const labels = tipoGrafico === 'Bolo' ? (serieBolo.labels || []) : (serieFornada.labels || []);
+    if (periodo === 'mes') {
+      return labels.map((l) => monthNames[parseInt(l) - 1] || String(l));
+    }
+    return labels.map((l) => String(l));
+  }, [tipoGrafico, serieBolo.labels, serieFornada.labels, periodo]);
+
+  const serieConcluidos = useMemo(() => (
+    tipoGrafico === 'Bolo' ? (serieBolo.concluidos || []) : (serieFornada.concluidos || [])
+  ), [tipoGrafico, serieBolo.concluidos, serieFornada.concluidos]);
+
+  const serieCancelados = useMemo(() => (
+    tipoGrafico === 'Bolo' ? (serieBolo.cancelados || []) : (serieFornada.cancelados || [])
+  ), [tipoGrafico, serieBolo.cancelados, serieFornada.cancelados]);
 
   const pedidosOptions = useMemo(
     () => ({
@@ -227,7 +213,7 @@ export default function Dashboard() {
       },
       dataLabels: { enabled: false },
       xaxis: { 
-        categories: allCategories,
+        categories: categoriesDisplay,
         labels: {
           style: {
             fontFamily: 'Montserrat, sans-serif',
@@ -270,23 +256,15 @@ export default function Dashboard() {
         custom: function({series, seriesIndex, dataPointIndex, w}) {
           const label = w.globals.labels[dataPointIndex];
           const valor = series[seriesIndex][dataPointIndex];
-          const tipo = seriesIndex === 0 ? 'Bolo' : 'Fornada';
+          const serieNome = seriesIndex === 0 ? 'Concluídos' : 'Cancelados';
           const cor = seriesIndex === 0 ? '#D4B076' : '#1C3B57';
-          
-          // Converter número do mês para nome quando período = mês
-          let titulo = label;
-          if (periodo === 'mes') {
-            const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-            const mesNome = monthNames[parseInt(label) - 1] || label;
-            titulo = mesNome;
-          }
-          
+
           return `
             <div style="padding: 14px; background: white; border: 1px solid ${cor}; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); min-width: 140px;">
-              <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px;">${titulo}</div>
+              <div style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px;">${label}</div>
               <div style="display: flex; align-items: center; gap: 10px;">
                 <div style="width: 12px; height: 12px; background: ${cor}; border-radius: 50%;"></div>
-                <div style="color: #666; font-size: 14px; font-weight: 500;">${valor} pedidos de ${tipo}</div>
+                <div style="color: #666; font-size: 14px; font-weight: 500;">${valor} ${serieNome} (${tipoGrafico})</div>
               </div>
             </div>
           `;
@@ -297,7 +275,7 @@ export default function Dashboard() {
         strokeDashArray: 3
       }
     }),
-    [allCategories, periodo]
+    [categoriesDisplay, periodo, tipoGrafico]
   );
 
   const produtosFiltrados = useMemo(() => {
@@ -357,19 +335,25 @@ export default function Dashboard() {
           <div className="bg-gradient-to-b from-[#1C3B57] to-[#0F2A3D] text-gold px-5 py-3 flex items-center justify-between">
             <div>
               <div className="text-xl font-bold tracking-wide">Pedidos</div>
-              <div className="text-[11px] opacity-90">Acompanhe o pulso das vendas em tempo real.</div>
+              <div className="text-[11px] opacity-90">Concluídos x Cancelados · Filtrar por tipo</div>
             </div>
-            <select className="bg-bgHome text-darkBlue px-3 py-1 rounded-full border-2 border-gold shadow" value={periodo} onChange={(e) => setPeriodo(e.target.value)}>
-              <option value="mes">Mês</option>
-              <option value="ano">Ano</option>
-            </select>
+            <div className="flex items-center gap-2">
+              <select className="bg-bgHome text-darkBlue px-3 py-1 rounded-full border-2 border-gold shadow" value={tipoGrafico} onChange={(e) => setTipoGrafico(e.target.value)}>
+                <option value="Bolo">Bolo</option>
+                <option value="Fornada">Fornada</option>
+              </select>
+              <select className="bg-bgHome text-darkBlue px-3 py-1 rounded-full border-2 border-gold shadow" value={periodo} onChange={(e) => setPeriodo(e.target.value)}>
+                <option value="mes">Mês</option>
+                <option value="ano">Ano</option>
+              </select>
+            </div>
           </div>
           <div className="bg-bgHome p-4 min-h-[320px]">
             <ReactApexChart
               options={pedidosOptions}
               series={[
-                { name: "Bolo", data: alignedSeries.bolo },
-                { name: "Fornada", data: alignedSeries.fornada },
+                { name: "Concluídos", data: serieConcluidos },
+                { name: "Cancelados", data: serieCancelados },
               ]}
               type="bar"
               height={260}

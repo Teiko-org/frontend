@@ -8,8 +8,17 @@ export const findAllFornada = async () => {
         const lastFornada = fornadas.data[fornadas.data.length - 1];
 
         const productsFornada = await axiosApi.get(`/fornadas/da-vez/produtos?data_inicio=${lastFornada.dataInicio}&data_fim=${lastFornada.dataFim}`);
-
-        return productsFornada.data;
+        // Normalizar para lista do ProductList e marcar tipo
+        return (productsFornada.data || []).map((p) => ({
+            tipo: 'FORNADA',
+            categoria: p.categoria,
+            descricao: p.descricao,
+            isAtivo: p.isAtivo,
+            produto: p.produto,
+            id: p.id,
+            valor: p.valor,
+            quantidade: p.quantidade ?? 0
+        }));
     } catch (error) {
         console.log(error);
         return [];
@@ -22,6 +31,7 @@ export const findAllBolo = async () => {
         const bolos = await axiosApi.get(`/bolos/detalhe`)
 
         bolos.data.map(item => bolosToResponse.push({
+            tipo: 'BOLO',
             categoria: item.categoria,
             descricao: null,
             isAtivo: item.ativo,
@@ -48,23 +58,23 @@ export const findFeaturedDecoracoes = async () => {
     }
 };
 
-export const handleVisibilityBolo = (data, id) => {
+export const handleVisibilityBolo = async (id, isAtivo) => {
     try {
-        axiosApi.patch(`/bolos/atualizar-status/${id}`, {
-            isAtivo: data[0].isAtivo
-        });
+        await axiosApi.patch(`/bolos/atualizar-status/${id}`, { isAtivo });
+        return true;
     } catch (error) {
         console.log(error);
+        return false;
     }
 }
 
-export const handleVisibilityProdutoFornada = (data, id) => {
+export const handleVisibilityProdutoFornada = async (id, isAtivo) => {
     try {
-        axiosApi.patch(`/fornadas/produto-fornada/status/${id}`, {
-            isAtivo: data[0].isAtivo
-        });
+        await axiosApi.patch(`/fornadas/produto-fornada/status/${id}`, { isAtivo });
+        return true;
     } catch (error) {
         console.log(error)
+        return false;
     }
 }
 

@@ -10,7 +10,8 @@ function parseLocalDate(dateStr) {
 
 export const listFornadas = async () => {
   try {
-    const response = await axiosApi.get('/fornadas');
+    // buscar todas (ativas e encerradas) para histórico consistente
+    const response = await axiosApi.get('/fornadas/todas');
     return response.data;
   } catch (error) {
     console.error('Erro ao listar fornadas:', error);
@@ -77,11 +78,22 @@ export const getLastFornada = async () => {
       return null;
     }
 
-    // Ordena por data FIM decrescente para pegar a com dataFim mais recente
-    const lastFornada = fornadas.sort((a, b) =>
-      new Date(b.dataFim) - new Date(a.dataFim)  // Mudado de dataInicio para dataFim
-    )[0];
+    // Considera somente fornadas ENCERRADAS que JÁ ACONTECERAM
+    // Regra: dataInicio <= hoje e dataFim <= hoje (comparação por dia)
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const encerradas = fornadas.filter(f => {
+      const fim = parseLocalDate(f.dataFim);
+      const ini = parseLocalDate(f.dataInicio);
+      if (!fim || !ini) return false;
+      fim.setHours(0,0,0,0);
+      ini.setHours(0,0,0,0);
+      return ini <= hoje && fim <= hoje;
+    });
 
+    if (encerradas.length === 0) return null;
+
+    // Ordena por dataFim decrescente e pega a última encerrada
+    const lastFornada = encerradas.sort((a, b) => new Date(b.dataFim) - new Date(a.dataFim))[0];
     return lastFornada;
   } catch (error) {
     console.error('Erro ao buscar última fornada:', error);
@@ -95,30 +107,31 @@ export const getFornadaAtiva = async () => {
 
     if (fornadas.length === 0) return null;
 
-    const hoje = new Date();
+    // Comparação por dia (ignorando horas) para permitir que dataFim === hoje
+    // seja considerada encerrada no dia atual
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
 
-    // Primeiro, filtra fornadas que ainda não expiraram (dataFim >= hoje)
-    const fornadasNaoExpiradas = fornadas.filter(fornada => {
-      const dataFim = parseLocalDate(fornada.dataFim);
-      return dataFim >= hoje;
-    });
+    // Considera apenas fornadas marcadas como ativas e que ainda não expiraram (dataFim > hoje)
+    const fornadasNaoExpiradas = (fornadas || [])
+      .filter(f => (f.isAtivo ?? f.ativo) === true)
+      .filter(fornada => {
+        const dataFim = parseLocalDate(fornada.dataFim);
+        dataFim.setHours(0,0,0,0);
+        return dataFim > hoje;
+      });
 
     if (fornadasNaoExpiradas.length === 0) {
-      // Se todas expiraram, pega a que expirou mais recentemente (maior dataFim)
-      const lastFornada = fornadas.sort((a, b) =>
-        new Date(b.dataFim) - new Date(a.dataFim)  // Ordena por dataFim decrescente
-      )[0];
-
-      return lastFornada;
+      // Nenhuma fornada ativa/futura
+      return null;
     }
 
-    // Das não expiradas, pega a que está ativa agora (hoje entre dataInicio e dataFim)
+    // Das não expiradas, pega a que está ativa agora (hoje entre [dataInicio, dataFim))
     const fornadasAtivas = fornadasNaoExpiradas.filter(fornada => {
       const [yi, mi, di] = String(fornada.dataInicio).split("-").map(Number);
       const [yf, mf, df] = String(fornada.dataFim).split("-").map(Number);
       const dataInicio = new Date(yi, mi - 1, di, 0, 0, 0, 0);
-      const dataFim = new Date(yf, mf - 1, df, 23, 59, 59, 999);
-      return hoje >= dataInicio && hoje <= dataFim;
+      const dataFim = new Date(yf, mf - 1, df, 0, 0, 0, 0);
+      return hoje >= dataInicio && hoje < dataFim;
 
     });
 
@@ -152,14 +165,16 @@ export const getFornadaRealmenteAtiva = async () => {
 
     const hoje = new Date();
 
-    // Filtra apenas fornadas que estão ativas agora (hoje entre dataInicio e dataFim)
-    const fornadasAtivas = fornadas.filter(fornada => {
-      const [yi, mi, di] = String(fornada.dataInicio).split("-").map(Number);
-      const [yf, mf, df] = String(fornada.dataFim).split("-").map(Number);
-      const dataInicio = new Date(yi, mi - 1, di, 0, 0, 0, 0);
-      const dataFim = new Date(yf, mf - 1, df, 23, 59, 59, 999);
-      return hoje >= dataInicio && hoje <= dataFim;
-    });
+    // Filtra apenas fornadas marcadas ativas e com hoje entre dataInicio e dataFim
+    const fornadasAtivas = (fornadas || [])
+      .filter(f => (f.isAtivo ?? f.ativo) === true)
+      .filter(fornada => {
+        const [yi, mi, di] = String(fornada.dataInicio).split("-").map(Number);
+        const [yf, mf, df] = String(fornada.dataFim).split("-").map(Number);
+        const dataInicio = new Date(yi, mi - 1, di, 0, 0, 0, 0);
+        const dataFim = new Date(yf, mf - 1, df, 23, 59, 59, 999);
+        return hoje >= dataInicio && hoje <= dataFim;
+      });
 
     if (fornadasAtivas.length > 0) {
       // Se há fornadas ativas, pega a com dataFim mais distante (que vai durar mais)
@@ -308,17 +323,12 @@ export const getMesesAnosFornadas = async () => {
 
 export const getFornadasMesAno = async (mes, ano) => {
   try {
-    // Endpoint correto para filtrar por mês/ano
-    const response = await axiosApi.get('/fornadas/com-itens', {
-      params: { mes, ano }
-    });
-    const data = response.data || [];
-    // Normaliza para o formato usado na listagem (id, dataInicio, dataFim)
-    return data.map((f) => ({
-      id: f.fornadaId ?? f.id,
-      dataInicio: f.dataInicio,
-      dataFim: f.dataFim
-    }));
+    // Preferir /fornadas/todas + filtro local para evitar inconsistências
+    const todas = await listFornadas();
+    return (todas || []).filter(f => {
+      const [y, m] = String(f.dataInicio || '').split('-').map(Number);
+      return y === Number(ano) && m === Number(mes);
+    }).map(f => ({ id: f.id, dataInicio: f.dataInicio, dataFim: f.dataFim }));
   } catch (error) {
     console.error('Erro ao buscar fornadas por mês/ano:', error);
     throw error;

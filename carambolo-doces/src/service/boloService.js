@@ -13,10 +13,15 @@ export const getBolosPorCategoria = async () => {
 export const getBolosComImagens = async () => {
   try {
     const bolos = await getBolosPorCategoria();
-    
+    // Filtrar apenas bolos ativos (isAtivo/ativo true)
+    const bolosAtivos = (bolos || []).filter((b) => {
+      const flag = (b.isAtivo ?? b.ativo ?? b.ativoBolo ?? b.ativo);
+      return flag === true;
+    });
+
     // Para cada bolo, busca as imagens da decoração
     const bolosComImagens = await Promise.all(
-      bolos.map(async (bolo) => {
+      bolosAtivos.map(async (bolo) => {
         try {
           // Se tem decoração, busca as imagens
           if (bolo.decoracaoId) {

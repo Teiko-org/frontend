@@ -11,16 +11,19 @@ import BannerPrincipal from "../../components/BannerPrincipal";
 import BannerFornada from "../../components/BannerFornada";
 import { getFornadaRealmenteAtiva, getFornadaAtiva, getProdutosFornadaComImagens } from "../../service/fornadaService";
 import { findFeaturedDecoracoes } from "../../service/productService";
+import { getBolosComImagens } from "../../service/boloService";
 import { getProdutosMaisPedidos } from "../../service/dashboardService";
 import Carousel from "../../components/Carousel";
 import './cardsTransition.css';
 
 function Home() {
   const [decoracoes, setDecoracoes] = useState([]);
+  const [slidesCarambolos, setSlidesCarambolos] = useState([]);
   const [produtosFornada, setProdutosFornada] = useState([]);
   const [fornada, setFornada] = useState(null);
   const [fornadaParaBanner, setFornadaParaBanner] = useState(null);
   const [carambolosMaisPedidos, setCarambolosMaisPedidos] = useState([]);
+  const [categoriasBolosAtivos, setCategoriasBolosAtivos] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
   const searchQuery = new URLSearchParams(location.search).get('q')?.trim().toLowerCase() || '';
@@ -50,7 +53,9 @@ function Home() {
         if (fornadaAtual) {
           setFornada(fornadaAtual);
           const produtos = await getProdutosFornadaComImagens(fornadaAtual.id);
-          setProdutosFornada(produtos.slice(0, 4));
+          // Segurança adicional: mostrar apenas produtos com quantidade > 0 e ativos
+          const visiveis = (produtos || []).filter(p => (p.quantidade ?? 0) > 0 && (p.isAtivo ?? true));
+          setProdutosFornada(visiveis.slice(0, 4));
         } else {
           setFornada(null);
           setProdutosFornada([]);
@@ -70,11 +75,33 @@ function Home() {
     fetchDecoracoes();
     carregarDadosFornada();
 
+    // Carregar bolos ativos para compor o carrossel de Carambolos diretamente
+    (async () => {
+      try {
+        const bolosAtivos = await getBolosComImagens();
+        const porCategoria = new Map();
+        (bolosAtivos || []).forEach((b) => {
+          if (!b?.categoria) return;
+          if (!porCategoria.has(b.categoria)) {
+            const imagem = b.imagens?.[0] ?? "src/assets/image_card.png";
+            porCategoria.set(b.categoria, { image: imagem, title: b.categoria, categoria: b.categoria, id: b.boloId ?? b.id });
+          }
+        });
+        setSlidesCarambolos(Array.from(porCategoria.values()));
+        const categorias = Array.from(porCategoria.keys());
+        setCategoriasBolosAtivos(categorias);
+      } catch (e) {
+        setSlidesCarambolos([]);
+        setCategoriasBolosAtivos([]);
+      }
+    })();
+
     (async () => {
       try {
         const top = await getProdutosMaisPedidos();
         const apenasBolos = (top || [])
           .filter((p) => p.tipo === "BOLO")
+          .filter((p) => (p.isAtivo ?? p.ativo ?? true) === true)
           .slice(0, 4)
           .map((p) => ({
             id: p.id,
@@ -99,11 +126,12 @@ function Home() {
                 }
                 return p;
               } catch {
-                return p;
+                // Se o bolo não existir/estiver inativo (404), descartar
+                return null;
               }
             })
           );
-          setCarambolosMaisPedidos(enriquecidos);
+          setCarambolosMaisPedidos(enriquecidos.filter(Boolean));
         } catch {
           setCarambolosMaisPedidos(apenasBolos);
         }
@@ -112,26 +140,68 @@ function Home() {
         setCarambolosMaisPedidos([]);
       }
     })();
+
+    const onVisibilityChanged = async () => {
+      try {
+        const top = await getProdutosMaisPedidos();
+        const apenasBolos = (top || [])
+          .filter((p) => p.tipo === "BOLO")
+          .filter((p) => (p.isAtivo ?? p.ativo ?? true) === true)
+          .slice(0, 4)
+          .map((p) => ({
+            id: p.id,
+            nome: p.nome,
+            quantidade: p.quantidade,
+            valorTotal: p.valorTotal,
+            imagens: ["src/assets/image_card.png"],
+          }));
+
+        const { axiosApi } = await import("../../provider/AxiosApi");
+        const enriquecidos = await Promise.all(
+          apenasBolos.map(async (p) => {
+            try {
+              const { data: bolo } = await axiosApi.get(`/bolos/${p.id}`);
+              const decoracaoId = bolo?.decoracaoId;
+              if (decoracaoId) {
+                const { data: decoracao } = await axiosApi.get(`/decoracoes/${decoracaoId}`);
+                const imagemUrl = decoracao?.imagens?.[0];
+                const nomeDecoracao = decoracao?.categoria || decoracao?.nome || p.nome;
+                return { ...p, imagens: [imagemUrl || p.imagens?.[0]], nome: nomeDecoracao };
+              }
+              return p;
+            } catch {
+              return null;
+            }
+          })
+        );
+        setCarambolosMaisPedidos(enriquecidos.filter(Boolean));
+        // Recarregar categorias de bolos ativos para filtrar Carambolos Pré-Decorados
+        try {
+          const bolosAtivos = await getBolosComImagens();
+          const categorias = Array.from(new Set((bolosAtivos || []).map(b => b.categoria).filter(Boolean)));
+          setCategoriasBolosAtivos(categorias);
+        } catch {
+          setCategoriasBolosAtivos([]);
+        }
+      } catch {}
+    };
+    window.addEventListener('carambolo:visibility-changed', onVisibilityChanged);
+    return () => {
+      window.removeEventListener('carambolo:visibility-changed', onVisibilityChanged);
+    };
   }, []);
 
   // (removido sticky footer hack da Home)
 
   const slides = useMemo(() => {
-    if (!decoracoes || decoracoes.length === 0) {
-      return [];
-    }
-    const base = decoracoes.map((d) => ({ 
-      image: d.imagens?.[0]?.url ?? d.imagens?.[0] ?? "src/assets/image_card.png", 
-      title: d.categoria ?? d.nome,
-      categoria: d.categoria,
-      id: d.id
-    }));
+    const base = slidesCarambolos;
+    if (!base || base.length === 0) return [];
     if (!searchQuery) return base;
     const q = searchQuery;
     if (q.includes('fornada')) return [];
     if (q.includes('carambolo') || q.includes('bolo')) return base;
     return base.filter(s => (s.title || '').toLowerCase().includes(q));
-  }, [decoracoes, searchQuery]);
+  }, [slidesCarambolos, searchQuery]);
 
   const handleTemaClick = (slide) => {
     if (slide.categoria) {
@@ -171,13 +241,9 @@ function Home() {
       <BannerPrincipal />
       <div className="h-12"></div>
       
-      {/* Banner de Fornada - aparece se houver fornada (ativa ou futura) */}
-      {fornadaParaBanner && (
-        <>
-          <BannerFornada fornada={fornadaParaBanner} />
-          <div className="h-12"></div>
-        </>
-      )}
+      {/* Banner de Fornada - sempre visível; se não houver fornada, BannerFornada se auto-ajusta */}
+      <BannerFornada fornada={fornadaParaBanner} />
+      <div className="h-12"></div>
       
       {/* Carambolos Pré-Decorados - com carrossel */}
       {showCarambolos && (

@@ -40,23 +40,40 @@ function AllFornadasDashboard() {
     const carregarFornadas = async () => {
         try {
             setLoading(true);
-            // Caso ANO e MÊS selecionados: busca diretamente filtrado no back
-            if (anoSelecionado && mesSelecionado) {
-                const filtradas = await getFornadasMesAno(mesSelecionado, anoSelecionado);
-                setFornadas(Array.isArray(filtradas) ? filtradas : []);
-                return;
-            }
-
-            // Carrega todas e filtra no cliente para os casos parciais
             const todasFornadas = await listFornadas();
+            console.log('[ALL-FORNADAS] Raw fornadas:', (todasFornadas || []).map(f => ({ id: f.id, ini: f.dataInicio, fim: f.dataFim, ativo: f.isAtivo })));
             let resultado = Array.isArray(todasFornadas) ? todasFornadas : [];
 
-            if (anoSelecionado && !mesSelecionado) {
-                resultado = resultado.filter(f => new Date(f.dataInicio).getFullYear() === Number(anoSelecionado));
-            } else if (!anoSelecionado && mesSelecionado) {
-                resultado = resultado.filter(f => (new Date(f.dataInicio).getMonth() + 1) === Number(mesSelecionado));
+            if (anoSelecionado) {
+                resultado = resultado.filter(f => {
+                    const [y] = String(f.dataInicio || '').split('-').map(Number);
+                    return y === Number(anoSelecionado);
+                });
+            }
+            if (mesSelecionado) {
+                resultado = resultado.filter(f => {
+                    const [, m] = String(f.dataInicio || '').split('-').map(Number);
+                    return m === Number(mesSelecionado);
+                });
             }
 
+            resultado.sort((a, b) => {
+                const normEnd = (x) => {
+                    const [yi, mi, di] = String(x.dataInicio || '').split('-').map(Number);
+                    const [yf, mf, df] = String(x.dataFim || '').split('-').map(Number);
+                    const ti = new Date(yi || 0, (mi || 1) - 1, di || 1).getTime();
+                    const tf = new Date(yf || 0, (mf || 1) - 1, df || 1).getTime();
+                    return isNaN(tf) ? ti : Math.max(ti, tf);
+                };
+                const eb = normEnd(b);
+                const ea = normEnd(a);
+                if (eb !== ea) return eb - ea;
+                const ib = Number(b.id || 0);
+                const ia = Number(a.id || 0);
+                return ib - ia;
+            });
+
+            console.log('[ALL-FORNADAS] Filtrado/ordenado:', resultado.map(f => ({ id: f.id, ini: f.dataInicio, fim: f.dataFim })));
             setFornadas(resultado);
         } catch (error) {
             console.error('Erro ao carregar fornadas:', error);
@@ -71,35 +88,15 @@ function AllFornadasDashboard() {
     };
 
     const handleEncerrarFornada = async (fornadaId) => {
-        try {
-            const confirmacao = window.confirm(
-                "Tem certeza que deseja encerrar esta fornada? Esta ação não pode ser desfeita."
-            );
-
-            if (!confirmacao) return;
-
-            const sucesso = await encerrarFornada(fornadaId);
-            
-            if (sucesso) {
-                alert('Fornada encerrada com sucesso!');
-                carregarFornadas(); // Recarrega as fornadas para refletir o status atualizado
-            } else {
-                alert('Erro ao encerrar fornada!');
-            }
-        } catch (error) {
-            console.error('Erro ao encerrar fornada:', error);
-            alert('Erro ao encerrar fornada. Tente novamente.');
-        }
+        return;
     };
 
     const getMesesAnos = async () => {
         try {
             const data = await getMesesAnosFornadas();
             setDados(data);
-            // anos sempre independentes do mês
             const anosUnicos = [...new Set((data || []).map(item => item.ano))].sort((a,b)=>b-a);
             setAnos(anosUnicos.map(ano => ({ label: ano, value: ano })));
-            // se já há ano selecionado, filtra meses por esse ano; senão lista todos
             const mesesBase = (anoSelecionado ? data.filter(i => i.ano === anoSelecionado) : data) || [];
             const mesesUnicos = [...new Set(mesesBase.map(item => item.mes))].sort((a,b)=>a-b);
             setMeses(mesesUnicos.map(mes => ({ label: nomesMeses[mes - 1], value: mes })));
@@ -111,7 +108,6 @@ function AllFornadasDashboard() {
     };
 
     useEffect(() => {
-        // Quando o ano muda, recalcula os meses disponíveis para aquele ano
         const mesesDisponiveis = (dados || [])
             .filter(item => anoSelecionado ? item.ano === anoSelecionado : true)
             .map(item => item.mes);
@@ -120,13 +116,11 @@ function AllFornadasDashboard() {
         if (mesSelecionado && !mesesUnicos.includes(mesSelecionado)) setMesSelecionado(null);
     }, [anoSelecionado, dados]);
 
-    // Anos não dependem do mês: sempre listar todos disponíveis
     useEffect(() => {
         const anosUnicos = [...new Set((dados || []).map(item => item.ano))].sort((a,b)=>b-a);
         setAnos(anosUnicos.map(ano => ({ label: ano, value: ano })));
     }, [dados]);
 
-    // removido efeito duplicado; `carregarFornadas` já popula `fornadas`
 
     const [fornadaSelecionada, setFornadaSelecionada] = useState(null);
 
@@ -144,7 +138,7 @@ function AllFornadasDashboard() {
                               onClick={() => navigate(-1)}
                               className="bg-gradient-to-l from-gold to-darkGold text-blue font-bold px-4 py-1 rounded-full border-2 border-gold shadow hover:shadow-md"
                             >
-                              Sair
+                              Voltar
                             </button>
                           }
                         />

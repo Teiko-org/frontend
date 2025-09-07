@@ -42,7 +42,7 @@ export default function ModalFilterProduct(props) {
                         <div className="w-[80%]">
                             <Select
                                 options={categoriesFiltered.map(category => ({ value: category, label: category }))}
-                                // value={localStorage.getItem("CATEGORY")}
+                                value={category}
                                 onChange={(e) => setCategory(e.target.value)}
                                 placeholder="Selecione a categoria do produto"
                             />
@@ -110,7 +110,7 @@ export default function ModalFilterProduct(props) {
 
                                     ]
                                 }
-                                value={category}
+                                value={status}
                                 onChange={(e) => setStatus(e.target.value)}
                                 placeholder="Selecionar status"
                             />

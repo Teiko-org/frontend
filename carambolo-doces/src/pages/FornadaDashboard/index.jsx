@@ -12,7 +12,6 @@ import { useNavigate } from "react-router-dom";
 import { insertNewFornada, updateFornada } from "../../service/fornadaService";
 import { validateAndCleanAuth } from "../../service/userService";
 
-// Função para evitar problemas de fuso horário ao converter datas
 const parseLocalDate = (dateStr) => {
   if (!dateStr) return null;
   const [y, m, d] = String(dateStr).split("-").map(Number);
@@ -23,6 +22,8 @@ import KPILastFornada from "../../components/KPILastFornada";
 import KPIThisMonthFornadas from "../../components/KPIThisMonthFornadas";
 import { getFornadaAtiva, getProdutosFornadaComImagens, getProximaFornada, encerrarFornada } from "../../service/fornadaService";
 import { FaRegEdit, FaPlus, FaSave, FaTimes } from "react-icons/fa";
+import ModalConfirmarEdicao from "../../components/ModalConfirmarEdicao";
+import { useRef } from "react";
 import TableProductsThisFornada from "../../components/TableProductsThisFornada/TableProductsThisFornada";
 
 function FornadaDashboard() {
@@ -32,6 +33,8 @@ function FornadaDashboard() {
     dataInicio: "",
     dataFim: "",
   });
+
+  const [kpiRefreshKey, setKpiRefreshKey] = useState(0);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editingFornada, setEditingFornada] = useState(null);
@@ -51,16 +54,14 @@ function FornadaDashboard() {
     }
   };
 
-  // Função para obter data mínima para o campo "Até" baseado na data de início
   const getMinDateFim = () => {
     if (!fornada.dataInicio) return null;
-    return fornada.dataInicio; // Já está no formato YYYY-MM-DD
+    return fornada.dataInicio; 
   };
 
-  // Função para obter data mínima para o campo "Até" no modo de edição
   const getMinDateFimEdit = () => {
     if (!editingFornada?.dataInicio) return null;
-    return editingFornada.dataInicio; // Já está no formato YYYY-MM-DD
+    return editingFornada.dataInicio; 
   };
 
   const registerFornada = async () => {
@@ -69,7 +70,6 @@ function FornadaDashboard() {
       return;
     }
 
-    // As datas já estão no formato YYYY-MM-DD, não precisamos converter
     const dataInicio = new Date(fornada.dataInicio + 'T00:00:00');
     const dataFim = new Date(fornada.dataFim + 'T00:00:00');
 
@@ -92,11 +92,8 @@ function FornadaDashboard() {
 
       if (response && response.id) {
         await registerFornadaDaVez(response.id);
-        // Limpar formulário após sucesso
         setFornada({ dataInicio: "", dataFim: "" });
-        // Limpar produtos selecionados
         localStorage.removeItem("selectedProducts");
-        // Recarregar dados para mostrar a nova fornada
         await carregarDadosFornada();
       } else {
         toast.error("Erro ao cadastrar fornada!");
@@ -125,7 +122,6 @@ function FornadaDashboard() {
   };
 
   const handleSaveEdit = async () => {
-    // Verificar se o usuário está autenticado
     if (!validateAndCleanAuth()) {
       toast.error("Você precisa estar logado para atualizar uma fornada!");
       navigate('/login');
@@ -137,7 +133,6 @@ function FornadaDashboard() {
       return;
     }
 
-    // As datas já estão no formato YYYY-MM-DD, não precisamos converter
     const dataInicio = new Date(editingFornada.dataInicio + 'T00:00:00');
     const dataFim = new Date(editingFornada.dataFim + 'T00:00:00');
 
@@ -156,12 +151,10 @@ function FornadaDashboard() {
       });
 
       if (sucesso) {
-        // Verificar se há produtos selecionados para adicionar
         const selectedProducts = JSON.parse(localStorage.getItem("selectedProducts") || "[]");
         if (selectedProducts.length > 0) {
           toast.info("Adicionando produtos à fornada...");
           await registerFornadaDaVez(editingFornada.id);
-          // Limpar produtos selecionados após adicionar
           localStorage.removeItem("selectedProducts");
         }
         
@@ -187,7 +180,6 @@ function FornadaDashboard() {
     toast("Fornada cadastrada com sucesso!", {
       type: "success",
     });
-    // Não redireciona mais, permanece na tela
   };
 
   const registerFornadaDaVez = async (idFornada) => {
@@ -224,13 +216,11 @@ function FornadaDashboard() {
     }
   };
 
-  // Fornada já cadastrada:
   const [fornadaAtual, setFornadaAtual] = useState(null);
   const [fornadaProxima, setFornadaProxima] = useState(null);
 
   const carregarDadosFornada = async () => {
     try {
-      // Buscar fornada atual
       try {
         const fornadaAtiva = await getFornadaAtiva();
         if (fornadaAtiva) {
@@ -243,7 +233,6 @@ function FornadaDashboard() {
         setFornadaAtual(null);
       }
 
-      // Buscar próxima fornada
       try {
         const proximaFornada = await getProximaFornada();
         if (proximaFornada) {
@@ -343,8 +332,9 @@ function FornadaDashboard() {
     return now >= inicio && now <= fim;
   }
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const pendingFornadaIdRef = useRef(null);
   const handleEncerrarFornada = async () => {
-    // Verificar se o usuário está autenticado
     if (!validateAndCleanAuth()) {
       toast.error("Você precisa estar logado para encerrar uma fornada!");
       navigate('/login');
@@ -358,38 +348,45 @@ function FornadaDashboard() {
         return;
       }
 
-      const confirmacao = window.confirm(
-        "Tem certeza que deseja encerrar esta fornada? Esta ação não pode ser desfeita."
-      );
-
-      if (!confirmacao) return;
-
-      toast.info("Encerrando fornada...");
-      const sucesso = await encerrarFornada(fornadaId);
-      
-      if (sucesso) {
-        toast.success("Fornada encerrada com sucesso!");
-        // Recarregar os dados da fornada
-        await carregarDadosFornada();
-      } else {
-        toast.error("Erro ao encerrar fornada!");
-      }
+      pendingFornadaIdRef.current = fornadaId;
+      setConfirmOpen(true);
     } catch (error) {
       console.error("Erro ao encerrar fornada:", error);
       toast.error("Erro ao encerrar fornada! Tente novamente.");
     }
   };
 
-  // Determinar o estado atual da tela
-  const hasActiveFornada = fornadaAtual && parseLocalDate(fornadaAtual.dataFim) > new Date();
-  const hasScheduledFornada = fornadaProxima && parseLocalDate(fornadaProxima.dataInicio) > new Date();
+  const confirmEncerrar = async () => {
+    try {
+      if (!pendingFornadaIdRef.current) { setConfirmOpen(false); return; }
+      toast.info("Encerrando fornada...");
+      const sucesso = await encerrarFornada(pendingFornadaIdRef.current);
+      console.log('[ENCERRAR][FRONT] id=', pendingFornadaIdRef.current, ' sucesso=', sucesso);
+      
+      if (sucesso) {
+        toast.success("Fornada encerrada com sucesso!");
+        await carregarDadosFornada();
+        setKpiRefreshKey((v) => v + 1);
+      } else {
+        toast.error("Erro ao encerrar fornada!");
+      }
+    } catch (error) {
+      console.error("[ENCERRAR][FRONT] Erro ao encerrar fornada:", error);
+      toast.error("Erro ao encerrar fornada! Tente novamente.");
+    } finally {
+      setConfirmOpen(false);
+      pendingFornadaIdRef.current = null;
+    }
+  };
+
+  const nowDay = new Date(); nowDay.setHours(0,0,0,0);
+  const hasActiveFornada = !!(fornadaAtual && (() => { const df = parseLocalDate(fornadaAtual.dataFim); df.setHours(0,0,0,0); return df > nowDay; })());
+  const hasScheduledFornada = !!(fornadaProxima && (() => { const di = parseLocalDate(fornadaProxima.dataInicio); di.setHours(0,0,0,0); return di > nowDay; })());
   const hasNoFornada = !hasActiveFornada && !hasScheduledFornada;
 
-  // Função auxiliar para formatar data
   const formatDate = (dateString) => {
     if (!dateString) return '';
     try {
-      // Evitar problemas de fuso horário - parsear localmente
       const [year, month, day] = dateString.split('-');
       const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
       return date.toLocaleDateString('pt-BR');
@@ -399,7 +396,6 @@ function FornadaDashboard() {
     }
   };
 
-  // Função para verificar se estamos dentro do intervalo da fornada
   const isWithinFornadaInterval = (fornadaData) => {
     if (!fornadaData || !fornadaData.dataInicio || !fornadaData.dataFim) return false;
     
@@ -407,14 +403,12 @@ function FornadaDashboard() {
     const dataInicio = parseLocalDate(fornadaData.dataInicio);
     const dataFim = parseLocalDate(fornadaData.dataFim);
     
-    // Ajustar para início do dia (00:00:00) e fim do dia (23:59:59)
     dataInicio.setHours(0, 0, 0, 0);
     dataFim.setHours(23, 59, 59, 999);
     
     return now >= dataInicio && now <= dataFim;
   };
 
-  // Função para renderizar o conteúdo do card central baseado no estado
   const renderCardContent = () => {
     if (isEditing) {
       return (
@@ -463,7 +457,6 @@ function FornadaDashboard() {
     }
 
     if (hasActiveFornada && isWithinFornadaInterval(fornadaAtual)) {
-      // Fornada ativa e estamos dentro do intervalo - mostrar timer
       return (
         <>
           <h3 className="font-bold text-blue">Tempo Restante da Fornada Atual</h3>
@@ -478,7 +471,6 @@ function FornadaDashboard() {
 
 
     if (hasActiveFornada || hasScheduledFornada) {
-      // Fornada programada ou ativa mas fora do intervalo - mostrar datas
       const fornadaToShow = fornadaAtual || fornadaProxima;
       return (
         <>
@@ -497,10 +489,8 @@ function FornadaDashboard() {
     return null;
   };
 
-  // Função para renderizar a tabela de produtos baseada no estado
   const renderProductTable = () => {
     if (isEditing) {
-      // Modo de edição - mostrar seleção de produtos para adicionar
       return (
         <div className="w-full flex justify-center">
           <TableSelectProductsFornada />
@@ -509,7 +499,6 @@ function FornadaDashboard() {
     }
 
     if (hasNoFornada) {
-      // Sem fornada - mostrar seleção de produtos para nova fornada
       return (
         <div className="w-full flex justify-center">
           <TableSelectProductsFornada />
@@ -517,7 +506,6 @@ function FornadaDashboard() {
       );
     }
 
-    // Com fornada - mostrar produtos da fornada atual com a mesma estilização
     return (
       <div className="w-full">
         <div className="w-full flex justify-center border-2 border-gold rounded-2xl bg-bgHome">
@@ -575,7 +563,7 @@ function FornadaDashboard() {
           </div>
 
           <div className="flex flex-row justify-evenly items-center gap-10">
-            <KPILastFornada />
+            <KPILastFornada key={kpiRefreshKey} kpiDataOverride={null} rangeOverride={null} />
             
             {/* Card central - muda baseado no estado e modo */}
             <div className="flex flex-col justify-center items-center w-[470px] h-[170px] border-2 border-gold rounded-2xl bg-bgHome gap-5 p-10 transition-all duration-500 ease-in-out">
@@ -584,7 +572,7 @@ function FornadaDashboard() {
               </div>
             </div>
 
-            <KPIThisMonthFornadas />
+            <KPIThisMonthFornadas key={`month-${kpiRefreshKey}`} />
           </div>
 
           <div className="flex flex-col w-full items-center gap-5 pt-5">
@@ -596,7 +584,6 @@ function FornadaDashboard() {
             {/* Botões de ação baseados no estado e modo */}
             <div className="transition-all duration-300 ease-in-out">
             {isEditing ? (
-              // Modo de edição - botões de salvar e cancelar
               <div className="flex gap-4 mb-5">
                 <button
                   className="flex items-center bg-gradient-to-l from-gold to-darkGold text-blue font-bold py-3 px-6 rounded-lg shadow-md border-2 border-gold focus:outline-none transform hover:scale-105 transition-all duration-300 ease-in-out hover:shadow-lg"
@@ -615,7 +602,6 @@ function FornadaDashboard() {
                 </button>
               </div>
             ) : hasNoFornada ? (
-              // Estado 1: Botão para cadastrar nova fornada
               <button
                 className="mb-5 flex items-center bg-gradient-to-l from-gold to-darkGold text-lg text-blue border-gold font-bold py-1 px-4 rounded-full shadow-md border-2 focus:outline-none transform hover:scale-105 transition-all duration-300 ease-in-out hover:shadow-lg"
                 onClick={registerFornada}
@@ -623,7 +609,6 @@ function FornadaDashboard() {
                 CADASTRAR FORNADA <FaPlus className="inline ml-2" />
               </button>
             ) : (
-              // Estados 2 e 3: Botões para editar e encerrar
               <div className="flex gap-4 mb-5">
                               <button
                 className="flex items-center bg-gradient-to-l from-gold to-darkGold text-lg text-blue border-gold font-bold py-1 px-4 rounded-full shadow-md border-2 focus:outline-none transform hover:scale-105 transition-all duration-300 ease-in-out hover:shadow-lg"
@@ -656,6 +641,12 @@ function FornadaDashboard() {
         draggable
         pauseOnHover
         theme="light"
+      />
+      <ModalConfirmarEdicao 
+        isOpen={confirmOpen}
+        onClose={() => { setConfirmOpen(false); pendingFornadaIdRef.current = null; }}
+        onConfirm={confirmEncerrar}
+        step={"encerramento da fornada"}
       />
     </div>
   );

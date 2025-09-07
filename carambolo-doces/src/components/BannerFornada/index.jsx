@@ -82,10 +82,6 @@ const BannerFornada = ({ fornada }) => {
     return () => clearInterval(timer);
   }, [fornadaData]);
 
-  // Se não há fornada ativa, não renderiza o banner
-  if (!fornadaData || !fornadaData.dataFim) {
-    return null;
-  }
 
   const formatEndDate = () => {
     if (!fornadaData || !fornadaData.dataFim) {
@@ -107,33 +103,69 @@ const BannerFornada = ({ fornada }) => {
     return date.toLocaleDateString('pt-BR');
   };
 
+  const isAtivaAgora = (() => {
+    try {
+      if (!fornadaData?.dataInicio || !fornadaData?.dataFim) return false;
+      const [yi, mi, di] = String(fornadaData.dataInicio).split('-').map(Number);
+      const [yf, mf, df] = String(fornadaData.dataFim).split('-').map(Number);
+      const ini = new Date(yi, mi - 1, di, 0, 0, 0, 0);
+      const fim = new Date(yf, mf - 1, df, 23, 59, 59, 999);
+      const now = new Date();
+      return now >= ini && now <= fim;
+    } catch { return false; }
+  })();
+
+  const timerLegenda = isFornadaFutura
+    ? 'Até a próxima fornada'
+    : isAtivaAgora
+      ? 'Tempo restante'
+      : 'Aguardando próxima fornada';
+
   return (
     <section className="relative h-[150px] w-full bg-cover bg-center m-auto items-end" style={{ backgroundImage: 'url(src/assets/img_banner_fornada.png)' }}>
       <div className="flex justify-between h-full w-full items-center justify-end pl-[350px] pr-[70px]">
         <div className="text-white flex flex-col w-1/2 mx-auto justify-center">
           <h2 className="text-xl font-bold mb-3 text-pink">Fornada</h2>
-          {isFornadaFutura ? (
-            <>
-              <p className="mb-2">Nova fornada chegando em breve!</p>
-              <p className="mb-2">Inicia em {formatStartDate()} até {formatEndDate()}</p>
-              <p className="text-sm text-yellow-200">Timer mostra quando a fornada vai começar</p>
-            </>
-          ) : (
-            <>
-              <p className="mb-2">Aproveite a nossa Fornada com doces exclusivos!</p>
-              <p>Disponível por tempo limitado até {formatEndDate()}</p>
-            </>
-          )}
+          {(() => {
+            if (isFornadaFutura && fornadaData) {
+              return (
+                <>
+                  <p className="mb-2">Nova fornada chegando em breve!</p>
+                  <p className="mb-2">Inicia em {formatStartDate()} até {formatEndDate()}</p>
+                  <p className="text-sm text-yellow-200">Timer mostra quando a fornada vai começar</p>
+                </>
+              );
+            }
+            if (isAtivaAgora && fornadaData) {
+              return (
+                <>
+                  <p className="mb-2">Aproveite a nossa Fornada com doces exclusivos!</p>
+                  <p>Disponível por tempo limitado até {formatEndDate()}</p>
+                </>
+              );
+            }
+            // Nenhuma fornada ativa ou futura conhecida
+            return (
+              <>
+                <p className="mb-2">Fique atento! Em breve teremos uma nova fornada.</p>
+              </>
+            );
+          })()}
         </div>
-        <div className="text-white text-2xl flex gap-x-8">
-          <span>{String(timeLeft.days).padStart(2, '0')}D</span>
-          <span>:</span>
-          <span>{String(timeLeft.hours).padStart(2, '0')}H</span>
-          <span>:</span>
-          <span>{String(timeLeft.minutes).padStart(2, '0')}M</span>
-          <span>:</span>
-          <span>{String(timeLeft.seconds).padStart(2, '0')}S</span>
-        </div>
+        {fornadaData && (
+          <div className="text-white flex flex-col items-center">
+            <div className="text-2xl flex gap-x-8">
+              <span>{String(timeLeft.days).padStart(2, '0')}D</span>
+              <span>:</span>
+              <span>{String(timeLeft.hours).padStart(2, '0')}H</span>
+              <span>:</span>
+              <span>{String(timeLeft.minutes).padStart(2, '0')}M</span>
+              <span>:</span>
+              <span>{String(timeLeft.seconds).padStart(2, '0')}S</span>
+            </div>
+            <span className="text-sm mt-1">{timerLegenda}</span>
+          </div>
+        )}
       </div>
     </section>
   );

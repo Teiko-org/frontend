@@ -88,9 +88,12 @@ const Step5 = () => {
   setIsModalFinalizarOpen(true);
 };
 
-const handleConfirmFinalizar = () => {
-  submitForm();
-  setIsModalFinalizarOpen(false);
+const handleConfirmFinalizar = async () => {
+  try {
+    await submitForm();
+  } finally {
+    setIsModalFinalizarOpen(false);
+  }
 };
 
   return (
@@ -256,6 +259,7 @@ const handleConfirmFinalizar = () => {
           />
           {isModalFinalizarOpen && (
             <ModalFinalizar
+              isOpen={isModalFinalizarOpen}
               onClose={() => setIsModalFinalizarOpen(false)}
               onFinalize={handleConfirmFinalizar}
             />

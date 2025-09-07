@@ -105,7 +105,11 @@ export default function ModalCadastroProduto() {
         }
 
         const formData = new FormData();
-        observacao.forEach((obs) => formData.append("observacao", obs));
+        if (observacao && observacao.length > 0) {
+            formData.append("observacao", observacao.join(", "));
+        } else {
+            formData.append("observacao", "");
+        }
         formData.append("nome", nomeDecoracao);
         if (file) formData.append("imagens", file);
         if (categoriaDecoracao && categoria === "Decoracao") {
@@ -113,7 +117,9 @@ export default function ModalCadastroProduto() {
         }
 
         try {
-            const response = await axiosApi.post("/decoracoes", formData);
+            const response = await axiosApi.post("/decoracoes", formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
             toast.success("Decoração cadastrada com sucesso!");
             
             await fetchDecoracoes();

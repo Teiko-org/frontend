@@ -160,18 +160,27 @@ export default function TableProductsThisFornada(props) {
                                                             paddingBottom: compact ? "0.25rem" : "0.5rem",
                                                         }}
                                                     >
-                                                        {compact ? (
-                                                            <div className="pr-2">{row.quantidadeVendida || 0}/{row.quantidade}</div>
-                                                        ) : (
-                                                            props.amountLeft ? (
-                                                                <div className="flex gap-1 items-center">
-                                                                  <div className="flex items-center w-fit bg-bgNativeHome px-2 border-2 border-gold rounded-lg text-base">{row.quantidadeVendida || 0} / {row.quantidade}</div>
-                                                                  Restantes
-                                                                </div>
-                                                            ) : (
-                                                                <div>{row.quantidadeVendida || 0}/{row.quantidade}</div>
-                                                            )
-                                                        )}
+                                                        {(() => {
+                                                            const vendidos = row.quantidadeVendida || 0;
+                                                            const restante = row.quantidade || 0;
+                                                            const planejado = vendidos + restante;
+                                                            if (compact) {
+                                                                return (
+                                                                    <div className="pr-2">{vendidos}/{planejado}</div>
+                                                                );
+                                                            }
+                                                            if (props.amountLeft) {
+                                                                return (
+                                                                    <div className="flex gap-1 items-center">
+                                                                      <div className="flex items-center w-fit bg-bgNativeHome px-2 border-2 border-gold rounded-lg text-base">{vendidos} / {planejado}</div>
+                                                                      Restantes
+                                                                    </div>
+                                                                );
+                                                            }
+                                                            return (
+                                                                <div>{vendidos}/{planejado}</div>
+                                                            );
+                                                        })()}
                                                     </TableCell>
                                                 );
                                             }
