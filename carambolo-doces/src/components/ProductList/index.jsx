@@ -1,4 +1,5 @@
 import * as React from 'react';
+import ReactDOM from 'react-dom';
 import { useEffect } from 'react';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
@@ -9,6 +10,8 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import { axiosApi } from '../../provider/AxiosApi';
 import { LuEye, LuEyeClosed } from "react-icons/lu";
+import { HiOutlineInformationCircle } from "react-icons/hi";
+import { BsChatSquareFill } from "react-icons/bs";
 import { FaRegEdit } from "react-icons/fa";
 import { RiDeleteBinLine } from "react-icons/ri";
 import { ConfirmToast } from 'react-confirm-toast';
@@ -30,6 +33,8 @@ const columns = [
 ];
 
 export default function ProductList() {
+    const [showInfoBalloon, setShowInfoBalloon] = React.useState(false);
+    const [balloonPosition, setBalloonPosition] = React.useState({ x: 0, y: 0 });
     const [products, setProducts] = React.useState([]);
     const [updatingMap, setUpdatingMap] = React.useState({});
     const [searchTerm, setSearchTerm] = React.useState('');
@@ -163,10 +168,81 @@ export default function ProductList() {
                                     <TableCell
                                         key={column.id}
                                         align={column.align}
+                                        className={column.id === 'ativo' ? 'rounded-l-full' : undefined}
                                         style={{ minWidth: column.minWidth, height: '50px' }}
-                                        sx={{ backgroundColor: "#FFE7DD", fontWeight: "bold", boxShadow: "none", borderBottom: "none", paddingTop: "0.5rem", paddingBottom: "0.5rem", padding: 0}}
+                                        sx={{
+                                            backgroundColor: "#FFE7DD",
+                                            fontWeight: "bold",
+                                            boxShadow: "none",
+                                            borderBottom: "none",
+                                            padding: 0,
+                                            ...(column.id === 'ativo' ? { paddingLeft: '1.25rem' } : { paddingTop: '0.5rem', paddingBottom: '0.5rem' })
+                                        }}
                                     >
-                                        {column.label}
+                                        {column.id === 'ativo' ? (
+                                            <span
+                                                style={{ display: 'inline-flex', alignItems: 'center' }}
+                                                onMouseEnter={e => {
+                                                    const rect = e.currentTarget.getBoundingClientRect();
+                                                    setBalloonPosition({
+                                                        x: rect.left + rect.width / 2,
+                                                        y: rect.top
+                                                    });
+                                                    setShowInfoBalloon(true);
+                                                }}
+                                                onMouseLeave={() => setShowInfoBalloon(false)}
+                                            >
+                                                <HiOutlineInformationCircle className="text-[#A47032] text-[1.625rem] cursor-pointer" />
+                                            </span>
+                                        ) : (
+                                            column.label
+                                        )}
+                                        {column.id === 'ativo' && showInfoBalloon && ReactDOM.createPortal(
+                                            <div
+                                                style={{
+                                                    position: 'fixed',
+                                                    left: balloonPosition.x,
+                                                    top: balloonPosition.y - 16,
+                                                    transform: 'translate(-50%, -100%)',
+                                                    zIndex: 99999,
+                                                    pointerEvents: 'none',
+                                                }}
+                                            >
+                                                <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                    <div
+                                                        style={{
+                                                            background: 'white',
+                                                            color: '#A47032',
+                                                            borderRadius: 8,
+                                                            boxShadow: '0 4px 24px 0 rgba(0,0,0,0.18)',
+                                                            padding: '18px 22px',
+                                                            minWidth: 320,
+                                                            maxWidth: 400,
+                                                            textAlign: 'center',
+                                                            fontSize: 15,
+                                                            fontWeight: 500,
+                                                            lineHeight: 1.4,
+                                                        }}
+                                                    >
+                                                        Não quer disponibilizar um produto por agora? <br />Clique no olhinho para ocultar os produtos na página inicial sem precisar excluir.
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            width: 0,
+                                                            height: 0,
+                                                            borderLeft: '14px solid transparent',
+                                                            borderRight: '14px solid transparent',
+                                                            borderTop: '16px solid white',
+                                                            margin: '0 auto',
+                                                            position: 'relative',
+                                                            top: '-1px',
+                                                            filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.10))',
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>,
+                                            document.body
+                                        )}
                                     </TableCell>
                                 ))}
                             </TableRow>
