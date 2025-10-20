@@ -1,11 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import ModalBaseLogin from "../ModalBaseLogin";
 import Button from "../Button";
-import PhoneNumberInput from "../PhoneInput";
-import { ToastContainer, toast } from "react-toastify";
+import PhoneInputCustom from "../PhoneInput/PhoneInputCustom";
+import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-import { axiosApi } from "../../provider/AxiosApi";
+import { register as registerUser } from "../../service/userService";
 
 function RegisterModal({ onClose, switchToLogin }) {
   const {
@@ -17,21 +17,24 @@ function RegisterModal({ onClose, switchToLogin }) {
     trigger
   } = useForm();
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const onSubmit = async (data) => {
-    await axiosApi.post("/usuarios", {
-      nome: data.name,
-      senha: data.password,
-      contato: data.phone
-    }).then((response) => {
-      toast.success("Cadastro criado com sucesso!");
+    if (isSubmitting) return; // Previne múltiplos envios
+    
+    setIsSubmitting(true);
+    try {
+      // Tentar cadastrar o usuário
+      // Se o telefone já existir, o backend retornará erro 409
+      // que será tratado pelo userService com uma mensagem clara
+      await registerUser(data.name, data.password, data.phone);
       switchToLogin();
-    }).catch((error) => {
-      if(error.status == 409) {
-        alert(`Usuario com contato ${data.phone} ja existente`);
-      } else if(error.status == 500) {
-        alert(`Tivemos problemas para processar seu cadastro. Tente novamente mais tarde!`);
-      }
-    })
+    } catch (error) {
+      console.error('Erro no cadastro:', error);
+      // O erro já é tratado pelo userService com toast
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleErrors = () => {
@@ -58,17 +61,17 @@ function RegisterModal({ onClose, switchToLogin }) {
         />
         {errors.name && <p className="text-pink text-sm mb-1">{errors.name.message}</p>}
 
-        <div className={`flex flex-col ${errors.phone ? '' : 'mb-4'}`}>
-          <label htmlFor="phone" className="text-white mb-1">Telefone Celular</label>
-          <PhoneNumberInput
-            {...register("phone", { required: "Telefone é obrigatório" })}
-            onChange={(phone) => {
-              setValue('phone', phone, { shouldValidate: true });
-              trigger('phone');
-            }}
-          />
-          {errors.phone && <p className="text-red-600 text-sm mb-1">{errors.phone.message}</p>}
-        </div>
+        <label htmlFor="phone" className="text-white mb-1">Telefone Celular</label>
+        <PhoneInputCustom
+          {...register("phone", { required: "Telefone é obrigatório" })}
+          onChange={(phone) => {
+            setValue('phone', phone, { shouldValidate: true });
+            trigger('phone');
+          }}
+          includeCountryCode={true}
+          className={`w-full ${errors.phone ? 'mb-1' : 'mb-4'}`}
+        />
+        {errors.phone && <p className="text-red-600 text-sm mb-1">{errors.phone.message}</p>}
 
         <label htmlFor="password" className="text-white mb-1">Senha</label>
         <input
@@ -98,7 +101,8 @@ function RegisterModal({ onClose, switchToLogin }) {
         {errors.confirmPassword && <p className="text-red-600 text-sm mb-1">{errors.confirmPassword.message}</p>}
 
         <Button
-          text="Cadastrar"
+          text={isSubmitting ? "Cadastrando..." : "Cadastrar"}
+          disabled={isSubmitting}
           bgColor="bg-gradient-to-l from-gold to-darkGold"
           textColor="text-black"
           type="submit"
@@ -108,7 +112,6 @@ function RegisterModal({ onClose, switchToLogin }) {
       <p className="text-center text-base font-normal text-white">
         Já possui uma conta? <span onClick={switchToLogin} className="text-gradient font-bold cursor-pointer">Entrar</span>
       </p>
-      <ToastContainer />
     </ModalBaseLogin>
   );
 }

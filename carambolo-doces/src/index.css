@@ -2,6 +2,18 @@
   font-family: "Montserrat", sans-serif;
 }
 
+/* Corrige espaço branco fora do app e padroniza o fundo global */
+html, body, #root {
+  margin: 0;
+  min-height: 100%;
+  background-color: #FFEEE7; /* bgNativeHome */
+}
+
+#root { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* Evitar qualquer margem global no final da página */
+body { padding-bottom: 0 !important; }
+
 .gradient-border {
   position: relative;
   margin: 0;
@@ -47,6 +59,39 @@
 .carousel {
   transform-style: preserve-3d;
   transition: transform 1s;
+}
+
+/* Animações sutis para botões pill (Dashboard) */
+.button-animated {
+  position: relative;
+  overflow: hidden;
+  transition: transform 150ms ease, box-shadow 200ms ease;
+}
+
+.button-animated::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 120%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  transform: skewX(-20deg);
+}
+
+.button-animated:hover::after {
+  left: 140%;
+  transition: left 600ms ease;
+}
+
+.button-animated:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(212, 176, 118, 0.3);
+}
+
+.button-animated:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 10px rgba(212, 176, 118, 0.25);
 }
 
 /* :root {
@@ -117,3 +162,27 @@
       background-color: #f9f9f9;
     }
   } */
+
+/* Scrollbar customizada para Dashboard */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #1C3B57 transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #1C3B57;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #0F2A3D;
+}

@@ -1,0 +1,327 @@
+/* Estilos para o sistema de drag and drop do Kanban */
+
+/* Cursor para elementos arrastáveis */
+.cursor-grab {
+  cursor: grab;
+}
+
+.cursor-grab:active {
+  cursor: grabbing;
+}
+
+/* Transições suaves */
+.transition-transform {
+  transition: transform 0.2s ease-in-out;
+}
+
+.transition-all {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Efeitos de hover */
+.hover\:scale-105:hover {
+  transform: scale(1.05);
+}
+
+/* Container principal do kanban */
+.kanban-columns-container {
+  min-height: calc(100vh - 200px);
+  max-height: calc(100vh - 120px);
+  height: 100%;
+  padding: 1rem;
+}
+
+/* Coluna do kanban */
+.kanban-column {
+  min-height: calc(100vh - 250px);
+  max-height: calc(100vh - 170px);
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+/* Container da coluna */
+.column-container {
+  transition: all 0.2s ease;
+  border-radius: 0.5rem;
+}
+
+/* Conteúdo da coluna */
+.column-content {
+  min-height: calc(100vh - 300px);
+  max-height: calc(100vh - 220px);
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Scrollbar customizada */
+.column-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.column-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.column-scrollbar::-webkit-scrollbar-thumb {
+  background: #D4B076;
+  border-radius: 3px;
+}
+
+.column-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #B8945F;
+}
+
+/* Wrapper do card */
+.kanban-card-wrapper {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kanban-card-wrapper:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Estado de drag ativo */
+.dragging {
+  opacity: 0.5;
+  transform: rotate(5deg) scale(1.05);
+  z-index: 1000;
+}
+
+/* Área de drop ativa */
+.drop-zone-active {
+  border: 2px solid #fbbf24 !important;
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.3) !important;
+  transform: scale(1.05);
+}
+
+/* Indicador visual de que o item pode ser arrastado */
+.draggable-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: #9ca3af;
+  font-size: 12px;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  user-select: none;
+  cursor: grab;
+}
+
+.draggable-indicator:hover {
+  opacity: 1;
+  color: #D4B076;
+}
+
+/* Área de drop vazia */
+.empty-drop-zone {
+  transition: all 0.3s ease;
+  border: 2px dashed #9CA3AF;
+  background-color: rgba(156, 163, 175, 0.05);
+  flex: 1;
+  min-height: 200px;
+}
+
+.empty-drop-zone:hover {
+  border-color: #D4B076;
+  background-color: rgba(212, 176, 118, 0.1);
+}
+
+
+/* Conteúdo do card */
+.card-content {
+  transition: all 0.2s ease;
+}
+
+.card-content:hover {
+  transform: translateY(-1px);
+}
+
+/* Footer do card */
+.card-footer {
+  transition: all 0.2s ease;
+}
+
+/* Background da página */
+.page-background {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  min-height: 100vh;
+}
+
+/* Header da página */
+.page-header {
+  background: rgba(26, 26, 26, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(212, 176, 118, 0.2);
+}
+
+/* Footer da página */
+.page-footer {
+  background: rgba(26, 26, 26, 0.95);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(212, 176, 118, 0.2);
+}
+
+/* Animações */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.kanban-card-wrapper {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .kanban-columns-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .kanban-column {
+    min-height: 300px;
+  }
+  
+  .column-content {
+    max-height: 300px;
+  }
+}
+
+@media (min-height: 1200px) {
+  .kanban-columns-container {
+    max-height: 1000px;
+  }
+  
+  .kanban-column {
+    max-height: 950px;
+  }
+  
+  .column-content {
+    max-height: 900px;
+  }
+}
+
+/* Estados de hover para botões */
+.kanban-card-wrapper button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(212, 176, 118, 0.3);
+}
+
+/* Transições suaves para todos os elementos interativos */
+.kanban-column * {
+  transition: all 0.2s ease;
+}
+
+/* Estilos específicos para drag and drop */
+.drag-over {
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 2px dashed #3b82f6;
+}
+
+.drag-start {
+  opacity: 0.8;
+  transform: scale(1.02);
+}
+
+/* Melhorias visuais para o kanban */
+.kanban-board {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.kanban-column-header {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  color: white;
+  padding: 1rem;
+  border-radius: 0.5rem 0.5rem 0 0;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.kanban-card {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.kanban-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.kanban-card.dragging {
+  transform: rotate(5deg) scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+/* Estilos para diferentes status */
+.status-pendente {
+  border-left: 4px solid #f59e0b;
+}
+
+.status-pago {
+  border-left: 4px solid #10b981;
+}
+
+.status-concluido {
+  border-left: 4px solid #059669;
+}
+
+.status-cancelado {
+  border-left: 4px solid #ef4444;
+}
+
+/* Animações de entrada */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.kanban-card {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Melhorias de acessibilidade */
+.kanban-card:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.draggable-indicator:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Estilos para dispositivos touch */
+@media (hover: none) and (pointer: coarse) {
+  .kanban-card:hover {
+    transform: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .draggable-indicator {
+    opacity: 1;
+  }
+}

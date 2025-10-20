@@ -4,9 +4,10 @@ import Button from '../Button';
 import TextGradiante from '../textGradiente';
 import { useNavigate } from 'react-router-dom';
 
-export default function ModalResumoFinal({
+export default function ModalFinalizar({
   isOpen,
   onClose,
+  onFinalize,
   valorEstimado = 999.99,
   horariosEntrega = [
     'SEG - 14:00 as 19:00',
@@ -29,7 +30,6 @@ export default function ModalResumoFinal({
     'Prazo de Validade de até 5 dias.',
   ]
 }) {
-
   const navigate = useNavigate();
 
   return (
@@ -86,7 +86,13 @@ export default function ModalResumoFinal({
         <div className="flex justify-center mt-8">
           <Button
             text="Finalizar"
-            onClick={() => {navigate("/")}}
+            onClick={async () => {
+              try {
+                await onFinalize();
+              } finally {
+                navigate("/");
+              }
+            }}
             bgColor="bg-gradient-to-l from-gold to-darkGold"
             fontSize="text-base"
             textColor="text-blue"

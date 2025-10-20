@@ -1,10 +1,11 @@
 import React from 'react';
 
 export default function ModalBase({ isOpen, onClose, children, title, width = '689px', height = '271px' }) {
-  // if (!isOpen) return null;
+  console.log("🎭 ModalBase - isOpen:", isOpen, "title:", title);
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50">
       <div
         className="p-[2px] rounded-xl"
         style={{

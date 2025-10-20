@@ -1,31 +1,49 @@
 import React, { useEffect, useState } from "react";
-import Button from "../../components/Button";
-import { LuUpload } from "react-icons/lu";
-import ModalConfirmationLogOff from "../../components/ModalConfirmationLogOff";
+import ProfileImageUpload from "../../components/InputImage/ProfileImageUpload";
 import { useNavigate } from "react-router-dom";
+import { getUserData, logOff } from "../../service/userService";
 
 function UserSideMenu() {
   const navigate = useNavigate();
+  const [userData, setUserData] = useState({ imagemUrl: null });
 
   useEffect(() => {
-    let statusLogOn = localStorage.getItem("IS_SIGNED");
+    const loadUserData = async () => {
+      const userId = localStorage.getItem("userId");
+      if (userId && userId !== 'null' && userId !== 'undefined') {
+        try {
+          console.log("Carregando dados do usuário no UserSideMenu...");
+          const data = await getUserData(userId);
+          console.log("Dados recebidos no UserSideMenu:", data);
+          setUserData(data);
+        } catch (error) {
+          console.error("Erro ao carregar dados:", error);
+        }
+      }
+    };
 
-    if (!statusLogOn) {
-      navigate("/");
-    }
+    loadUserData();
+
+    const handleImageUpdateEvent = () => {
+      console.log("Evento de atualização de imagem detectado no UserSideMenu");
+      loadUserData();
+    };
+
+    window.addEventListener("userImageUpdated", handleImageUpdateEvent);
+
+    return () => {
+      window.removeEventListener("userImageUpdated", handleImageUpdateEvent);
+    };
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("IS_SIGNED");
-    localStorage.removeItem("TOKEN_JWT");
-    window.dispatchEvent(new Event("storage")); // Força a "notificação" do evento
+    logOff();
     navigate("/");
   };
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  const handleProfileImageUpdate = (newImageUrl) => {
+    setUserData(prev => ({ ...prev, imagemUrl: newImageUrl }));
+  };
 
   return (
     <div className={`w-[450px] px-10 bg-bgHome border-r-2 border-r-gold`}>
@@ -34,20 +52,11 @@ function UserSideMenu() {
       </header>
 
       <div className="flex flex-col items-center gap-10 mb-10">
-        <div className="flex flex-col items-center justify-around mb-6 gap-5">
-          <img
-            width={190}
-            src="src/assets/user_icon.png"
-            alt="Ícone de Usuário"
-          />
-          <Button
-            text={
-              <span className="flex items-center gap-3 p-1">
-                Enviar Imagem <LuUpload />
-              </span>
-            }
-          />
-        </div>
+        <ProfileImageUpload
+          currentImageUrl={userData.imagemUrl}
+          userId={localStorage.getItem("userId")}
+          onImageUpdate={handleProfileImageUpdate}
+        />
 
         <div className="flex flex-col gap-3 mb-10">
           <button
@@ -57,8 +66,13 @@ function UserSideMenu() {
           </button>
 
           <button className="w-[365px] bg-bgNativeHome border-2 border-gold rounded-2xl font-semibold p-3 px-5 text-left"
-          onClick={() => { navigate("/pagina-enderecos") }}>
+            onClick={() => { navigate("/pagina-enderecos") }}>
             Endereços
+          </button>
+
+          <button className="w-[365px] bg-bgNativeHome border-2 border-gold rounded-2xl font-semibold p-3 px-5 text-left"
+          onClick={() => { navigate("/carrinho") }}>
+            Carrinho
           </button>
         </div>
       </div>
@@ -70,7 +84,6 @@ function UserSideMenu() {
         >
           Desconectar
         </button>
-        {isModalOpen && <ModalConfirmationLogOff onClose={closeModal} />}
       </footer>
     </div>
   );

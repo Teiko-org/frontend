@@ -1,0 +1,142 @@
+/* Estilos personalizados para o react-trello */
+
+/* Estilo das lanes */
+.react-trello-lane {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+  border: 2px solid #fbbf24 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+  margin: 0 15px !important;
+  min-width: 300px !important;
+  max-width: 350px !important;
+}
+
+/* Estilo dos cabeçalhos das lanes */
+.react-trello-lane > header {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+  color: #1e293b !important;
+  font-weight: 700 !important;
+  font-size: 16px !important;
+  padding: 16px !important;
+  border-radius: 10px 10px 0 0 !important;
+  border-bottom: 2px solid #d97706 !important;
+  text-align: center !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Estilo dos labels das lanes */
+.react-trello-lane > header > span:last-child {
+  background: rgba(30, 41, 59, 0.9) !important;
+  color: #fbbf24 !important;
+  padding: 4px 12px !important;
+  border-radius: 20px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  margin-top: 8px !important;
+  display: inline-block !important;
+}
+
+/* Estilo do corpo das lanes */
+.react-trello-lane > div:last-child {
+  padding: 16px !important;
+  background: rgba(248, 250, 252, 0.95) !important;
+  border-radius: 0 0 10px 10px !important;
+  min-height: 400px !important;
+}
+
+/* Estilo dos cards durante o drag */
+.react-trello-card {
+  transition: all 0.2s ease-in-out !important;
+  cursor: grab !important;
+}
+
+.react-trello-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+.react-trello-card:active {
+  cursor: grabbing !important;
+  transform: scale(1.02) !important;
+}
+
+/* Estilo do card sendo arrastado */
+.react-trello-card.react-trello-card--dragging {
+  transform: rotate(5deg) scale(1.05) !important;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2) !important;
+  z-index: 1000 !important;
+}
+
+/* Estilo da área de drop */
+.react-trello-lane.react-trello-lane--over {
+  background: linear-gradient(135deg, #1e293b 0%, #475569 100%) !important;
+  border-color: #fbbf24 !important;
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.3) !important;
+}
+
+/* Estilo do scroll das lanes */
+.react-trello-lane > div:last-child::-webkit-scrollbar {
+  width: 8px !important;
+}
+
+.react-trello-lane > div:last-child::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1) !important;
+  border-radius: 4px !important;
+}
+
+.react-trello-lane > div:last-child::-webkit-scrollbar-thumb {
+  background: #fbbf24 !important;
+  border-radius: 4px !important;
+}
+
+.react-trello-lane > div:last-child::-webkit-scrollbar-thumb:hover {
+  background: #f59e0b !important;
+}
+
+/* Animações */
+@keyframes cardDrop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.react-trello-card {
+  animation: cardDrop 0.3s ease-out !important;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .react-trello-lane {
+    min-width: 250px !important;
+    max-width: 300px !important;
+    margin: 0 8px !important;
+  }
+  
+  .react-trello-lane > header {
+    font-size: 14px !important;
+    padding: 12px !important;
+  }
+}
+
+/* Estilo para indicar que o card pode ser movido */
+.react-trello-card::before {
+  content: "⋮⋮" !important;
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  color: #9ca3af !important;
+  font-size: 12px !important;
+  opacity: 0.6 !important;
+  transition: opacity 0.2s ease !important;
+}
+
+.react-trello-card:hover::before {
+  opacity: 1 !important;
+  color: #fbbf24 !important;
+}
+

@@ -1,48 +1,110 @@
 import React, { useState, useContext } from "react";
 import { FormContext } from "../../contexts/FormContext";
 import Button from "../../components/Button";
-
-import ModalBase from "../../components/ModalBase";
-
 import ModalMontagem from "../../components/ModalMontagem";
 import ModalDecoracao from "../../components/ModalDecoracao";
 import ModalAdicionais from "../../components/ModalAdicionais";
 import ModalEntregaRetirada from "../../components/ModalEntregaRetirada";
 import ModalFinalizar from "../../components/ModalFinalizar";
-
-import { FaEdit } from "react-icons/fa";  
+import ModalImagensReferencia from "../../components/ModalImagensReferencia";
+import { FaEdit } from "react-icons/fa";
 
 const Step5 = () => {
-  const { prevStep } = useContext(FormContext);
+  const { prevStep, submitForm, formData, valorEstimado, appendFormData, setFormData } = useContext(FormContext);
+  
+  if (!formData) {
+    console.error("formData não está definido");
+    return null;
+  }
+
+  const formDataEntries = {
+    ...formData, 
+    imagens: Array.isArray(formData.imagens) ? formData.imagens : []
+  };
+
+  const [isModalMontagemOpen, setIsModalMontagemOpen] = useState(false);
+  const [isModalDecoracaoOpen, setIsModalDecoracaoOpen] = useState(false);
+  const [isModalAdicionaisOpen, setIsModalAdicionaisOpen] = useState(false);
+  const [isModalEntregaRetiradaOpen, setIsModalEntregaRetiradaOpen] = useState(false);
+  const [isModalFinalizarOpen, setIsModalFinalizarOpen] = useState(false);
+  const [isModalImagensReferenciaOpen, setIsModalImagensReferenciaOpen] = useState(false);
+
+  const formatString = (str) =>
+    str.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "";
+
+    const dateComponents = dateStr.split("/");
+
+    if (dateComponents.length === 3) {
+      const [year, month, day] = dateComponents;
+      return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
+    }
+
+    return dateStr;
+  };
+
+  const formatRecheio = (str) => {
+    if (!str) return "";
+    const parts = str.split("-");
+    if (parts.length > 1) {
+      const nome = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+      const descricao = parts
+        .slice(1)
+        .join(" ")
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+      return `${nome} (${descricao})`;
+    } else {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+  };
+
+  const montagemData = {
+    tamanho: formDataEntries.tamanho || "",
+    formato: formDataEntries.formato || "",
+    massa: formatString(formDataEntries.massa) || "",
+    recheio: formatRecheio(formDataEntries.recheio) || "",
+  };
+
+  const decoracaoData = `${formDataEntries.observacoes || "Nenhuma"}`
+
+  const entregaRetiradaData = {
+    tipo: formDataEntries.deliveryOption || "",
+    nome: formDataEntries.nome || "",
+    telefone: formDataEntries.telefone || "",
+    data: formDataEntries.data ? formatDate(formDataEntries.data) : "",
+    cep: formDataEntries.cep || "",
+    estado: formDataEntries.estado || "",
+    cidade: formDataEntries.cidade || "",
+    bairro: formDataEntries.bairro || "",
+    rua: formDataEntries.rua || "",
+    numero: formDataEntries.numero || "",
+    complemento: formDataEntries.complemento || "",
+    horario: formDataEntries.horario || "",
+  };
 
   const handlePrev = () => {
     prevStep();
   };
 
-  const [isModalMontagemOpen, setIsModalMontagemOpen] = useState(false);
-  const closeModalMontagem = () => setIsModalMontagemOpen(false);
+  const handleFinalizar = () => {
+  setIsModalFinalizarOpen(true);
+};
 
-  const [isModalDecoracaoOpen, setIsModalDecoracaoOpen] = useState(false);
-  const closeModalDecoracao = () => setIsModalDecoracaoOpen(false);
-
-  const [isModalAdicionaisOpen, setIsModalAdicionaisOpen] = useState(false);
-  const closeModalAdicionais = () => setIsModalAdicionaisOpen(false);
-
-  const [isModalEntregaRetiradaOpen, setIsModalEntregaRetiradaOpen] =
-    useState(false);
-  const closeModalEntregaRetirada = () => setIsModalEntregaRetiradaOpen(false);
-
-  const [isModalFinalizarOpen, setIsModalFinalizarOpen] = useState(false);
-  const closeModalFinalizar = () => setIsModalFinalizarOpen(false);
-
-  const handleFinalize = () => {
-    setIsModalFinalizarOpen(true);
-  };
+const handleConfirmFinalizar = async () => {
+  try {
+    await submitForm();
+  } finally {
+    setIsModalFinalizarOpen(false);
+  }
+};
 
   return (
     <div className="p-6 bg-bgNativeHome rounded-lg shadow-md">
       <h2 className="text-blue text-2xl mb-6 font-bold">Revise seu pedido</h2>
 
+      {/* MONTAGEM */}
       <div className="mb-5 pb-4 border-b border-gray-300">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-bold text-lg text-blue">MONTAGEM</h3>
@@ -50,39 +112,48 @@ const Step5 = () => {
             className="text-gold cursor-pointer"
             onClick={() => setIsModalMontagemOpen(true)}
           />
-
           {isModalMontagemOpen && (
-            <ModalMontagem onClose={closeModalMontagem} />
+            <ModalMontagem
+              isOpen={isModalMontagemOpen}
+              onClose={() => setIsModalMontagemOpen(false)}
+              selectedSize={montagemData.tamanho}
+              selectedShape={montagemData.formato}
+              selectedMass={formDataEntries.massa}
+              selectedFilling={formDataEntries.recheio}
+              onSave={(newData) => {
+                // Atualizar os dados de montagem no FormContext
+                appendFormData({
+                  tamanho: newData.size,
+                  formato: newData.shape,
+                  massa: newData.mass,
+                  recheio: newData.filling,
+                  massaId: newData.mass, // Assumindo que o ID é o mesmo que o valor
+                  recheioId: newData.filling // Assumindo que o ID é o mesmo que o valor
+                }, 'dadosMontagem');
+                setIsModalMontagemOpen(false);
+              }}
+            />
           )}
-
         </div>
         <div className="flex flex-col gap-2">
           <div className="flex gap-10 mb-6">
             <div className="flex flex-col gap-2">
-
               <span className="text-blue font-semibold">TAMANHO</span>
-              <span className="bg-gradient-to-l from-darkGoldButton to-goldButton rounded-full border-2 border-gold px-4 py-1 text-blue font-bold text-center">
-                13cm
-              </span>
+              <span className="badge">{montagemData.tamanho}</span>
             </div>
             <div className="flex flex-col gap-2">
               <span className="text-blue font-semibold">FORMATO</span>
-              <span className="bg-gradient-to-l from-darkGoldButton to-goldButton rounded-full border-2 border-gold px-4 py-1 text-blue font-bold text-center">
-                Redondo
-              </span>
-
+              <span className="badge">{montagemData.formato}</span>
             </div>
           </div>
           <div className="flex gap-12">
             <div className="flex flex-col">
-
               <span className="text-blue font-semibold">MASSA</span>
-              Red-Velvet
+              {montagemData.massa}
             </div>
             <div className="flex flex-col">
               <span className="text-blue font-semibold">RECHEIO</span>
-
-              Brigadeiro de Pistache com Redução de Frutas Vermelhas
+              {montagemData.recheio}
             </div>
           </div>
         </div>
@@ -92,20 +163,28 @@ const Step5 = () => {
       <div className="mb-5 pb-4 border-b border-gray-300">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-bold text-lg text-blue">DECORAÇÃO</h3>
-
           <FaEdit
             className="text-gold cursor-pointer"
             onClick={() => setIsModalDecoracaoOpen(true)}
           />
-
           {isModalDecoracaoOpen && (
-            <ModalDecoracao onClose={closeModalDecoracao} />
+            <ModalDecoracao 
+              isOpen={isModalDecoracaoOpen}
+              onClose={() => setIsModalDecoracaoOpen(false)}
+              initialObservations={formDataEntries.observacoes}
+              onSave={(newData) => {
+                // Atualizar as observações no FormContext
+                appendFormData({
+                  observacoes: newData.observacoes || ""
+                }, 'dadosMontagem');
+                setIsModalDecoracaoOpen(false);
+              }}
+            />
           )}
-
         </div>
         <div className="flex flex-col">
-          <span className="text-blue font-semibold">Observações</span>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit...
+          <span className="text-blue font-semibold">OBSERVAÇÕES</span>
+          {decoracaoData}
         </div>
       </div>
 
@@ -113,91 +192,206 @@ const Step5 = () => {
       <div className="mb-5 pb-4 border-b border-gray-300">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-bold text-lg text-blue">ADICIONAIS</h3>
-
           <FaEdit
             className="text-gold cursor-pointer"
             onClick={() => setIsModalAdicionaisOpen(true)}
           />
-
-          {isModalAdicionaisOpen && (
-            <ModalAdicionais onClose={closeModalAdicionais} />
-          )}
-
         </div>
-        <div className="flex gap-2">
-          {["Cereja", "Glitter", "Perolado"].map((item, index) => (
-            <span
-              key={index}
-              className="bg-gradient-to-l from-darkGoldButton to-goldButton border-2 border-gold rounded px-2 py-1 text-blue font-bold"
-            >
-              {item}
-            </span>
+        <div className="flex flex-wrap gap-6">
+          {[
+            { label: "CEREJA", name: "cereja", checked: formDataEntries.adicionais?.cereja || false },
+            { label: "GLITTER", name: "glitter", checked: formDataEntries.adicionais?.glitter || false },
+            { label: "PEROLADO", name: "perolado", checked: formDataEntries.adicionais?.perolado || false },
+            { label: "LACINHOS", name: "lacinhos", checked: formDataEntries.adicionais?.lacinhos || false },
+          ].map((item) => (
+            <div key={item.name} className="flex items-center gap-2 text-blue text-sm font-semibold">
+              <span
+                className="w-5 h-5 rounded-sm p-[1px]"
+                style={{
+                  background: "linear-gradient(180deg, #A47032 0%, #D4B076 100%)",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <span
+                  className="w-full h-full rounded-[1px] flex items-center justify-center"
+                  style={{
+                    background: item.checked
+                      ? "linear-gradient(180deg, #A47032 0%, #D4B076 100%)"
+                      : "#fff",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  {item.checked && (
+                    <svg
+                      className="w-3 h-3 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </span>
+              </span>
+              {item.label}
+            </div>
           ))}
         </div>
+        
+        {isModalAdicionaisOpen && (
+          <ModalAdicionais
+            isOpen={isModalAdicionaisOpen}
+            onClose={() => setIsModalAdicionaisOpen(false)}
+            initialAddons={{
+              cereja: formDataEntries.adicionais?.cereja || false,
+              glitter: formDataEntries.adicionais?.glitter || false,
+              perolado: formDataEntries.adicionais?.perolado || false,
+              lacinhos: formDataEntries.adicionais?.lacinhos || false,
+            }}
+            onSave={(newData) => {
+              // Atualizar os adicionais no FormContext
+              appendFormData({ adicionais: newData }, 'dadosMontagem');
+              setIsModalAdicionaisOpen(false);
+            }}
+          />
+        )}
       </div>
 
-      {/* DADOS ENTREGA */}
+      {/* IMAGENS DE REFERÊNCIA */}
+      {formDataEntries.imagens && formDataEntries.imagens.length > 0 && (
+        <div className="mb-5 pb-4 border-b border-gray-300">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="font-bold text-lg text-blue">IMAGENS DE REFERÊNCIA</h3>
+            <FaEdit
+              className="text-gold cursor-pointer"
+              onClick={() => setIsModalImagensReferenciaOpen(true)}
+            />
+            {isModalImagensReferenciaOpen && (
+              <ModalImagensReferencia
+                isOpen={isModalImagensReferenciaOpen}
+                onClose={() => setIsModalImagensReferenciaOpen(false)}
+                initialImages={formDataEntries.imagens}
+                onSave={(newImages) => {
+                  // Atualizar as imagens no FormContext
+                  // Substituir as imagens existentes pelas novas
+                  const imageFiles = newImages.map(img => img.file || img);
+                  setFormData(imageFiles, 'imagens');
+                  setIsModalImagensReferenciaOpen(false);
+                }}
+              />
+            )}
+          </div>
+          <div className="flex flex-col">
+            <div className="flex flex-wrap gap-2 mt-2">
+              {formDataEntries.imagens.map((imagem, index) => (
+                <div key={index} className="text-sm text-gray-600">
+                  {imagem.name || imagem.file?.name || `Imagem ${index + 1}`}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ENTREGA/RETIRADA */}
       <div className="mb-5 pb-4 border-b border-gray-300">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-bold text-lg text-blue">DADOS ENTREGA</h3>
-
           <FaEdit
             className="text-gold cursor-pointer"
             onClick={() => setIsModalEntregaRetiradaOpen(true)}
           />
-
           {isModalEntregaRetiradaOpen && (
-            <ModalEntregaRetirada onClose={closeModalEntregaRetirada} />
+            <ModalEntregaRetirada
+              isOpen={isModalEntregaRetiradaOpen}
+              onClose={() => setIsModalEntregaRetiradaOpen(false)}
+              selectedData={formDataEntries.data}
+              selectedTelefone={formDataEntries.telefone}
+              selectedNome={formDataEntries.nome}
+              selectedCep={formDataEntries.cep}
+              selectedUf={formDataEntries.estado}
+              selectedCidade={formDataEntries.cidade}
+              selectedBairro={formDataEntries.bairro}
+              selectedRua={formDataEntries.rua}
+              selectedNumero={formDataEntries.numero}
+              selectedComplemento={formDataEntries.complemento}
+              selectedTipoEntrega={formDataEntries.deliveryOption}
+              onSave={(newData) => {
+                // Atualizar os dados de entrega no FormContext
+                appendFormData(newData, 'dadosEntrega');
+                setIsModalEntregaRetiradaOpen(false);
+              }}
+            />
           )}
-
         </div>
         <div className="grid grid-cols-2 gap-y-4 mb-4 text-blue">
           <div>
-            <span className="font-semibold">SEU PEDIDO SERÁ:</span> Entrega
+            <span className="font-semibold">SEU PEDIDO SERÁ:</span>{" "}
+            {entregaRetiradaData.tipo}
           </div>
           <div>
-            <span className="font-semibold">DATA:</span> 99/99
+            <span className="font-semibold">DATA:</span>{" "}
+            {entregaRetiradaData.data}
           </div>
           <div>
-            <span className="font-semibold">NOME:</span> Murilo Do Nascimento
-            Barros
+            <span className="font-semibold">NOME:</span>{" "}
+            {entregaRetiradaData.nome}
           </div>
           <div>
-            <span className="font-semibold">TELEFONE:</span> (XX) X XXXX-XXXX
+            <span className="font-semibold">TELEFONE:</span>{" "}
+            {entregaRetiradaData.telefone}
           </div>
         </div>
-        <div className="grid grid-cols-3 mb-4 text-blue">
-          <div>
-            <span className="font-semibold">CEP:</span> 00000-00
+
+        {entregaRetiradaData.tipo === "Entrega" ? (
+          <>
+            <div className="grid grid-cols-3 mb-4 text-blue">
+              <div>
+                <span className="font-semibold">CEP:</span>{" "}
+                {entregaRetiradaData.cep}
+              </div>
+              <div>
+                <span className="font-semibold">ESTADO:</span>{" "}
+                {entregaRetiradaData.estado}
+              </div>
+              <div>
+                <span className="font-semibold">CIDADE:</span>{" "}
+                {entregaRetiradaData.cidade}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-y-4 text-blue">
+              <div>
+                <span className="font-semibold">BAIRRO:</span>{" "}
+                {entregaRetiradaData.bairro}
+              </div>
+              <div>
+                <span className="font-semibold">RUA:</span>{" "}
+                {entregaRetiradaData.rua}
+              </div>
+              <div>
+                <span className="font-semibold">NÚMERO:</span>{" "}
+                {entregaRetiradaData.numero}
+              </div>
+              <div>
+                <span className="font-semibold">COMPLEMENTO:</span>{" "}
+                {entregaRetiradaData.complemento}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="text-blue mt-2">
+            <span className="font-semibold">Horário para retirada:</span>{" "}
+            {entregaRetiradaData.horario}
           </div>
-          <div>
-            <span className="font-semibold">Estado:</span> SP
-          </div>
-          <div>
-            <span className="font-semibold">Cidade:</span> São Paulo
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-y-4 text-blue">
-          <div>
-            <span className="font-semibold">Bairro:</span> Jardim Guairaca
-          </div>
-          <div>
-            <span className="font-semibold">Rua:</span> Rua Antônio Marques
-            Julião
-          </div>
-          <div>
-            <span className="font-semibold">Número:</span> 9999
-          </div>
-          <div>
-            <span className="font-semibold">Complemento:</span> Inserir seu
-            endereço
-          </div>
-        </div>
+        )}
       </div>
 
       <div className="flex justify-between items-center mt-6">
         <div className="text-gradient font-bold text-lg">
-          VALOR ESTIMADO: R$ 999,99
+          VALOR ESTIMADO: R$ {valorEstimado.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </div>
         <div>
           <Button
@@ -209,25 +403,18 @@ const Step5 = () => {
           <Button
             text="Finalizar Pedido"
             className="px-6 py-1"
-            onClick={handleFinalize}
+            onClick={handleFinalizar}
             bgColor="bg-gradient-to-l from-darkGoldButton to-goldButton"
           />
-
           {isModalFinalizarOpen && (
-            <ModalFinalizar onClose={closeModalFinalizar} />
+            <ModalFinalizar
+              isOpen={isModalFinalizarOpen}
+              onClose={() => setIsModalFinalizarOpen(false)}
+              onFinalize={handleConfirmFinalizar}
+            />
           )}
         </div>
       </div>
-
-      {/* {isModalOpen && (
-        <ModalBase title="Editar" onClose={closeModal}>
-          <p>Conteúdo do modal de edição aqui.</p>
-          <div className="flex justify-end mt-4">
-            <Button text="Cancelar" className="mr-2" onClick={closeModal} />
-            <Button text="Salvar" />
-          </div>
-        </ModalBase>
-      )} */}
     </div>
   );
 };
