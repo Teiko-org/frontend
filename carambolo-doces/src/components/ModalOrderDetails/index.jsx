@@ -1,5 +1,5 @@
 import { useState } from "react";
-import OrderStatusChanger from "../orderStatusChanger";
+import OrderStatusChanger from "../OrderStatusChanger";
 
 function formatPhone(phone) {
   if (!phone) return "Carregando...";
