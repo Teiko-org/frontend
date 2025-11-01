@@ -61,7 +61,10 @@ export const register = async (name, password, phone) => {
     toast.success('Cadastro criado com sucesso!');
     return response.data;
   } catch (error) {
-    handleAuthError(error, phoneWithCountryCode || phone);
+    // Usar phoneWithCountryCode que foi definido no escopo da função
+    const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
+    const phoneWithCountryCode = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+    handleAuthError(error, phoneWithCountryCode);
     throw error;
   }
 };
@@ -72,9 +75,18 @@ export const register = async (name, password, phone) => {
 // através do tratamento do erro 409 retornado pelo backend
 
 const handleAuthError = (error, phone) => {
+  console.log('=== DEBUG handleAuthError ===');
+  console.log('Error:', error);
+  console.log('Error response:', error.response);
+  console.log('Error status:', error.response?.status);
+  console.log('Phone:', phone);
+  
   if (error.response && error.response.status === 409) {
     // Formatar o telefone para exibição mais amigável
     const formattedPhone = phone ? formatPhoneForDisplay(phone) : 'este telefone';
+    console.log('Formatted phone:', formattedPhone);
+    console.log('Exibindo toast de erro 409...');
+    
     toast.error(
       `Este telefone (${formattedPhone}) já está cadastrado. Tente fazer login ou use outro número.`,
       {
@@ -84,12 +96,16 @@ const handleAuthError = (error, phone) => {
       }
     );
   } else if (error.response && error.response.status === 500) {
+    console.log('Exibindo toast de erro 500...');
     toast.error('Tivemos problemas para processar seu cadastro. Tente novamente mais tarde!');
   } else if (error.response && error.response.status === 401) {
+    console.log('Exibindo toast de erro 401...');
     toast.error('Telefone ou Senha incorretos.');
   } else if (error.response && error.response.status === 404) {
+    console.log('Exibindo toast de erro 404...');
     toast.error(`Usuário com contato ${phone} não encontrado`);
   } else {
+    console.log('Exibindo toast de erro genérico...');
     toast.error('Erro de autenticação. Tente novamente.');
     console.error('Erro de autenticação', error);
   }
