@@ -31,15 +31,17 @@ const isAuthRoute = (url) => {
     return authRoutes.some(route => url.includes(route));
 };
 
-export const axiosApi = axios.create(
-    {
-        baseURL: "http://localhost:8080",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        withCredentials: true
-    }
-)
+const baseURL = (import.meta?.env?.PROD)
+  ? "/api"
+  : (import.meta?.env?.VITE_API_BASE_URL ?? "http://localhost:8080");
+
+export const axiosApi = axios.create({
+    baseURL,
+    headers: {
+        "Content-Type": "application/json",
+    },
+    withCredentials: true,
+})
 
 // Interceptor para configurar cookies corretamente
 axiosApi.interceptors.request.use(
