@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { X } from "lucide-react";
 import Button from "../Button";
 import InputOption from "../InputOption";
-import axios from "axios";
+import { axiosApi } from "../../provider/AxiosApi";
 
 export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProdutoEditado }) {
     const [file, setFile] = useState(null);
@@ -56,17 +56,17 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
         if (!isOpen) return;
         // Busca listas de opções
         if (categoria.toLowerCase().includes("carambolo")) {
-            axios.get("http://localhost:8080/bolos/massa").then(res => setMassasDisponiveis(res.data));
-            axios.get("http://localhost:8080/bolos/recheio-exclusivo").then(res => setRecheiosDisponiveis(res.data));
+            axiosApi.get("/bolos/massa").then(res => setMassasDisponiveis(res.data));
+            axiosApi.get("/bolos/recheio-exclusivo").then(res => setRecheiosDisponiveis(res.data));
         }
-        axios.get("http://localhost:8080/bolos/cobertura").then(res => setCoberturasDisponiveis(res.data));
-        axios.get("http://localhost:8080/bolos/formatos").then(res => {
+        axiosApi.get("/bolos/cobertura").then(res => setCoberturasDisponiveis(res.data));
+        axiosApi.get("/bolos/formatos").then(res => {
             // Filtra apenas os formatos válidos
             const validos = res.data.filter(f => f === "CIRCULO" || f === "CORACAO");
             setFormatosDisponiveis(validos);
         });
-        axios.get("http://localhost:8080/bolos/tamanhos").then(res => setTamanhosDisponiveis(res.data));
-        axios.get("http://localhost:8080/decoracoes").then(res => setDecoracoesDisponiveis(res.data));
+        axiosApi.get("/bolos/tamanhos").then(res => setTamanhosDisponiveis(res.data));
+        axiosApi.get("/decoracoes").then(res => setDecoracoesDisponiveis(res.data));
     }, [isOpen, categoria]);
 
     const anexarImagem = (e) => {
@@ -90,7 +90,7 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
                     valor: Number(valor),
                     categoria,
                 };
-                await axios.put(`http://localhost:8080/fornadas/produto-fornada/${produto.id}`, data, {
+                await axiosApi.put(`/fornadas/produto-fornada/${produto.id}`, data, {
                     headers: { "Content-Type": "application/json" }
                 });
             } else if (categoria.toLowerCase().includes("carambolo")) {
@@ -103,7 +103,7 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
                 const decoracaoIdToUpdate = produto?.decoracaoId || decoracao;
                 let nomeDecoracao = nome;
                 if (decoracaoIdToUpdate) {
-                    await axios.put(`http://localhost:8080/decoracoes/${decoracaoIdToUpdate}`, {
+                    await axiosApi.put(`/decoracoes/${decoracaoIdToUpdate}`, {
                         nome: nome,
                         observacao: descricao
                     }, {
@@ -123,7 +123,7 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
                     tamanho: tamanho || null,
                     categoria,
                 };
-                await axios.put(`http://localhost:8080/bolos/${produto.id}`, data, {
+                await axiosApi.put(`/bolos/${produto.id}`, data, {
                     headers: { "Content-Type": "application/json" }
                 });
             } else {
