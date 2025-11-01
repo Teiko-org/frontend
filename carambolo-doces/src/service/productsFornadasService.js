@@ -3,7 +3,7 @@ import { axiosApi } from '../provider/AxiosApi.js';
 export const productsFornadasService = async () => {
     try {
         const response = await axiosApi.get('/fornadas/produto-fornada');
-        return response.data;
+        return response.data.content;
     } catch (error) {
         console.error("Erro ao buscar os produtos da Fornada:", error);
         return [];
