@@ -52,11 +52,15 @@ export const register = async (name, password, phone) => {
     // Limpa o telefone e adiciona o código do país 55 (Brasil)
     const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
     const phoneWithCountryCode = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+    // Persistir SEM DDI (11 dígitos) para ficar consistente com o login
+    const contatoToSend = (cleanPhone.length >= 12 && cleanPhone.startsWith('55'))
+      ? cleanPhone.slice(-11)
+      : cleanPhone;
     
     const requestData = {
       nome: name,
       senha: password,
-      contato: phoneWithCountryCode
+      contato: contatoToSend
     };
     
     const response = await axiosApi.post('/usuarios', requestData);
@@ -66,8 +70,10 @@ export const register = async (name, password, phone) => {
   } catch (error) {
     // Usar phoneWithCountryCode que foi definido no escopo da função
     const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
-    const phoneWithCountryCode = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
-    handleAuthError(error, phoneWithCountryCode);
+    const contatoToSend = (cleanPhone.length >= 12 && cleanPhone.startsWith('55'))
+      ? cleanPhone.slice(-11)
+      : cleanPhone;
+    handleAuthError(error, contatoToSend);
     throw error;
   }
 };
