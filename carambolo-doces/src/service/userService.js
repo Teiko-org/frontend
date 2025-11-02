@@ -6,12 +6,16 @@ export const login = async (phone, password) => {
   // Limpa o telefone e adiciona o código do país 55 (Brasil)
   const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
   const phoneWithCountryCode = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+  // Para compatibilizar com bases que armazenam SEM DDI, envie apenas os 11 dígitos finais
+  const contatoToSend = (cleanPhone.length >= 12 && cleanPhone.startsWith('55'))
+    ? cleanPhone.slice(-11)
+    : cleanPhone;
 
   try {
-    const response = await axiosApi.post('/usuarios/login', { contato: phoneWithCountryCode, senha: password }, { withCredentials: true });
+    const response = await axiosApi.post('/usuarios/login', { contato: contatoToSend, senha: password }, { withCredentials: true });
     return response.data;
   } catch (error) {
-    handleAuthError(error, phoneWithCountryCode);
+    handleAuthError(error, contatoToSend);
     throw error;
   }
 };
