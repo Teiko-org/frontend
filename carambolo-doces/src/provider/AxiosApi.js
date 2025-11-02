@@ -31,9 +31,10 @@ const isAuthRoute = (url) => {
     return authRoutes.some(route => url.includes(route));
 };
 
+// Prod → "/api" (proxy na EC2). Dev → usa VITE_API_BASE_URL se definido, senão "/api" (proxy do Vite)
 const baseURL = (import.meta?.env?.PROD)
   ? "/api"
-  : (import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080");
+  : (import.meta?.env?.VITE_API_BASE_URL || "/api");
 
 export const axiosApi = axios.create({
     baseURL,
