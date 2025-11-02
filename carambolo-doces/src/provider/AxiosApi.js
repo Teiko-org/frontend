@@ -5,7 +5,7 @@ import { clearAuthData } from "../service/userService.js"
 const isPublicRoute = (url, method = 'GET') => {
     const methodUpper = (method || 'GET').toUpperCase();
     // Essas rotas são públicas somente para GET
-    const publicGetOnly = ['/decoracoes', '/bolos'];
+    const publicGetOnly = ['/decoracoes', '/bolos', '/fornadas', '/files', '/dashboard'];
 
     // Para fornadas, apenas GET é público, outras operações precisam de autenticação
     if (url.includes('/fornadas')) {
@@ -31,7 +31,9 @@ const isAuthRoute = (url) => {
     return authRoutes.some(route => url.includes(route));
 };
 
-const baseURL = "/api";
+const baseURL = (import.meta?.env?.PROD)
+  ? "/api"
+  : (import.meta?.env?.VITE_API_BASE_URL || "http://localhost:8080");
 
 export const axiosApi = axios.create({
     baseURL,
