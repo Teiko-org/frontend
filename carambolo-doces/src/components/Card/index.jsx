@@ -33,14 +33,22 @@ function Card({ available, type, produto, nome, preco, imagem, boloData, onClick
         // sejam roteadas via proxy do frontend em /api
         const parsed = new URL(url, window.location.origin);
         const isLocalhost = parsed.hostname === 'localhost' && (parsed.port === '8080' || parsed.port === '');
-        const isPrivate10 = /^10\.\d+\.\d+\.\d+$/.test(parsed.hostname) && parsed.port === '8080';
+        const isPrivate10 = /^10\.\d+\.\d+\.\d+$/.test(parsed.hostname) && (parsed.port === '8080' || parsed.port === '');
         if (isLocalhost || isPrivate10) {
           return `/api${parsed.pathname}${parsed.search}`;
         }
+        // Se vier um caminho da API como /files/... também deve ir via /api
+        if (parsed.origin === window.location.origin) {
+          if (parsed.pathname.startsWith('/files')) {
+            return `/api${parsed.pathname}${parsed.search}`;
+          }
+        }
         return url;
       } catch (_e) {
-        // Se for caminho relativo já serve direto
-        return url;
+        // Caminhos relativos vindos do backend, ex.: /files/... ou files/...
+        if (url.startsWith('/files')) return `/api${url}`;
+        if (url.startsWith('files/')) return `/api/${url}`;
+        return url; // deixa como está para outras urls relativas de assets
       }
     };
 
