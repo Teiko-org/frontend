@@ -3,16 +3,15 @@ import { axiosApi } from '../provider/AxiosApi.js';
 import { toast } from 'react-toastify';
 
 export const login = async (phone, password) => {
+  // Limpa o telefone e adiciona o código do país 55 (Brasil)
+  const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
+  const phoneWithCountryCode = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+
   try {
-    // Limpa o telefone e adiciona o código do país 55 (Brasil)
-    const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
-    const phoneWithCountryCode = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
-    
-    
     const response = await axiosApi.post('/usuarios/login', { contato: phoneWithCountryCode, senha: password }, { withCredentials: true });
     return response.data;
   } catch (error) {
-    handleAuthError(error, phoneWithCountryCode || phone);
+    handleAuthError(error, phoneWithCountryCode);
     throw error;
   }
 };
