@@ -26,8 +26,26 @@ function Card({ available, type, produto, nome, preco, imagem, boloData, onClick
   };
 
   const getImageSrc = () => {
+    const normalizeImageUrl = (url) => {
+      if (!url) return url;
+      try {
+        // Garante que URLs absolutas apontando para localhost:8080 ou 10.x.x.x:8080
+        // sejam roteadas via proxy do frontend em /api
+        const parsed = new URL(url, window.location.origin);
+        const isLocalhost = parsed.hostname === 'localhost' && (parsed.port === '8080' || parsed.port === '');
+        const isPrivate10 = /^10\.\d+\.\d+\.\d+$/.test(parsed.hostname) && parsed.port === '8080';
+        if (isLocalhost || isPrivate10) {
+          return `/api${parsed.pathname}${parsed.search}`;
+        }
+        return url;
+      } catch (_e) {
+        // Se for caminho relativo já serve direto
+        return url;
+      }
+    };
+
     if (imagem) {
-      return imagem;
+      return normalizeImageUrl(imagem);
     }
     
     if (produto && produto.imagens && produto.imagens.length > 0) {
@@ -35,7 +53,7 @@ function Card({ available, type, produto, nome, preco, imagem, boloData, onClick
       const imagemUrl = typeof primeiraImagem === 'object' && primeiraImagem.url 
         ? primeiraImagem.url 
         : primeiraImagem;
-      return imagemUrl;
+      return normalizeImageUrl(imagemUrl);
     }
     
     if (boloData && boloData.imagens && boloData.imagens.length > 0) {
@@ -43,7 +61,7 @@ function Card({ available, type, produto, nome, preco, imagem, boloData, onClick
       const imagemUrl = typeof primeiraImagem === 'object' && primeiraImagem.url 
         ? primeiraImagem.url 
         : primeiraImagem;
-      return imagemUrl;
+      return normalizeImageUrl(imagemUrl);
     }
     
     return type === "Bolo" ? "src/assets/image_card.png" : "src/assets/image_fornada.png";
