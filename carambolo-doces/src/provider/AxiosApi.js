@@ -31,9 +31,7 @@ const isAuthRoute = (url) => {
     return authRoutes.some(route => url.includes(route));
 };
 
-const baseURL = (import.meta?.env?.PROD)
-  ? "/api"
-  : (import.meta?.env?.VITE_API_BASE_URL ?? "http://localhost:8080");
+const baseURL = "/api";
 
 export const axiosApi = axios.create({
     baseURL,
