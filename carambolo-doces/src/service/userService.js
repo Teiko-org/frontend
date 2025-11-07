@@ -90,7 +90,43 @@ export const changePassword = async (userId, senhaAtual, novaSenha) => {
     clearAuthData();
     return true;
   } catch (error) {
-    toast.error("Erro ao alterar senha: " + (error.response?.data?.message || "Tente novamente"));
+    let errorMessage = "Erro ao alterar senha. Tente novamente.";
+    
+    if (error.response?.status === 400) {
+      const data = error.response.data;
+      
+      if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+        const firstError = data.errors[0];
+        const field = firstError.field || firstError.property || '';
+        const message = firstError.defaultMessage || firstError.message || '';
+        
+        if (field === 'novaSenha' || message.includes('senha') || message.includes('A senha deve ter')) {
+          errorMessage = message || "A senha deve ter no mínimo 6 caracteres, incluir pelo menos uma letra maiúscula, um número e um caractere especial (!@#$%^&*).";
+        } else if (field === 'senhaAtual') {
+          errorMessage = "Senha atual incorreta.";
+        } else {
+          errorMessage = message || errorMessage;
+        }
+      } else if (data.message) {
+        if (data.message.includes("novaSenha") || data.message.includes("Pattern") || data.message.includes("regexp") || data.message.includes("A senha deve ter")) {
+          errorMessage = "A senha deve ter no mínimo 6 caracteres, incluir pelo menos uma letra maiúscula, um número e um caractere especial (!@#$%^&*).";
+        } else if (data.message.includes("igual") || data.message.includes("mesma")) {
+          errorMessage = "A nova senha não pode ser igual à senha atual.";
+        } else {
+          errorMessage = data.message;
+        }
+      } else if (typeof data === 'string' && data.includes("Validation failed")) {
+        errorMessage = "A senha não atende aos requisitos de segurança. Verifique se contém: mínimo 6 caracteres, uma maiúscula, um número e um caractere especial.";
+      } else {
+        errorMessage = "A senha não atende aos requisitos de segurança. Verifique se contém: mínimo 6 caracteres, uma maiúscula, um número e um caractere especial (!@#$%^&*).";
+      }
+    } else if (error.response?.status === 401) {
+      errorMessage = "Senha atual incorreta.";
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    }
+    
+    toast.error(errorMessage);
     throw error;
   }
 };

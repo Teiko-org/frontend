@@ -78,8 +78,8 @@ function RegisterModal({ onClose, switchToLogin }) {
           {...register("password", {
             required: "Senha é obrigatória",
             pattern: {
-              value: /^(?=.*[A-Z])(?=.*[!@#$%^&*])(?=.{6,})/,
-              message: "Senha deve ter pelo menos 6 caracteres, um maiúsculo e um especial"
+              value: /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{6,})/,
+              message: "Senha deve ter pelo menos 6 caracteres, um maiúsculo, um número e um especial"
             }
           })}
           type="password"
