@@ -20,7 +20,8 @@ const parseLocalDate = (dateStr) => {
 };
 import KPILastFornada from "../../components/KPILastFornada";
 import KPIThisMonthFornadas from "../../components/KPIThisMonthFornadas";
-import { getFornadaAtiva, getProdutosFornadaComImagens, getProximaFornada, encerrarFornada } from "../../service/fornadaService";
+import { getFornadaAtiva, getProdutosFornadaComImagens, getProximaFornada, encerrarFornada, getProdutosPorFornadaId } from "../../service/fornadaService";
+import { atualizarFornadaDaVez, excluirFornadaDaVez } from "../../service/fornadaDaVezService";
 import { FaRegEdit, FaPlus, FaSave, FaTimes } from "react-icons/fa";
 import ModalConfirmarEdicao from "../../components/ModalConfirmarEdicao";
 import { useRef } from "react";
@@ -38,7 +39,10 @@ function FornadaDashboard() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [editingFornada, setEditingFornada] = useState(null);
+  const [initialEditingFornada, setInitialEditingFornada] = useState(null);
+  const [initialSelectedProducts, setInitialSelectedProducts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const handleDateChange = (field, value) => {
     if (isEditing) {
@@ -104,21 +108,34 @@ function FornadaDashboard() {
     }
   };
 
-  const handleEditFornada = () => {
-    if (fornadaAtual) {
-      setEditingFornada({
-        ...fornadaAtual,
-        dataInicio: fornadaAtual.dataInicio,
-        dataFim: fornadaAtual.dataFim
-      });
-    } else if (fornadaProxima) {
-      setEditingFornada({
-        ...fornadaProxima,
-        dataInicio: fornadaProxima.dataInicio,
-        dataFim: fornadaProxima.dataFim
-      });
+  const handleEditFornada = async () => {
+    const fornadaParaEditar = fornadaAtual || fornadaProxima;
+    if (!fornadaParaEditar) return;
+
+    try {
+      const produtosFornada = await getProdutosPorFornadaId(fornadaParaEditar.id);
+      const produtosSelecionados = (produtosFornada || [])
+        .filter(produto => produto.id && produto.fornadaDaVezId)
+        .map(produto => ({
+          id: produto.id,
+          quantidade: produto.quantidade || 1
+        }));
+      localStorage.setItem("selectedProducts", JSON.stringify(produtosSelecionados));
+
+      const fornadaInicial = {
+        ...fornadaParaEditar,
+        dataInicio: fornadaParaEditar.dataInicio,
+        dataFim: fornadaParaEditar.dataFim
+      };
+      
+      setEditingFornada(fornadaInicial);
+      setInitialEditingFornada(JSON.parse(JSON.stringify(fornadaInicial)));
+      setInitialSelectedProducts(JSON.parse(JSON.stringify(produtosSelecionados)));
+      setIsEditing(true);
+    } catch (error) {
+      console.error("Erro ao carregar produtos da fornada:", error);
+      toast.error("Erro ao carregar produtos da fornada. Tente novamente.");
     }
-    setIsEditing(true);
   };
 
   const handleSaveEdit = async () => {
@@ -151,12 +168,9 @@ function FornadaDashboard() {
       });
 
       if (sucesso) {
-        const selectedProducts = JSON.parse(localStorage.getItem("selectedProducts") || "[]");
-        if (selectedProducts.length > 0) {
-          toast.info("Adicionando produtos à fornada...");
-          await registerFornadaDaVez(editingFornada.id);
-          localStorage.removeItem("selectedProducts");
-        }
+        toast.info("Sincronizando produtos da fornada...");
+        await sincronizarProdutosFornada(editingFornada.id);
+        localStorage.removeItem("selectedProducts");
         
         toast.success("Fornada atualizada com sucesso!");
         setIsEditing(false);
@@ -171,15 +185,99 @@ function FornadaDashboard() {
     }
   };
 
+  const hasUnsavedChanges = () => {
+    if (!editingFornada || !initialEditingFornada) return false;
+    
+    const datesChanged = editingFornada.dataInicio !== initialEditingFornada.dataInicio ||
+                         editingFornada.dataFim !== initialEditingFornada.dataFim;
+    
+    const currentProducts = JSON.parse(localStorage.getItem("selectedProducts") || "[]");
+    const productsChanged = JSON.stringify(currentProducts.sort((a, b) => a.id - b.id)) !== 
+                           JSON.stringify(initialSelectedProducts.sort((a, b) => a.id - b.id));
+    
+    return datesChanged || productsChanged;
+  };
+
   const handleCancelEdit = () => {
+    if (hasUnsavedChanges()) {
+      setShowCancelConfirm(true);
+    } else {
+      confirmCancelEdit();
+    }
+  };
+
+  const confirmCancelEdit = () => {
     setIsEditing(false);
     setEditingFornada(null);
+    setInitialEditingFornada(null);
+    setInitialSelectedProducts([]);
+    setShowCancelConfirm(false);
+    localStorage.setItem("selectedProducts", JSON.stringify(initialSelectedProducts));
   };
 
   const notify = () => {
     toast("Fornada cadastrada com sucesso!", {
       type: "success",
     });
+  };
+
+  const sincronizarProdutosFornada = async (idFornada) => {
+    try {
+      const selectedProducts = JSON.parse(localStorage.getItem("selectedProducts") || "[]");
+      const produtosAtuais = await getProdutosPorFornadaId(idFornada);
+      
+      const produtosAtuaisMap = new Map();
+      produtosAtuais.forEach(produto => {
+        if (produto.fornadaDaVezId && produto.id) {
+          produtosAtuaisMap.set(produto.id, {
+            fornadaDaVezId: produto.fornadaDaVezId,
+            quantidade: produto.quantidade
+          });
+        }
+      });
+
+      const produtosSelecionadosMap = new Map();
+      selectedProducts.forEach(produto => {
+        produtosSelecionadosMap.set(produto.id, produto.quantidade);
+      });
+
+      const operacoes = [];
+
+      for (const [produtoId, quantidade] of produtosSelecionadosMap.entries()) {
+        const produtoAtual = produtosAtuaisMap.get(produtoId);
+        
+        if (produtoAtual) {
+          if (quantidade !== produtoAtual.quantidade) {
+            if (quantidade > 0) {
+              operacoes.push(atualizarFornadaDaVez(produtoAtual.fornadaDaVezId, quantidade));
+            } else {
+              operacoes.push(excluirFornadaDaVez(produtoAtual.fornadaDaVezId));
+            }
+          }
+        } else {
+          if (quantidade > 0) {
+            operacoes.push(fornadaDaVezService({
+              fornadaId: idFornada,
+              produtoFornadaId: produtoId,
+              quantidade: quantidade,
+            }));
+          }
+        }
+      }
+
+      for (const [produtoId, produtoAtual] of produtosAtuaisMap.entries()) {
+        if (!produtosSelecionadosMap.has(produtoId)) {
+          operacoes.push(excluirFornadaDaVez(produtoAtual.fornadaDaVezId));
+        }
+      }
+
+      if (operacoes.length > 0) {
+        await Promise.all(operacoes);
+      }
+    } catch (error) {
+      console.error("Erro ao sincronizar produtos da fornada:", error);
+      throw error;
+    }
   };
 
   const registerFornadaDaVez = async (idFornada) => {
@@ -244,6 +342,8 @@ function FornadaDashboard() {
         console.error("Erro ao buscar próxima fornada:", error);
         setFornadaProxima(null);
       }
+      
+      setKpiRefreshKey((v) => v + 1);
     } catch (error) {
       console.error("Erro geral ao carregar dados da fornada:", error);
     }
@@ -563,7 +663,7 @@ function FornadaDashboard() {
           </div>
 
           <div className="flex flex-row justify-evenly items-center gap-10">
-            <KPILastFornada key={kpiRefreshKey} kpiDataOverride={null} rangeOverride={null} />
+            <KPILastFornada key={kpiRefreshKey} kpiDataOverride={null} rangeOverride={null} refreshKey={kpiRefreshKey} />
             
             {/* Card central - muda baseado no estado e modo */}
             <div className="flex flex-col justify-center items-center w-[470px] h-[170px] border-2 border-gold rounded-2xl bg-bgHome gap-5 p-10 transition-all duration-500 ease-in-out">
@@ -618,7 +718,7 @@ function FornadaDashboard() {
               </button>
 
                 <button
-                  className="flex items-center bg-gradient-to-l from-blue to-darkBlue text-lg text-white border-blue font-bold py-1 px-4 rounded-full shadow-md border-2 focus:outline-none transform hover:scale-105 transition-all duration-300 ease-in-out hover:shadow-lg"
+                  className="flex items-center bg-gradient-to-l from-red to-brightRed text-lg text-white border-red font-bold py-1 px-4 rounded-full shadow-md border-2 focus:outline-none transform hover:scale-105 transition-all duration-300 ease-in-out hover:shadow-lg"
                   onClick={handleEncerrarFornada}
                 >
                   ENCERRAR FORNADA
@@ -635,6 +735,13 @@ function FornadaDashboard() {
         onClose={() => { setConfirmOpen(false); pendingFornadaIdRef.current = null; }}
         onConfirm={confirmEncerrar}
         step={"encerramento da fornada"}
+      />
+
+      <ModalConfirmarEdicao 
+        isOpen={showCancelConfirm}
+        onClose={() => setShowCancelConfirm(false)}
+        onConfirm={confirmCancelEdit}
+        step={"cancelamento da edição"}
       />
     </div>
   );
