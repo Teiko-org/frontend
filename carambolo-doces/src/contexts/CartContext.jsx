@@ -1,12 +1,18 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { buscarCarrinhoBackend, salvarCarrinhoBackend, limparCarrinhoBackend } from "../service/cartService";
 
 const CartContext = createContext(null);
 
 export function CartProvider({ children }) {
-  // Função para obter a chave do carrinho baseada no usuário
   const getCartKey = () => {
     const userId = localStorage.getItem("userId");
     return userId ? `CART_ITEMS_USER_${userId}` : "CART_ITEMS_GUEST";
+  };
+
+  const isUserLoggedIn = () => {
+    const userId = localStorage.getItem("userId");
+    const isSigned = localStorage.getItem("IS_SIGNED");
+    return userId && isSigned === "true";
   };
 
   const [items, setItems] = useState(() => {
@@ -19,35 +25,75 @@ export function CartProvider({ children }) {
     }
   });
   const hasMountedRef = useRef(false);
+  const syncTimeoutRef = useRef(null);
+  const isSyncingRef = useRef(false);
+  const lastUserIdRef = useRef(null);
 
-  // Função para carregar carrinho do usuário atual
-  const loadUserCart = () => {
+  const loadUserCart = async () => {
     try {
-      const cartKey = getCartKey();
-      const saved = localStorage.getItem(cartKey);
-      const cartItems = saved ? JSON.parse(saved) : [];
-      setItems(cartItems);
-      console.log(`Carrinho carregado para chave: ${cartKey}, itens:`, cartItems);
+      const userId = localStorage.getItem("userId");
+      
+      if (userId && isUserLoggedIn()) {
+        try {
+          const backendItems = await buscarCarrinhoBackend(parseInt(userId));
+          setItems(backendItems);
+          const cartKey = getCartKey();
+          localStorage.setItem(cartKey, JSON.stringify(backendItems));
+        } catch (error) {
+          console.warn("Erro ao buscar carrinho do backend, usando localStorage:", error);
+          const cartKey = getCartKey();
+          const saved = localStorage.getItem(cartKey);
+          const cartItems = saved ? JSON.parse(saved) : [];
+          setItems(cartItems);
+        }
+      } else {
+        const cartKey = getCartKey();
+        const saved = localStorage.getItem(cartKey);
+        const cartItems = saved ? JSON.parse(saved) : [];
+        setItems(cartItems);
+      }
     } catch (error) {
       console.error("Erro ao carregar carrinho:", error);
-      setItems([]);
+      try {
+        const cartKey = getCartKey();
+        const saved = localStorage.getItem(cartKey);
+        const cartItems = saved ? JSON.parse(saved) : [];
+        setItems(cartItems);
+      } catch (_) {
+        setItems([]);
+      }
     }
   };
 
-  // Carregar carrinho quando o usuário mudar
   useEffect(() => {
     const handleStorageChange = () => {
-      loadUserCart();
+      loadUserCart().catch(console.error);
     };
 
-    // Escutar mudanças no localStorage
     window.addEventListener('storage', handleStorageChange);
     
-    // Carregar carrinho inicial
-    loadUserCart();
+    loadUserCart().catch(console.error);
+
+    const checkUserId = () => {
+      const currentUserId = localStorage.getItem("userId");
+      const lastUserId = lastUserIdRef.current;
+      
+      if (currentUserId !== lastUserId) {
+        lastUserIdRef.current = currentUserId;
+        loadUserCart().catch(console.error);
+      }
+    };
+
+    lastUserIdRef.current = localStorage.getItem("userId");
+
+    const intervalId = setInterval(checkUserId, 1000);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      clearInterval(intervalId);
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -56,11 +102,42 @@ export function CartProvider({ children }) {
       hasMountedRef.current = true;
       return;
     }
-    try {
-      const cartKey = getCartKey();
-      localStorage.setItem(cartKey, JSON.stringify(items));
-    } catch (_) {
+    
+    const userId = localStorage.getItem("userId");
+    if (!userId || !isUserLoggedIn()) {
+      try {
+        const cartKey = getCartKey();
+        localStorage.setItem(cartKey, JSON.stringify(items));
+      } catch (_) {}
+      return;
     }
+
+    if (syncTimeoutRef.current) {
+      clearTimeout(syncTimeoutRef.current);
+    }
+
+    syncTimeoutRef.current = setTimeout(async () => {
+      try {
+        isSyncingRef.current = true;
+        await salvarCarrinhoBackend(parseInt(userId), items);
+        const cartKey = getCartKey();
+        localStorage.setItem(cartKey, JSON.stringify(items));
+      } catch (error) {
+        console.error("Erro ao sincronizar carrinho com backend:", error);
+        try {
+          const cartKey = getCartKey();
+          localStorage.setItem(cartKey, JSON.stringify(items));
+        } catch (_) {}
+      } finally {
+        isSyncingRef.current = false;
+      }
+    }, 500);
+
+    return () => {
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+    };
   }, [items]);
 
   const addItem = (product, quantity = 1) => {
@@ -97,15 +174,27 @@ export function CartProvider({ children }) {
     setItems((prev) => prev.filter((p) => !(p.id === id && p.type === type)));
   };
 
-  // Remove itens de fornada pelo fornadaDaVezId (útil após finalizar pedido)
   const removeByFornadaId = (fornadaDaVezId) => {
     if (!fornadaDaVezId) return;
     setItems((prev) => prev.filter((p) => !(p.type === 'Fornada' && p.fornadaDaVezId === fornadaDaVezId)));
   };
 
-  const clearCart = () => setItems([]);
+  const clearCart = async () => {
+    setItems([]);
+    const userId = localStorage.getItem("userId");
+    if (userId && isUserLoggedIn()) {
+      try {
+        await limparCarrinhoBackend(parseInt(userId));
+      } catch (error) {
+        console.error("Erro ao limpar carrinho no backend:", error);
+      }
+    }
+    try {
+      const cartKey = getCartKey();
+      localStorage.removeItem(cartKey);
+    } catch (_) {}
+  };
 
-  // Função para limpar carrinho de convidado quando usuário faz login
   const clearGuestCart = () => {
     try {
       localStorage.removeItem("CART_ITEMS_GUEST");
@@ -113,40 +202,86 @@ export function CartProvider({ children }) {
     }
   };
 
-  // Função para migrar carrinho de convidado para usuário logado
-  const migrateGuestCartToUser = () => {
+  const migrateGuestCartToUser = async () => {
     try {
-      const guestCart = localStorage.getItem("CART_ITEMS_GUEST");
-      if (guestCart) {
-        const guestItems = JSON.parse(guestCart);
-        if (guestItems.length > 0) {
-          // Adicionar itens do carrinho de convidado ao carrinho do usuário
-          guestItems.forEach(item => {
-            addItem(item, item.quantity);
-          });
-          // Limpar carrinho de convidado
-          clearGuestCart();
-          console.log("Carrinho de convidado migrado para usuário logado");
-        }
+      const userId = localStorage.getItem("userId");
+      if (!userId || !isUserLoggedIn()) {
+        return;
       }
+
+      const guestCart = localStorage.getItem("CART_ITEMS_GUEST");
+      const guestItems = guestCart ? JSON.parse(guestCart) : [];
+      
+      if (guestItems.length === 0) {
+        try {
+          const backendItems = await buscarCarrinhoBackend(parseInt(userId));
+          setItems(backendItems);
+          const userCartKey = `CART_ITEMS_USER_${userId}`;
+          localStorage.setItem(userCartKey, JSON.stringify(backendItems));
+        } catch (error) {
+          console.warn("Erro ao buscar carrinho do backend:", error);
+          const userCartKey = `CART_ITEMS_USER_${userId}`;
+          const userCart = localStorage.getItem(userCartKey);
+          const userItems = userCart ? JSON.parse(userCart) : [];
+          setItems(userItems);
+        }
+        return;
+      }
+      
+      let backendItems = [];
+      try {
+        backendItems = await buscarCarrinhoBackend(parseInt(userId));
+      } catch (error) {
+        console.warn("Erro ao buscar carrinho do backend, usando localStorage:", error);
+        const userCartKey = `CART_ITEMS_USER_${userId}`;
+        const userCart = localStorage.getItem(userCartKey);
+        backendItems = userCart ? JSON.parse(userCart) : [];
+      }
+      
+      const combinedItems = [...guestItems];
+      backendItems.forEach(backendItem => {
+        const existingIndex = combinedItems.findIndex(
+          item => item.id === backendItem.id && item.type === backendItem.type
+        );
+        if (existingIndex !== -1) {
+          const existingItem = combinedItems[existingIndex];
+          const max = Math.max(existingItem.maxQuantity ?? Infinity, backendItem.maxQuantity ?? Infinity);
+          combinedItems[existingIndex] = {
+            ...existingItem,
+            quantity: Math.min(max, existingItem.quantity + backendItem.quantity),
+            maxQuantity: max
+          };
+        } else {
+          combinedItems.push(backendItem);
+        }
+      });
+      
+      setItems(combinedItems);
+      
+      const userCartKey = `CART_ITEMS_USER_${userId}`;
+      localStorage.setItem(userCartKey, JSON.stringify(combinedItems));
+      
+      try {
+        await salvarCarrinhoBackend(parseInt(userId), combinedItems);
+      } catch (error) {
+        console.error("Erro ao salvar carrinho no backend (itens preservados no localStorage):", error);
+      }
+      
+      clearGuestCart();
     } catch (error) {
       console.error("Erro ao migrar carrinho de convidado:", error);
-    }
-  };
-
-  // Função para migrar carrinho de usuário para convidado (logout)
-  const migrateUserCartToGuest = () => {
-    try {
-      const currentCartKey = getCartKey();
-      const currentItems = localStorage.getItem(currentCartKey);
-      
-      if (currentItems) {
-        // Salvar carrinho atual como carrinho de convidado
-        localStorage.setItem("CART_ITEMS_GUEST", currentItems);
-        console.log("Carrinho do usuário migrado para convidado");
+      try {
+        const userId = localStorage.getItem("userId");
+        const guestCart = localStorage.getItem("CART_ITEMS_GUEST");
+        if (userId && guestCart) {
+          const guestItems = JSON.parse(guestCart);
+          const userCartKey = `CART_ITEMS_USER_${userId}`;
+          localStorage.setItem(userCartKey, JSON.stringify(guestItems));
+          setItems(guestItems);
+        }
+      } catch (preserveError) {
+        console.error("Erro ao preservar itens do guest:", preserveError);
       }
-    } catch (error) {
-      console.error("Erro ao migrar carrinho para convidado:", error);
     }
   };
 
@@ -177,7 +312,6 @@ export function CartProvider({ children }) {
       totals, 
       clearGuestCart, 
       migrateGuestCartToUser,
-      migrateUserCartToGuest,
       loadUserCart 
     }),
     [items, totals]
@@ -193,5 +327,3 @@ export function useCart() {
   }
   return ctx;
 }
-
-

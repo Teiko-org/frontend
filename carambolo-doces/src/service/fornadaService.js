@@ -1,6 +1,5 @@
 import { axiosApi } from '../provider/AxiosApi';
 
-// Evita parsing UTC do formato YYYY-MM-DD em JS, usando fuso local
 function parseLocalDate(dateStr) {
   if (!dateStr) return null;
   const [y, m, d] = String(dateStr).split("-").map(Number);
@@ -10,7 +9,6 @@ function parseLocalDate(dateStr) {
 
 export const listFornadas = async () => {
   try {
-    // buscar todas (ativas e encerradas) para histórico consistente
     const response = await axiosApi.get('/fornadas/todas');
     return response.data;
   } catch (error) {
@@ -78,8 +76,6 @@ export const getLastFornada = async () => {
       return null;
     }
 
-    // Considera somente fornadas ENCERRADAS que JÁ ACONTECERAM
-    // Regra: dataInicio <= hoje e dataFim <= hoje (comparação por dia)
     const hoje = new Date(); hoje.setHours(0,0,0,0);
     const encerradas = fornadas.filter(f => {
       const fim = parseLocalDate(f.dataFim);
@@ -92,7 +88,6 @@ export const getLastFornada = async () => {
 
     if (encerradas.length === 0) return null;
 
-    // Ordena por dataFim decrescente e pega a última encerrada
     const lastFornada = encerradas.sort((a, b) => new Date(b.dataFim) - new Date(a.dataFim))[0];
     return lastFornada;
   } catch (error) {
@@ -107,11 +102,8 @@ export const getFornadaAtiva = async () => {
 
     if (fornadas.length === 0) return null;
 
-    // Comparação por dia (ignorando horas) para permitir que dataFim === hoje
-    // seja considerada encerrada no dia atual
     const hoje = new Date(); hoje.setHours(0,0,0,0);
 
-    // Considera apenas fornadas marcadas como ativas e que ainda não expiraram (dataFim > hoje)
     const fornadasNaoExpiradas = (fornadas || [])
       .filter(f => (f.isAtivo ?? f.ativo) === true)
       .filter(fornada => {
@@ -121,11 +113,9 @@ export const getFornadaAtiva = async () => {
       });
 
     if (fornadasNaoExpiradas.length === 0) {
-      // Nenhuma fornada ativa/futura
       return null;
     }
 
-    // Das não expiradas, pega a que está ativa agora (hoje entre [dataInicio, dataFim))
     const fornadasAtivas = fornadasNaoExpiradas.filter(fornada => {
       const [yi, mi, di] = String(fornada.dataInicio).split("-").map(Number);
       const [yf, mf, df] = String(fornada.dataFim).split("-").map(Number);
@@ -136,14 +126,12 @@ export const getFornadaAtiva = async () => {
     });
 
     if (fornadasAtivas.length > 0) {
-      // Se há fornadas ativas, pega a com dataFim mais distante (que vai durar mais)
       const fornadaAtiva = fornadasAtivas.sort((a, b) =>
         new Date(b.dataFim) - new Date(a.dataFim)
       )[0];
 
       return fornadaAtiva;
     } else {
-      // Se nenhuma está ativa, pega a próxima a começar (menor dataInicio no futuro)
       const proximaFornada = fornadasNaoExpiradas.sort((a, b) =>
         new Date(a.dataInicio) - new Date(b.dataInicio)
       )[0];
@@ -156,7 +144,6 @@ export const getFornadaAtiva = async () => {
   }
 };
 
-// Nova função para buscar apenas fornadas realmente ativas (não futuras)
 export const getFornadaRealmenteAtiva = async () => {
   try {
     const fornadas = await listFornadas();
@@ -165,7 +152,6 @@ export const getFornadaRealmenteAtiva = async () => {
 
     const hoje = new Date();
 
-    // Filtra apenas fornadas marcadas ativas e com hoje entre dataInicio e dataFim
     const fornadasAtivas = (fornadas || [])
       .filter(f => (f.isAtivo ?? f.ativo) === true)
       .filter(fornada => {
@@ -177,7 +163,6 @@ export const getFornadaRealmenteAtiva = async () => {
       });
 
     if (fornadasAtivas.length > 0) {
-      // Se há fornadas ativas, pega a com dataFim mais distante (que vai durar mais)
       const fornadaAtiva = fornadasAtivas.sort((a, b) =>
         new Date(b.dataFim) - new Date(a.dataFim)
       )[0];
@@ -185,7 +170,7 @@ export const getFornadaRealmenteAtiva = async () => {
       return fornadaAtiva;
     }
 
-    return null; // Não há fornada ativa no momento
+    return null;
   } catch (error) {
     console.error('Erro ao buscar fornada realmente ativa:', error);
     throw error;
@@ -214,54 +199,28 @@ export const getProdutoFornadaById = async (fornadaDaVezId) => {
 
 export const getProdutosFornadaComImagens = async (fornadaId) => {
   try {
-    console.log('🔍 [DEBUG] Buscando produtos da fornada ID:', fornadaId);
-
-    // Primeiro busca os produtos da fornada
     const produtosFornada = await getProdutosPorFornadaId(fornadaId);
-    console.log('🔍 [DEBUG] Produtos da fornada encontrados:', produtosFornada.length);
-    console.log('🔍 [DEBUG] Lista de produtos:', produtosFornada.map(p => ({ id: p.id, nome: p.produto })));
 
-    // Para cada produto, busca também os dados completos com imagens da listagem geral
     const produtosComImagens = await Promise.all(
       produtosFornada.map(async (produto) => {
         try {
-          console.log(`🔍 [DEBUG] Processando produto ${produto.id} - ${produto.produto}`);
-
-          // Busca dados do produto na listagem geral que inclui imagens
           let response = await axiosApi.get('/fornadas/produto-fornada');
-
-          console.log(`🔍 [DEBUG] Busca geral retornou ${response.data.length} produtos`);
-          const produtoDetalhado = response.data.find(p => p.id === produto.id);
-          console.log(`🔍 [DEBUG] Produto ${produto.id} encontrado na listagem geral:`, !!produtoDetalhado);
+          const produtosLista = Array.isArray(response.data) ? response.data : [];
+          const produtoDetalhado = produtosLista.find(p => p.id === produto.id);
 
           if (produtoDetalhado) {
-            console.log(`🔍 [DEBUG] Produto ${produto.id} tem ${produtoDetalhado.imagens?.length || 0} imagens`);
-            if (produtoDetalhado.imagens && produtoDetalhado.imagens.length > 0) {
-              console.log(`🔍 [DEBUG] Primeira imagem do produto ${produto.id}:`, produtoDetalhado.imagens[0]);
-            }
-
-            const resultado = {
+            return {
               ...produto,
               imagens: produtoDetalhado.imagens || []
             };
-
-            console.log(`🔍 [DEBUG] Resultado final para produto ${produto.id}:`, {
-              id: resultado.id,
-              nome: resultado.produto,
-              imagensCount: resultado.imagens?.length || 0,
-              primeiraImagem: resultado.imagens?.[0]
-            });
-
-            return resultado;
           }
 
-          console.log(`🔍 [DEBUG] Produto ${produto.id} NÃO encontrado na listagem geral`);
           return {
             ...produto,
             imagens: []
           };
         } catch (error) {
-          console.warn(`🔍 [DEBUG] Erro ao buscar imagens do produto ${produto.id}:`, error);
+          console.warn(`Erro ao buscar imagens do produto ${produto.id}:`, error);
           return {
             ...produto,
             imagens: []
@@ -270,17 +229,9 @@ export const getProdutosFornadaComImagens = async (fornadaId) => {
       })
     );
 
-    console.log('🔍 [DEBUG] Resultado final de getProdutosFornadaComImagens:');
-    produtosComImagens.forEach(p => {
-      console.log(`  - ${p.produto} (ID ${p.id}): ${p.imagens?.length || 0} imagens`);
-      if (p.imagens && p.imagens.length > 0) {
-        console.log(`    Primeira imagem: ${p.imagens[0]}`);
-      }
-    });
-
     return produtosComImagens;
   } catch (error) {
-    console.error('🔍 [DEBUG] Erro ao buscar produtos da fornada com imagens:', error);
+    console.error('Erro ao buscar produtos da fornada com imagens:', error);
     throw error;
   }
 };
@@ -296,7 +247,6 @@ export const createPedidoFornada = async (pedido) => {
 };
 
 export const insertNewFornada = async (data) => {
-  console.log(data);
   try {
     const payload = {
       dataInicio: data.dataInicio,
@@ -323,7 +273,6 @@ export const getMesesAnosFornadas = async () => {
 
 export const getFornadasMesAno = async (mes, ano) => {
   try {
-    // Preferir /fornadas/todas + filtro local para evitar inconsistências
     const todas = await listFornadas();
     return (todas || []).filter(f => {
       const [y, m] = String(f.dataInicio || '').split('-').map(Number);
@@ -339,7 +288,6 @@ export const fornadaService = insertNewFornada;
 
 export const updateFornada = async (id, fornadaData) => {
   try {
-    // Converter as datas para o formato YYYY-MM-DD que o backend espera
     const payload = {
       dataInicio: fornadaData.dataInicio,
       dataFim: fornadaData.dataFim
@@ -356,11 +304,9 @@ export const updateFornada = async (id, fornadaData) => {
 export const encerrarFornada = async (fornadaId) => {
   try {
     const response = await axiosApi.delete(`/fornadas/${fornadaId}`);
-    return response.status === 204; // Retorna true se foi bem-sucedido
+    return response.status === 204;
   } catch (error) {
     console.error('Erro ao encerrar fornada:', error);
     throw error;
   }
 };
-
-
