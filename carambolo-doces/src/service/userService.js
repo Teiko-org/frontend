@@ -59,12 +59,10 @@ export const register = async (name, password, phone) => {
 
 const handleAuthError = (error, phone) => {
   if (error.response && error.response.status === 409) {
-    const formattedPhone = phone ? formatPhoneForDisplay(phone) : 'este telefone';
-    
     toast.error(
-      `Este telefone (${formattedPhone}) já está cadastrado. Tente fazer login ou use outro número.`,
+      'Este telefone já está cadastrado. Tente fazer login ou use outro número.',
       {
-        autoClose: 6000,
+        autoClose: 5000,
         closeOnClick: true,
         pauseOnHover: true,
       }
@@ -79,21 +77,6 @@ const handleAuthError = (error, phone) => {
     toast.error('Erro de autenticação. Tente novamente.');
     console.error('Erro de autenticação', error);
   }
-};
-
-const formatPhoneForDisplay = (phone) => {
-  if (!phone) return '';
-  
-  const cleanPhone = phone.replace(/\D/g, '');
-  
-  if (cleanPhone.startsWith('55') && cleanPhone.length >= 12) {
-    const ddd = cleanPhone.substring(2, 4);
-    const firstPart = cleanPhone.substring(4, 9);
-    const secondPart = cleanPhone.substring(9, 13);
-    return `(${ddd}) ${firstPart}-${secondPart}`;
-  }
-  
-  return phone;
 };
 
 export const changePassword = async (userId, senhaAtual, novaSenha) => {
