@@ -1,4 +1,5 @@
 import React from "react";
+import UnavailableOverlay from "../UnavailableOverlay";
 
 function StatusPill({ label = "Pendente", color = "bg-yellow-500" }) {
   return (
@@ -27,6 +28,7 @@ export default function CartItemCard({
   onDecrease,
   onIncrease,
   disableIncrease = false,
+  disableDecrease = false,
   statusLabel = "Pendente",
   statusColor,
   rightSuffix = "",
@@ -37,6 +39,8 @@ export default function CartItemCard({
   selected = false,
   onSelectChange,
   onClick,
+  isUnavailable = false,
+  unavailableReason = "INDISPONÍVEL",
 }) {
   const format = (v) => Number(v || 0).toFixed(2).replace(".", ",");
   const total = Number(unitPrice || 0) * Number(quantity || 0);
@@ -44,10 +48,11 @@ export default function CartItemCard({
 
   return (
     <div
-      className={`w-full bg-bgHome border-2 rounded-2xl p-4 md:p-5 transition-shadow hover:shadow-lg ${selected ? 'border-darkGold ring-2 ring-darkGold' : 'border-gold hover:border-darkGold'} ${className}`}
+      className={`relative w-full bg-bgHome border-2 rounded-2xl p-4 md:p-5 transition-shadow ${isUnavailable ? 'opacity-75' : 'hover:shadow-lg'} ${selected ? 'border-darkGold ring-2 ring-darkGold' : 'border-gold hover:border-darkGold'} ${className}`}
       style={{ fontFamily: 'Montserrat, sans-serif', cursor: onClick ? 'pointer' : 'default' }}
       onClick={onClick}
     >
+      {isUnavailable && <UnavailableOverlay motivo={unavailableReason} />}
       <div className="flex gap-4 md:gap-6 items-start">
         <img
           src={image ?? "src/assets/image_card.png"}
@@ -59,9 +64,11 @@ export default function CartItemCard({
           <div className="flex justify-between items-start gap-4">
             <div className="min-w-0">
               <h3 className="text-black text-lg md:text-xl font-medium truncate" style={{ fontFamily: 'Montserrat, sans-serif' }}>{title}</h3>
-              <button className="text-green-600 text-sm font-medium underline-offset-2 hover:underline">
+              <span className={`text-sm font-medium ${
+                availableText === 'Disponível' ? 'text-green-600' : 'text-gray-600'
+              }`}>
                 {availableText}
-              </button>
+              </span>
               {subtitle && (
                 <p className="text-black/80 text-sm mt-2 truncate">{subtitle}</p>
               )}
@@ -82,7 +89,8 @@ export default function CartItemCard({
               <div className="mt-2 flex items-center bg-white rounded-full border-2 border-gold overflow-hidden">
                 <button
                   onClick={(e) => { e.stopPropagation(); onDecrease && onDecrease(e); }}
-                  className="px-3 py-1 text-black hover:bg-black/5"
+                  disabled={disableDecrease}
+                  className={`px-3 py-1 text-black hover:bg-black/5 ${disableDecrease ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   –
                 </button>
