@@ -500,6 +500,7 @@ const Step4 = () => {
                 <Select
                   {...field}
                   label="Horário"
+                  placeholder="Selecione seu horário"
                   options={[
                     { value: "17:00", label: "17:00" },
                     { value: "17:30", label: "17:30" },
@@ -507,6 +508,7 @@ const Step4 = () => {
                     { value: "18:30", label: "18:30" },
                     { value: "19:00", label: "19:00" },
                   ]}
+                  value={field.value || ""}
                   onChange={(e) => {
                     field.onChange(e);
                     clearErrors("horario");

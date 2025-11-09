@@ -3,6 +3,7 @@ import ModalBaseForm from "../ModalBaseForm";
 import Button from "../Button";
 import axios from "axios";
 import { updateAddress } from "../../service/addressService";
+import { toast } from 'react-toastify';
 
 function ModalAddressEdition({ onClose, endereco, onAddressUpdated }) {
   const [isLoading, setIsLoading] = useState(false);
@@ -66,6 +67,16 @@ function ModalAddressEdition({ onClose, endereco, onAddressUpdated }) {
       );
 
       if (response.data && !response.data.erro) {
+        if (response.data.uf && response.data.uf.toUpperCase() !== "SP") {
+          toast.error("Apenas endereços de São Paulo são permitidos.");
+          setCep(formatCepForDisplay(endereco.cep) || "");
+          setEstado(endereco.estado || "");
+          setCidade(endereco.cidade || "");
+          setBairro(endereco.bairro || "");
+          setRua(endereco.logradouro || "");
+          return;
+        }
+        
         if (!estado || estado !== response.data.uf) setEstado(response.data.uf || estado);
         if (!cidade || cidade !== response.data.localidade) setCidade(response.data.localidade || cidade);
         if (!bairro || bairro !== response.data.bairro) setBairro(response.data.bairro || bairro);
@@ -181,7 +192,8 @@ function ModalAddressEdition({ onClose, endereco, onAddressUpdated }) {
       onClose();
     } catch (error) {
       console.error("Erro ao atualizar endereço:", error);
-      alert("Erro ao atualizar endereço. Verifique os dados e tente novamente.");
+      // O Toast é exibido pelo addressService.handleAddressError
+      // Não precisa de alert aqui para evitar duplicação
     } finally {
       setIsLoading(false);
     }

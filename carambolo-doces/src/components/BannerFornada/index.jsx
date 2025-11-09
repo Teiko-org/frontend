@@ -132,7 +132,6 @@ const BannerFornada = ({ fornada }) => {
                 <>
                   <p className="mb-2">Nova fornada chegando em breve!</p>
                   <p className="mb-2">Inicia em {formatStartDate()} até {formatEndDate()}</p>
-                  <p className="text-sm text-yellow-200">Timer mostra quando a fornada vai começar</p>
                 </>
               );
             }

@@ -3,9 +3,9 @@ import Button from "../Button";
 import DataKPIFornada from "../DataKPIFornada/DataKPIFornada";
 import ModalOtherFornadas from "../ModalOtherFornadas/ModalOtherFornadas";
 import { useNavigate } from "react-router-dom";
-import { getKPIFornadasMesAtual } from "../../service/kpiService";
+import { getKPIFornadasMesAtual, getKPIFornadasPorPeriodo } from "../../service/kpiService";
 
-function KPIThisMonthFornadas({ hideConsultar }) {
+function KPIThisMonthFornadas({ hideConsultar, mesSelecionado, anoSelecionado }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [kpiData, setKpiData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,21 +18,28 @@ function KPIThisMonthFornadas({ hideConsultar }) {
     const fetchKPIData = async () => {
       try {
         setLoading(true);
-        const data = await getKPIFornadasMesAtual();
+        const mes = mesSelecionado || new Date().getMonth() + 1;
+        const ano = anoSelecionado || new Date().getFullYear();
+        const data = await getKPIFornadasPorPeriodo(ano, mes);
         setKpiData(data);
       } catch (error) {
-        console.error("Erro ao carregar KPI das fornadas do mês:", error);
+        console.error("Erro ao carregar KPI das fornadas do período:", error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchKPIData();
-  }, []);
+  }, [mesSelecionado, anoSelecionado]);
 
-  const getCurrentMonthName = () => {
-    const now = new Date();
-    return now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  const getPeriodName = () => {
+    const nomesMeses = [
+      "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+      "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+    ];
+    const mes = mesSelecionado || new Date().getMonth() + 1;
+    const ano = anoSelecionado || new Date().getFullYear();
+    return `${nomesMeses[mes - 1]} de ${ano}`;
   };
 
   return (
@@ -43,7 +50,7 @@ function KPIThisMonthFornadas({ hideConsultar }) {
 
         <div className="flex justify-center gap-x-1">
           <span className="font-bold">
-            {loading ? "Carregando..." : `Fornadas de ${getCurrentMonthName()}`}
+            {loading ? "Carregando..." : `Fornadas de ${getPeriodName()}`}
           </span>
         </div>
 

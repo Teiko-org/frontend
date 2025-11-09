@@ -23,7 +23,6 @@ function Home() {
   const [fornada, setFornada] = useState(null);
   const [fornadaParaBanner, setFornadaParaBanner] = useState(null);
   const [carambolosMaisPedidos, setCarambolosMaisPedidos] = useState([]);
-  const [categoriasBolosAtivos, setCategoriasBolosAtivos] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
   const searchQuery = new URLSearchParams(location.search).get('q')?.trim().toLowerCase() || '';
@@ -34,10 +33,8 @@ function Home() {
         const data = await findFeaturedDecoracoes();
         setDecoracoes(data || []);
       } catch (error) {
-        if (error.response?.status === 401) {
-          console.log("ℹ️ Carregando decorações sem autenticação...");
-        } else {
-          console.warn("⚠️ Erro ao carregar decorações:", error.message);
+        if (error.response?.status !== 401) {
+          console.warn("Erro ao carregar decorações:", error.message);
         }
         setDecoracoes([]);
       }
@@ -53,7 +50,6 @@ function Home() {
         if (fornadaAtual) {
           setFornada(fornadaAtual);
           const produtos = await getProdutosFornadaComImagens(fornadaAtual.id);
-          // Segurança adicional: mostrar apenas produtos com quantidade > 0 e ativos
           const visiveis = (produtos || []).filter(p => (p.quantidade ?? 0) > 0 && (p.isAtivo ?? true));
           setProdutosFornada(visiveis.slice(0, 4));
         } else {
@@ -61,10 +57,8 @@ function Home() {
           setProdutosFornada([]);
         }
       } catch (error) {
-        if (error.response?.status === 401) {
-          console.log("ℹ️ Carregando dados da fornada sem autenticação...");
-        } else {
-          console.warn("⚠️ Erro ao carregar dados da fornada:", error.message);
+        if (error.response?.status !== 401) {
+          console.warn("Erro ao carregar dados da fornada:", error.message);
         }
         setFornadaParaBanner(null);
         setFornada(null);
@@ -75,7 +69,6 @@ function Home() {
     fetchDecoracoes();
     carregarDadosFornada();
 
-    // Carregar bolos ativos para compor o carrossel de Carambolos diretamente
     (async () => {
       try {
         const bolosAtivos = await getBolosComImagens();
@@ -88,15 +81,11 @@ function Home() {
           }
         });
         setSlidesCarambolos(Array.from(porCategoria.values()));
-        const categorias = Array.from(porCategoria.keys());
-        setCategoriasBolosAtivos(categorias);
       } catch (e) {
         setSlidesCarambolos([]);
-        setCategoriasBolosAtivos([]);
       }
     })();
 
-    // Carregar bolos mais pedidos (estatísticas de pedidos - correto para home)
     (async () => {
       try {
         const top = await getProdutosMaisPedidos();
@@ -109,25 +98,24 @@ function Home() {
             nome: p.nome,
             quantidade: p.quantidade,
             valorTotal: p.valorTotal,
-            // placeholder de imagem; ao clicar, navegaremos para a página de pedido de bolo
             imagens: ["src/assets/image_card.png"],
           }));
         try {
           const { axiosApi } = await import("../../provider/AxiosApi");
+          const { data: todosDetalhes } = await axiosApi.get('/bolos/detalhe');
           const enriquecidos = await Promise.all(
             apenasBolos.map(async (p) => {
               try {
-                const { data: bolo } = await axiosApi.get(`/bolos/${p.id}`);
-                const decoracaoId = bolo?.decoracaoId;
+                const detalheBolo = todosDetalhes.find((d) => d.boloId === p.id);
+                const categoria = detalheBolo?.categoria;
+                const decoracaoId = detalheBolo?.decoracaoId;
                 if (decoracaoId) {
                   const { data: decoracao } = await axiosApi.get(`/decoracoes/${decoracaoId}`);
                   const imagemUrl = decoracao?.imagens?.[0];
-                  const nomeDecoracao = decoracao?.categoria || decoracao?.nome || p.nome;
-                  return { ...p, imagens: [imagemUrl || p.imagens?.[0]], nome: nomeDecoracao };
+                  return { ...p, imagens: [imagemUrl || p.imagens?.[0]], categoria };
                 }
-                return p;
+                return { ...p, categoria };
               } catch {
-                // Se o bolo não existir/estiver inativo (404), descartar
                 return null;
               }
             })
@@ -137,7 +125,7 @@ function Home() {
           setCarambolosMaisPedidos(apenasBolos);
         }
       } catch (err) {
-        console.warn("⚠️ Erro ao carregar produtos mais pedidos:", err?.message);
+        console.warn("Erro ao carregar produtos mais pedidos:", err?.message);
         setCarambolosMaisPedidos([]);
       }
     })();
@@ -158,32 +146,25 @@ function Home() {
           }));
 
         const { axiosApi } = await import("../../provider/AxiosApi");
+        const { data: todosDetalhes } = await axiosApi.get('/bolos/detalhe');
         const enriquecidos = await Promise.all(
           apenasBolos.map(async (p) => {
             try {
-              const { data: bolo } = await axiosApi.get(`/bolos/${p.id}`);
-              const decoracaoId = bolo?.decoracaoId;
+              const detalheBolo = todosDetalhes.find((d) => d.boloId === p.id);
+              const categoria = detalheBolo?.categoria;
+              const decoracaoId = detalheBolo?.decoracaoId;
               if (decoracaoId) {
                 const { data: decoracao } = await axiosApi.get(`/decoracoes/${decoracaoId}`);
                 const imagemUrl = decoracao?.imagens?.[0];
-                const nomeDecoracao = decoracao?.categoria || decoracao?.nome || p.nome;
-                return { ...p, imagens: [imagemUrl || p.imagens?.[0]], nome: nomeDecoracao };
+                return { ...p, imagens: [imagemUrl || p.imagens?.[0]], categoria };
               }
-              return p;
+              return { ...p, categoria };
             } catch {
               return null;
             }
           })
         );
         setCarambolosMaisPedidos(enriquecidos.filter(Boolean));
-        // Recarregar categorias de bolos ativos para filtrar Carambolos Pré-Decorados
-        try {
-          const bolosAtivos = await getBolosComImagens();
-          const categorias = Array.from(new Set((bolosAtivos || []).map(b => b.categoria).filter(Boolean)));
-          setCategoriasBolosAtivos(categorias);
-        } catch {
-          setCategoriasBolosAtivos([]);
-        }
       } catch {}
     };
     window.addEventListener('carambolo:visibility-changed', onVisibilityChanged);
@@ -191,8 +172,6 @@ function Home() {
       window.removeEventListener('carambolo:visibility-changed', onVisibilityChanged);
     };
   }, []);
-
-  // (removido sticky footer hack da Home)
 
   const slides = useMemo(() => {
     const base = slidesCarambolos;
@@ -204,22 +183,13 @@ function Home() {
     return base.filter(s => (s.title || '').toLowerCase().includes(q));
   }, [slidesCarambolos, searchQuery]);
 
-  const handleTemaClick = (slide) => {
-    if (slide.categoria) {
-      navigate('/carambolos', { state: { categoriaSelecionada: slide.categoria } });
-    }
-  };
-
-  const handleVerMaisTemas = () => {
-    navigate('/carambolos');
-  };
-
   const slidesMaisPedidos = useMemo(() => {
     if (!carambolosMaisPedidos || carambolosMaisPedidos.length === 0) return [];
     const base = carambolosMaisPedidos.map((p) => ({
       image: p.imagens?.[0] ?? "src/assets/image_card.png",
       title: p.nome || "Carambolo",
       id: p.id,
+      categoria: p.categoria,
     }));
     if (!searchQuery) return base;
     const q = searchQuery;
@@ -231,8 +201,22 @@ function Home() {
   const showCarambolos = !searchQuery || searchQuery.includes('carambolo') || searchQuery.includes('bolo');
   const showFornada = !searchQuery || searchQuery.includes('fornada');
 
-  const handleMaisPedidosClick = () => {
+  const handleTemaClick = (slide) => {
+    if (slide.categoria) {
+      navigate('/carambolos', { state: { categoriaSelecionada: slide.categoria } });
+    }
+  };
+
+  const handleVerMaisTemas = () => {
     navigate('/carambolos');
+  };
+
+  const handleMaisPedidosClick = (slide) => {
+    if (slide?.categoria) {
+      navigate('/carambolos', { state: { categoriaSelecionada: slide.categoria } });
+    } else {
+      navigate('/carambolos');
+    }
   };
 
   return (
@@ -291,26 +275,28 @@ function Home() {
       {/* Espaço consistente entre seções */}
       <div className="h-24"></div>
 
-      {/* Carambolos Mais Pedidos - mesmo layout do carrossel acima */}
+      {/* Carambolos Mais Pedidos - com carrossel */}
       {showCarambolos && (
       <section className="pt-8 pb-8 bg-bgHome border-t border-b border-gold">
         <h2 className="text-center text-4xl font-medium mb-6">
           CARAMBOLOS MAIS PEDIDOS
         </h2>
-
+        
         {slidesMaisPedidos.length === 0 ? (
           <div className="text-center py-12">
             <div className="animate-pulse">
               <div className="h-8 bg-gray-200 rounded-lg mx-auto mb-4 w-64"></div>
-              <p className="text-xl text-gray-600 mb-4">{searchQuery ? 'Nenhum resultado para sua busca.' : 'Carregando carambolos...'}</p>
+              <p className="text-xl text-gray-600 mb-4">
+                {searchQuery ? 'Nenhum resultado para sua busca.' : 'Carregando carambolos...'}
+              </p>
             </div>
           </div>
         ) : (
           <>
             <div className="px-6">
-              <Carousel
-                slides={slidesMaisPedidos}
-                autoPlay
+              <Carousel 
+                slides={slidesMaisPedidos} 
+                autoPlay 
                 interval={3500}
                 onSlideClick={handleMaisPedidosClick}
               />
@@ -323,13 +309,16 @@ function Home() {
                 fontSize="text-lg"
                 textColor="text-blue"
                 borderColor="border-gold"
-                onClick={handleMaisPedidosClick}
+                onClick={() => navigate('/carambolos')}
               />
             </div>
           </>
         )}
       </section>
       )}
+
+      {/* Espaço consistente entre seções */}
+      <div className="h-24"></div>
 
       {/* Espaço consistente entre seções (mostra apenas se houver Fornada) */}
       {showFornada && <div className="h-24"></div>}

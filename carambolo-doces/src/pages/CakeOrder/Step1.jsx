@@ -4,6 +4,7 @@ import { useFormContext, Controller } from "react-hook-form";
 import Button from "../../components/Button";
 import Select from "../../components/Select";
 import { axiosApi } from "../../provider/AxiosApi";
+import { toast } from 'react-toastify';
 
 const formatLabel = (text) => {
   return text
@@ -30,16 +31,14 @@ const Step1 = () => {
   const [massasComValor, setMassasComValor] = useState([]);
   const [recheiosComValor, setRecheiosComValor] = useState([]);
   const [valorMudou, setValorMudou] = useState(false);
-  const [validationError, setValidationError] = useState("");
   const [camposPreenchidosAutomaticamente, setCamposPreenchidosAutomaticamente] = useState(false);
   const [forceRender, setForceRender] = useState(0);
 
-  // Valores fixos dos tamanhos (baseado no backend)
   const valoresTamanho = {
-    "11cm": 50.0,   // TAMANHO_5 -> 50.0 (assumindo 11cm = 5)
-    "13cm": 100.0,  // TAMANHO_7 -> 100.0 (assumindo 13cm = 7)
-    "15cm": 150.0,  // TAMANHO_12 -> 150.0 (assumindo 15cm = 12)
-    "17cm": 200.0   // TAMANHO_15 -> 200.0 (assumindo 17cm = 15)
+    "11cm": 50.0,
+    "13cm": 100.0,
+    "15cm": 150.0,
+    "17cm": 200.0
   };
 
   useEffect(() => {
@@ -53,7 +52,6 @@ const Step1 = () => {
             label: formatLabel(massa.sabor),
           }))
         );
-        // Salvar massas com valores para cálculo
         setMassasComValor(response.data);
       } catch (error) {
         console.error("Erro ao buscar massas:", error);
@@ -70,7 +68,6 @@ const Step1 = () => {
             label: recheio.descricao,
           }))
         );
-        // Salvar recheios com valores para cálculo
         setRecheiosComValor(response.data);
       } catch (error) {
         console.error("Erro ao buscar recheios:", error);
@@ -82,49 +79,63 @@ const Step1 = () => {
   }, []);
 
   const handleNextStep = async () => {
-    // Limpar erro anterior
-    setValidationError("");
-    
-    // VERIFICAÇÃO CRÍTICA: Se os campos foram preenchidos automaticamente, 
-    // o usuário DEVE interagir com pelo menos um campo para continuar
     if (camposPreenchidosAutomaticamente) {
-      setValidationError("Por favor, confirme suas escolhas clicando em pelo menos um dos campos (tamanho, formato, massa ou recheio) antes de continuar.");
+      toast.error("Por favor, preencha todos os campos obrigatórios (tamanho, formato, massa e recheio) antes de continuar.");
       return;
     }
     
-    // Obter os valores atuais do formulário
     const data = getValues();
-    
-    // Forçar validação de todos os campos obrigatórios
     const isValid = await trigger(['tamanho', 'formato', 'massa', 'recheio']);
     
     if (!isValid) {
-      setValidationError("Por favor, preencha todos os campos obrigatórios");
+      toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
 
     // Validação adicional para garantir que todos os campos obrigatórios estejam preenchidos
     if (!data.tamanho) {
-      setValidationError("Por favor, selecione um tamanho");
+      toast.error("Por favor, selecione um tamanho");
       return;
     }
     if (!data.formato) {
-      setValidationError("Por favor, selecione um formato");
+      toast.error("Por favor, selecione um formato");
       return;
     }
     if (!data.massa) {
-      setValidationError("Por favor, selecione uma massa");
+      toast.error("Por favor, selecione uma massa");
       return;
     }
-    if (!data.recheio) {
-      setValidationError("Por favor, selecione um recheio");
+    if (!data.recheio || data.recheio.trim() === "") {
+      toast.error("Por favor, selecione um recheio");
+      await trigger('recheio'); // Forçar validação do campo
+      return;
+    }
+    
+    // Validação adicional: verificar se o recheio selecionado está na lista de recheios disponíveis para a massa
+    const recheioValido = filteredRecheios.find(r => r.value === data.recheio);
+    if (!recheioValido) {
+      toast.error("O recheio selecionado não é compatível com a massa escolhida. Por favor, selecione outro recheio.");
+      return;
+    }
+    
+    // Buscar o ID do recheio selecionado
+    const recheioSelecionado = recheioOptions.find((r) => r.value === data.recheio);
+    if (!recheioSelecionado || !recheioSelecionado.id) {
+      toast.error("Erro ao processar o recheio selecionado. Por favor, selecione novamente.");
+      return;
+    }
+    
+    // Buscar o ID da massa selecionada
+    const massaSelecionada = massaOptions.find((m) => m.value === data.massa);
+    if (!massaSelecionada || !massaSelecionada.id) {
+      toast.error("Erro ao processar a massa selecionada. Por favor, selecione novamente.");
       return;
     }
     
     const postData = {
       ...data,
-      massaId: massaOptions.find((m) => m.value === data.massa)?.id,
-      recheioId: recheioOptions.find((r) => r.value === data.recheio)?.id,
+      massaId: massaSelecionada.id,
+      recheioId: recheioSelecionado.id,
     };
 
     appendFormData(postData, 'dadosMontagem');
@@ -136,17 +147,9 @@ const Step1 = () => {
 
   const handleButtonClick = (field, value) => (event) => {
     event.preventDefault();
-    console.log(`Botão clicado - Campo: ${field}, Valor: ${value}`);
     setValue(field, value, { shouldValidate: true, shouldDirty: true });
     clearErrors(field);
-    setValidationError(""); // Limpar mensagem de erro quando usuário selecionar
-    setCamposPreenchidosAutomaticamente(false); // Marcar que usuário interagiu
-    
-    // Verificar se o valor foi definido
-    setTimeout(() => {
-      const currentValue = getValues(field);
-      console.log(`Valor atual do campo ${field}:`, currentValue);
-    }, 100);
+    setCamposPreenchidosAutomaticamente(false);
   };
 
   const availableRecheios = {
@@ -222,12 +225,9 @@ const Step1 = () => {
     }
   }, [massaSelecionada, setValue]);
 
-  // Forçar re-renderização quando campos são preenchidos automaticamente
   useEffect(() => {
     if (camposPreenchidosAutomaticamente) {
-      // Forçar atualização dos valores observados
-      const valores = getValues();
-      console.log("Forçando re-renderização com valores:", valores);
+      getValues();
     }
   }, [camposPreenchidosAutomaticamente, getValues]);
 
@@ -378,10 +378,8 @@ const Step1 = () => {
               width="25%"
               value={field.value || ""}
               onChange={(e) => {
-                console.log(`Massa selecionada:`, e.target.value);
                 field.onChange(e);
                 setCamposPreenchidosAutomaticamente(false);
-                setValidationError("");
               }}
             />
           )}
@@ -408,10 +406,8 @@ const Step1 = () => {
               width="100%"
               value={field.value || ""}
               onChange={(e) => {
-                console.log(`Recheio selecionado:`, e.target.value);
                 field.onChange(e);
                 setCamposPreenchidosAutomaticamente(false);
-                setValidationError("");
               }}
             />
           )}
@@ -435,14 +431,6 @@ const Step1 = () => {
           bgColor="bg-gradient-to-l from-darkGoldButton to-goldButton"
         />
       </div>
-      
-      
-      {/* Mensagem de erro de validação */}
-      {validationError && (
-        <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-          {validationError}
-        </div>
-      )}
     </form>
   );
 };
