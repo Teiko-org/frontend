@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { FormContext } from "../../contexts/FormContext";
 import Button from "../../components/Button";
 import ModalMontagem from "../../components/ModalMontagem";
@@ -11,15 +11,51 @@ import { FaEdit } from "react-icons/fa";
 
 const Step5 = () => {
   const { prevStep, submitForm, formData, valorEstimado, appendFormData, setFormData } = useContext(FormContext);
+  const [localFormData, setLocalFormData] = useState(formData);
+  const [imageUrls, setImageUrls] = useState([]);
+  
+  useEffect(() => {
+    if (formData) {
+      setLocalFormData(formData);
+    }
+  }, [formData]);
+
+  useEffect(() => {
+    if (localFormData?.imagens && Array.isArray(localFormData.imagens)) {
+      const urls = localFormData.imagens.map((imagem) => {
+        if (imagem.preview) {
+          return imagem.preview;
+        } else if (imagem.file instanceof File) {
+          return URL.createObjectURL(imagem.file);
+        } else if (typeof imagem.file === 'string') {
+          return imagem.file;
+        } else if (imagem instanceof File) {
+          return URL.createObjectURL(imagem);
+        }
+        return null;
+      }).filter(Boolean);
+      
+      setImageUrls(urls);
+      
+      return () => {
+        urls.forEach(url => {
+          if (url.startsWith('blob:')) {
+            URL.revokeObjectURL(url);
+          }
+        });
+      };
+    } else {
+      setImageUrls([]);
+    }
+  }, [localFormData?.imagens]);
   
   if (!formData) {
-    console.error("formData não está definido");
     return null;
   }
 
   const formDataEntries = {
-    ...formData, 
-    imagens: Array.isArray(formData.imagens) ? formData.imagens : []
+    ...localFormData, 
+    imagens: Array.isArray(localFormData.imagens) ? localFormData.imagens : []
   };
 
   const [isModalMontagemOpen, setIsModalMontagemOpen] = useState(false);
@@ -182,9 +218,58 @@ const handleConfirmFinalizar = async () => {
             />
           )}
         </div>
-        <div className="flex flex-col">
-          <span className="text-blue font-semibold">OBSERVAÇÕES</span>
-          {decoracaoData}
+        <div className="flex flex-col gap-4">
+          <div>
+            <span className="text-blue font-semibold">OBSERVAÇÕES</span>
+            <div className="mt-1">{decoracaoData}</div>
+          </div>
+          {formDataEntries.imagens && formDataEntries.imagens.length > 0 && (
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-blue font-semibold">IMAGENS DE REFERÊNCIA</span>
+                <FaEdit
+                  className="text-gold cursor-pointer"
+                  onClick={() => setIsModalImagensReferenciaOpen(true)}
+                />
+              </div>
+              {isModalImagensReferenciaOpen && (
+                <ModalImagensReferencia
+                  isOpen={isModalImagensReferenciaOpen}
+                  onClose={() => setIsModalImagensReferenciaOpen(false)}
+                  initialImages={formDataEntries.imagens}
+                  onSave={(newImages) => {
+                    // Atualizar as imagens no FormContext
+                    // Substituir as imagens existentes pelas novas
+                    const imageFiles = newImages.map(img => img.file || img);
+                    setFormData(imageFiles, 'imagens');
+                    setIsModalImagensReferenciaOpen(false);
+                  }}
+                />
+              )}
+              <div className="flex flex-wrap gap-4 mt-2">
+                {formDataEntries.imagens.map((imagem, index) => {
+                  const imageUrl = imageUrls[index] || null;
+
+                  return (
+                    <div key={index} className="relative text-center group">
+                      <div className="relative inline-block">
+                        {imageUrl && (
+                          <img 
+                            src={imageUrl} 
+                            alt={imagem.name || imagem.file?.name || `Imagem ${index + 1}`}
+                            className="h-20 w-20 object-cover rounded-lg mb-2 group-hover:opacity-75 transition-opacity"
+                          />
+                        )}
+                      </div>
+                      <span className="text-blue text-sm block truncate max-w-[80px]">
+                        {imagem.name || imagem.file?.name || `Imagem ${index + 1}`}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -260,41 +345,6 @@ const handleConfirmFinalizar = async () => {
         )}
       </div>
 
-      {/* IMAGENS DE REFERÊNCIA */}
-      {formDataEntries.imagens && formDataEntries.imagens.length > 0 && (
-        <div className="mb-5 pb-4 border-b border-gray-300">
-          <div className="flex justify-between items-center mb-3">
-            <h3 className="font-bold text-lg text-blue">IMAGENS DE REFERÊNCIA</h3>
-            <FaEdit
-              className="text-gold cursor-pointer"
-              onClick={() => setIsModalImagensReferenciaOpen(true)}
-            />
-            {isModalImagensReferenciaOpen && (
-              <ModalImagensReferencia
-                isOpen={isModalImagensReferenciaOpen}
-                onClose={() => setIsModalImagensReferenciaOpen(false)}
-                initialImages={formDataEntries.imagens}
-                onSave={(newImages) => {
-                  // Atualizar as imagens no FormContext
-                  // Substituir as imagens existentes pelas novas
-                  const imageFiles = newImages.map(img => img.file || img);
-                  setFormData(imageFiles, 'imagens');
-                  setIsModalImagensReferenciaOpen(false);
-                }}
-              />
-            )}
-          </div>
-          <div className="flex flex-col">
-            <div className="flex flex-wrap gap-2 mt-2">
-              {formDataEntries.imagens.map((imagem, index) => (
-                <div key={index} className="text-sm text-gray-600">
-                  {imagem.name || imagem.file?.name || `Imagem ${index + 1}`}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ENTREGA/RETIRADA */}
       <div className="mb-5 pb-4 border-b border-gray-300">
@@ -319,9 +369,9 @@ const handleConfirmFinalizar = async () => {
               selectedNumero={formDataEntries.numero}
               selectedComplemento={formDataEntries.complemento}
               selectedTipoEntrega={formDataEntries.deliveryOption}
+              selectedHorario={formDataEntries.horario}
               onSave={(newData) => {
-                // Atualizar os dados de entrega no FormContext
-                appendFormData(newData, 'dadosEntrega');
+                setFormData(newData, 'dadosEntrega');
                 setIsModalEntregaRetiradaOpen(false);
               }}
             />

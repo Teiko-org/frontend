@@ -1,28 +1,41 @@
 import React, { useContext } from "react";
 import { FormContext } from "../../contexts/FormContext";
 import { useFormContext, Controller } from "react-hook-form";
+import { toast } from 'react-toastify';
 import Button from "../../components/Button";
 import InputImage from "../../components/InputImage";
 
 const Step2 = () => {
-  const { nextStep, prevStep, appendFormData, valorEstimado } = useContext(FormContext);
-  const { control, handleSubmit, formState: { errors } } = useFormContext();
+  const { nextStep, prevStep, appendFormData, setFormData, valorEstimado } = useContext(FormContext);
+  const { control, handleSubmit } = useFormContext();
 
   const handleNext = (data) => {
-  appendFormData({ observacoes: data.observacoes }, 'dadosMontagem');
+    appendFormData({ observacoes: data.observacoes }, 'dadosMontagem');
 
-  const imageFiles = data.images || [];
-  appendFormData(imageFiles, 'imagens');
+    const imageFiles = data.images || [];
+    setFormData(imageFiles, 'imagens');
 
-  nextStep();
-};
+    nextStep();
+  };
+
+  const handleError = (errors) => {
+    if (errors.observacoes) {
+      if (errors.observacoes.type === 'required') {
+        toast.error(errors.observacoes.message);
+      } else if (errors.observacoes.type === 'minLength') {
+        toast.error(errors.observacoes.message);
+      } else {
+        toast.error(errors.observacoes.message || "Por favor, preencha o campo de observações corretamente.");
+      }
+    }
+  };
 
   const handlePrev = () => {
     prevStep();
   };
 
   return (
-    <form onSubmit={handleSubmit(handleNext)}>
+    <form onSubmit={handleSubmit(handleNext, handleError)}>
       <Controller
         name="images"
         control={control}
@@ -45,16 +58,11 @@ const Step2 = () => {
             minLength: { value: 10, message: "Escreva pelo menos 10 caracteres para entendermos seu pedido." }
           }}
           render={({ field }) => (
-            <>
-              <textarea
-                {...field}
-                className="border-2 border-gold rounded-lg px-4 py-2 w-full mt-2 h-32"
-                placeholder=""
-              ></textarea>
-              {errors.observacoes && (
-                <p className="text-red-500 text-sm mt-1">{errors.observacoes.message}</p>
-              )}
-            </>
+            <textarea
+              {...field}
+              className="border-2 border-gold rounded-lg px-4 py-2 w-full mt-2 h-32"
+              placeholder=""
+            ></textarea>
           )}
         />
       </div>
