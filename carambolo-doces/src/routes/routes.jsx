@@ -12,6 +12,7 @@ import Products from '../pages/Products/index';
 import OrderKanban from '../pages/OrderKanban/index';
 import ProtectedRoute from './ProtectedRoute';
 import Dashboard from '../pages/Dashboard';
+import Producao from '../pages/Producao';
 import AllFornadasDashboard from '../pages/AllFornadasDashboard/AllFornadasDashboard';
 import ModalCadastroProduto from '../components/ModalCadastroProduto';
 import CartPage from '../pages/Cart';
@@ -23,6 +24,14 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/dashboard" element={<Dashboard />} />
+      <Route
+        path="/producao"
+        element={
+          <ProtectedRoute requireAdmin={true}>
+            <Producao />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/pagina-usuario"
         element={
