@@ -6,6 +6,7 @@ import PhoneInputCustom from "../PhoneInput/PhoneInputCustom";
 import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import { register as registerUser } from "../../service/userService";
+import userIcon from '../../assets/user_icon.png'; // added import
 
 function RegisterModal({ onClose, switchToLogin }) {
   const {
@@ -48,8 +49,8 @@ function RegisterModal({ onClose, switchToLogin }) {
   return (
     <ModalBaseLogin title="Cadastro" onClose={onClose}>
       <form onSubmit={handleSubmit(onSubmit, handleErrors)}>
-        <div className="flex flex-col items-center mb-2">
-          <img src="src/assets/user_icon.png" alt="Ícone de Usuário" className="w-12 h-12" />
+        <div className="flex flex-col items-center mb-6">
+          <img src={userIcon} alt="Ícone de Usuário" className="w-12 h-12" />
         </div>
         
         <label htmlFor="name" className="text-white mb-1">Nome</label>
