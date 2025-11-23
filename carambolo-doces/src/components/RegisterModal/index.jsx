@@ -48,8 +48,8 @@ function RegisterModal({ onClose, switchToLogin }) {
   return (
     <ModalBaseLogin title="Cadastro" onClose={onClose}>
       <form onSubmit={handleSubmit(onSubmit, handleErrors)}>
-        <div className="flex flex-col items-center mb-6">
-          <img src="src/assets/user_icon.png" alt="Ícone de Usuário" />
+        <div className="flex flex-col items-center mb-2">
+          <img src="src/assets/user_icon.png" alt="Ícone de Usuário" className="w-12 h-12" />
         </div>
         
         <label htmlFor="name" className="text-white mb-1">Nome</label>
@@ -106,7 +106,7 @@ function RegisterModal({ onClose, switchToLogin }) {
           bgColor="bg-gradient-to-l from-gold to-darkGold"
           textColor="text-black"
           type="submit"
-          className="mx-auto mb-4 px-10 flex"
+          className="mx-auto mb-2 px-10 flex"
         />
       </form>
       <p className="text-center text-base font-normal text-white">

@@ -86,15 +86,9 @@ function LoginModal({ onClose }) {
               />
             </div>
 
-            <div className="flex flex-col items-center mt-4">
-              <button
-                type="button"
-                onClick={handleRegisterClick}
-                className="text-white underline"
-              >
-                Não tem uma conta? Cadastre-se
-              </button>
-            </div>
+            <p className="text-center text-base font-normal text-white mt-4">
+              Não tem uma conta? <span onClick={handleRegisterClick} className="text-gradient font-bold cursor-pointer">Cadastre-se</span>
+            </p>
           </form>
         </ModalBaseLogin>
       ) : (
