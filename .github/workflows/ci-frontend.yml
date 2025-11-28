@@ -30,6 +30,12 @@ jobs:
         # Em produção (Dockerfile) continuamos usando npm ci.
         run: npm install --include=dev --include=optional --no-audit --no-fund
 
+      - name: Garantir binário nativo do Rollup para Linux (CI)
+        # Instala apenas no ambiente do CI o pacote opcional usado pelo Rollup em Linux.
+        # Não alteramos package.json; é só para evitar o erro "Cannot find module
+        # @rollup/rollup-linux-x64-gnu" no runner do GitHub.
+        run: npm install -D @rollup/rollup-linux-x64-gnu@4.40.0 --no-audit --no-fund || true
+
       # Ainda não temos suite de testes de frontend estável; por enquanto garantimos só o build.
       # - name: Run tests
       #   run: npm test -- --watch=false
