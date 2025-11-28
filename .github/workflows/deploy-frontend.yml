@@ -18,10 +18,15 @@ jobs:
 
       - name: Deploy frontend em EC2 públicas
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          # Lista de backends (privados) para o proxy /api em cada pública.
+          # Exemplo de valor do secret: "10.0.2.34:8080,10.0.3.9:8080"
+          API_UPSTREAMS: ${{ secrets.API_UPSTREAMS }}
         with:
           host: ${{ secrets.FRONTEND_EC2_HOSTS }}
           username: ${{ secrets.FRONTEND_EC2_USER }}
           key: ${{ secrets.FRONTEND_EC2_SSH_KEY }}
+          envs: API_UPSTREAMS
           script: |
             set -euo pipefail
 
