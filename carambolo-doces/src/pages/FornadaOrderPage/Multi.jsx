@@ -160,7 +160,11 @@ export default function FornadaMultiOrderPage() {
   };
 
   const registerFornadaOrderSummary = async (pedidoFornadaId, dataEntrega, horario) => {
-    const body = { pedidoFornadaId, dataEntrega: dataEntrega && horario ? `${dataEntrega}T${horario}:00` : null };
+    const horarioValido = horario && horario.trim() !== "";
+    const body = { 
+      pedidoFornadaId, 
+      dataEntrega: dataEntrega && horarioValido ? `${dataEntrega}T${horario}` : null 
+    };
     const response = await axiosApi.post("/resumo-pedido", body);
     return response.data;
   };

@@ -23,7 +23,8 @@ export const FormProvider = ({ children }) => {
         setDadosEntrega((prev) => ({ ...prev, ...data }));
         break;
       case 'imagens':
-        setImagens((prev) => [...prev, ...(Array.isArray(data) ? data : [data])]);
+        // Para imagens, substituir ao invés de adicionar para evitar multiplicação
+        setImagens(Array.isArray(data) ? data : [data]);
         break;
       case 'dadosMontagem':
         setDadosMontagem((prev) => ({ ...prev, ...data }));
@@ -110,49 +111,6 @@ export const FormProvider = ({ children }) => {
     }
   };
 
-  const getOrCreateRecheioPedido = async (recheioUnitarioId) => {
-    try {
-      const response = await axiosApi.get("/bolos/recheio-pedido");
-      if (response.data && response.data.length > 0) {
-        const recheioExistente = response.data.find(r => 
-          r.sabor1 === recheioUnitarioId || r.sabor2 === recheioUnitarioId
-        );
-        if (recheioExistente) {
-          return recheioExistente.id;
-        }
-        return response.data[0].id;
-      }
-    } catch (error) {
-      // Try creating new
-    }
-
-    try {
-      const response = await axiosApi.post("/bolos/recheio-unitario", {
-        sabor: "Recheio Padrão",
-        descricao: "Recheio criado automaticamente", 
-        valor: 10.0
-      });
-      
-      if (response.data && response.data.id) {
-        return response.data.id;
-      }
-    } catch (error) {
-      // Try fallback
-    }
-
-    for (let id of [1, 2, 3, 4, 5]) {
-      try {
-        const response = await axiosApi.get(`/bolos/recheio-pedido/${id}`);
-        if (response.data) {
-          return id;
-        }
-      } catch (error) {
-        continue;
-      }
-    }
-
-    return 1;
-  };
 
   const registerBolo = async (boloData) => {
     try {
@@ -213,7 +171,7 @@ export const FormProvider = ({ children }) => {
         return;
       }
       if (!dadosMontagem.recheioId) {
-        toast.warn("Por favor, selecione o recheio do bolo!");
+        toast.error("Por favor, selecione o recheio do bolo!");
         return;
       }
       if (!dadosMontagem.observacoes || dadosMontagem.observacoes.trim().length < 10) {
@@ -252,7 +210,54 @@ export const FormProvider = ({ children }) => {
       }
 
       const coberturaId = await getOrCreateCobertura();
-      const recheioPedidoId = await getOrCreateRecheioPedido(dadosMontagem.recheioId);
+      
+      // Validar que o recheioId existe antes de processar
+      if (!dadosMontagem.recheioId) {
+        toast.error("Recheio é obrigatório! Por favor, selecione um recheio.");
+        return;
+      }
+      
+      // Buscar ou criar recheio pedido baseado no recheio selecionado
+      let recheioPedidoId = null;
+      try {
+        // Primeiro, tentar buscar um recheio-pedido existente que contenha este recheio unitário
+        const response = await axiosApi.get("/bolos/recheio-pedido");
+        if (response.data && response.data.length > 0) {
+          const recheioExistente = response.data.find(r => 
+            r.sabor1 === dadosMontagem.recheioId || r.sabor2 === dadosMontagem.recheioId
+          );
+          if (recheioExistente) {
+            recheioPedidoId = recheioExistente.id;
+          } else {
+            // Se não encontrar, criar um novo recheio-pedido com o recheio selecionado
+            const recheioPedidoData = {
+              recheioUnitarioId1: dadosMontagem.recheioId,
+              recheioUnitarioId2: null,
+              recheioExclusivo: null
+            };
+            const novoRecheioPedido = await registerRecheioPedido(recheioPedidoData);
+            recheioPedidoId = novoRecheioPedido;
+          }
+        } else {
+          // Se não houver nenhum recheio-pedido, criar um novo
+          const recheioPedidoData = {
+            recheioUnitarioId1: dadosMontagem.recheioId,
+            recheioUnitarioId2: null,
+            recheioExclusivo: null
+          };
+          const novoRecheioPedido = await registerRecheioPedido(recheioPedidoData);
+          recheioPedidoId = novoRecheioPedido;
+        }
+      } catch (error) {
+        console.error('Erro ao processar recheio:', error);
+        toast.error("Erro ao processar o recheio selecionado. Por favor, tente novamente.");
+        return;
+      }
+      
+      if (!recheioPedidoId) {
+        toast.error("Não foi possível processar o recheio selecionado. Por favor, selecione outro recheio.");
+        return;
+      }
 
       let decoracaoCriadaId = null;
       try {
@@ -340,9 +345,10 @@ export const FormProvider = ({ children }) => {
       const pedidoId = await registerPedidoBolo(pedidoData);
 
       const dataEntregaFormatada = dadosEntrega.data.replace(/\//g, '-');
+      const horarioValido = dadosEntrega.horario && dadosEntrega.horario.trim() !== "";
       const resumoData = {
-        dataEntrega: dadosEntrega.horario ? 
-          `${dataEntregaFormatada}T${dadosEntrega.horario}:00` : 
+        dataEntrega: horarioValido ? 
+          `${dataEntregaFormatada}T${dadosEntrega.horario}` : 
           `${dataEntregaFormatada}T12:00:00`,
         pedidoBoloId: pedidoId,
         pedidoFornadaId: null

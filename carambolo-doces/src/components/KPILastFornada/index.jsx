@@ -5,7 +5,7 @@ import ModalProductsFornada from "../ModalProductsFornada/ModalProductsFornada";
 import { getKPIFornadaMaisRecente } from "../../service/kpiService";
 import { getLastFornada } from "../../service/fornadaService";
 
-function KPILastFornada({ kpiDataOverride, rangeOverride }) {
+function KPILastFornada({ kpiDataOverride, rangeOverride, refreshKey }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [kpiData, setKpiData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -45,7 +45,13 @@ function KPILastFornada({ kpiDataOverride, rangeOverride }) {
       return;
     }
     fetchKPIData();
-  }, [kpiDataOverride, rangeOverride]);
+    
+    const interval = setInterval(() => {
+      fetchKPIData();
+    }, 30000);
+    
+    return () => clearInterval(interval);
+  }, [kpiDataOverride, rangeOverride, refreshKey]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";

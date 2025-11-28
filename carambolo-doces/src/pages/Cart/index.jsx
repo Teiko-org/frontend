@@ -5,6 +5,8 @@ import Button from "../../components/Button";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../../contexts/CartContext";
 import { listResumoFornadaDoUsuario, aumentarQuantidadePedido, diminuirQuantidadePedido } from "../../service/cartFornadaService";
+import { getProdutoFornadaById, getFornada } from "../../service/fornadaService";
+import { axiosApi } from "../../provider/AxiosApi";
 import { toast } from "react-toastify";
 import CartItemCard from "../../components/CartItemCard";
 import ModalBaseForm from "../../components/ModalBaseForm";
@@ -16,6 +18,7 @@ export default function CartPage() {
   const navigate = useNavigate();
   const [selectedIds, setSelectedIds] = useState({});
   const [isMultiModalOpen, setMultiModalOpen] = useState(false);
+  const [produtosStatus, setProdutosStatus] = useState({});
 
   const carregarPedidos = async () => {
     try {
@@ -30,16 +33,138 @@ export default function CartPage() {
     }
   };
 
+  const verificarStatusProdutos = async () => {
+    const status = {};
+    const itensPorFornada = {};
+    for (const item of localItems) {
+      if (item.type === 'Fornada' && item.fornadaDaVezId) {
+        try {
+          const produto = await getProdutoFornadaById(item.fornadaDaVezId);
+          if (produto.fornada) {
+            if (!itensPorFornada[produto.fornada]) {
+              itensPorFornada[produto.fornada] = [];
+            }
+            itensPorFornada[produto.fornada].push({ item, produto });
+          }
+        } catch (error) {
+          console.error(`Erro ao buscar FornadaDaVez ${item.fornadaDaVezId}:`, error);
+        }
+      }
+    }
+    
+    const produtosPorFornada = {};
+    for (const [fornadaId, itens] of Object.entries(itensPorFornada)) {
+      try {
+        const produtosProjecao = await axiosApi.get(`/fornadas/da-vez/produtos/${fornadaId}`);
+        produtosPorFornada[fornadaId] = {};
+        if (Array.isArray(produtosProjecao.data)) {
+          produtosProjecao.data.forEach(prod => {
+            if (prod.fornadaDaVezId) {
+              produtosPorFornada[fornadaId][prod.fornadaDaVezId] = prod.isAtivo === true;
+            }
+          });
+        }
+      } catch (error) {
+        console.warn(`Erro ao buscar produtos da fornada ${fornadaId}:`, error.response?.status || error.message);
+        produtosPorFornada[fornadaId] = {};
+      }
+    }
+    
+    for (const item of localItems) {
+      if (item.type === 'Fornada' && item.fornadaDaVezId) {
+        try {
+          const produto = await getProdutoFornadaById(item.fornadaDaVezId);
+          
+          let isAtivoProdutoFornada = true;
+          if (produto.fornada && produtosPorFornada[produto.fornada]) {
+            const isAtivoDaProjecao = produtosPorFornada[produto.fornada][item.fornadaDaVezId];
+            if (isAtivoDaProjecao !== undefined) {
+              isAtivoProdutoFornada = isAtivoDaProjecao;
+            } else {
+              isAtivoProdutoFornada = false;
+            }
+          } else {
+            if (produto.produtoFornada) {
+              try {
+                const produtoFornadaResponse = await axiosApi.get(`/fornadas/produto-fornada/${produto.produtoFornada}`);
+                isAtivoProdutoFornada = produtoFornadaResponse.data.isAtivo === true;
+              } catch (error) {
+                console.warn(`Erro ao buscar ProdutoFornada ${produto.produtoFornada}:`, error.response?.status || error.message);
+                isAtivoProdutoFornada = produto.isAtivo !== false;
+              }
+            } else {
+              isAtivoProdutoFornada = produto.isAtivo !== false;
+            }
+          }
+          
+          const isAtivo = isAtivoProdutoFornada;
+          const quantidade = produto.quantidade || 0;
+          
+          let fornadaEncerrada = false;
+          if (produto.fornada) {
+            try {
+              const fornada = await getFornada(produto.fornada);
+              const hoje = new Date();
+              hoje.setHours(0, 0, 0, 0);
+              const dataFim = new Date(fornada.dataFim);
+              dataFim.setHours(23, 59, 59, 999);
+              
+              if (dataFim < hoje) {
+                fornadaEncerrada = true;
+              }
+            } catch (error) {
+              console.error(`Erro ao buscar fornada ${produto.fornada}:`, error);
+            }
+          }
+          
+          const disponivel = quantidade > 0 && isAtivo && !fornadaEncerrada;
+          
+          status[item.fornadaDaVezId] = {
+            disponivel: disponivel,
+            quantidade: quantidade,
+            isAtivo: isAtivo,
+            fornadaEncerrada: fornadaEncerrada
+          };
+        } catch (error) {
+          console.error(`Erro ao verificar produto ${item.fornadaDaVezId}:`, error);
+          status[item.fornadaDaVezId] = {
+            disponivel: false,
+            quantidade: 0,
+            isAtivo: null,
+            fornadaEncerrada: null
+          };
+        }
+      }
+    }
+    setProdutosStatus(status);
+  };
+
   useEffect(() => {
     carregarPedidos();
   }, []);
 
+  useEffect(() => {
+    if (localItems.length > 0) {
+      verificarStatusProdutos();
+    }
+  }, [localItems.length]);
+
   const totals = useMemo(() => {
-    const subtotalLocal = localItems.reduce((s, it) => s + Number(it.price || 0) * Number(it.quantity || 0), 0);
+    const itensDisponiveis = localItems.filter(item => {
+      if (item.type === 'Fornada' && item.fornadaDaVezId) {
+        const status = produtosStatus[item.fornadaDaVezId];
+        if (status !== undefined && !status.disponivel) {
+          return false;
+        }
+      }
+      return true;
+    });
+    
+    const subtotalLocal = itensDisponiveis.reduce((s, it) => s + Number(it.price || 0) * Number(it.quantity || 0), 0);
     const subtotalPedidos = pedidos.reduce((sum, it) => sum + Number(it.resumo?.valor || 0), 0);
     const subtotal = subtotalLocal + subtotalPedidos;
-    return { subtotal, total: subtotal, shipping: 0, count: localItems.length + pedidos.length };
-  }, [localItems, pedidos]);
+    return { subtotal, total: subtotal, shipping: 0, count: itensDisponiveis.length + pedidos.length };
+  }, [localItems, pedidos, produtosStatus]);
 
   return (
     <div className="bg-bgNativeHome min-h-screen flex flex-col">
@@ -58,37 +183,59 @@ export default function CartPage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <section className="lg:col-span-2 space-y-4">
-              {localItems.map((item) => (
-                <div key={`local-${item.type}-${item.id}`} className="flex items-start gap-3">
-                  <div className="pt-2">
-                    <input
-                      type="checkbox"
-                      checked={!!selectedIds[`${item.type}-${item.id}`]}
-                      onChange={(e) => setSelectedIds((prev) => ({ ...prev, [`${item.type}-${item.id}`]: e.target.checked }))}
-                      className="w-5 h-5 accent-gold cursor-pointer"
-                    />
+              {localItems.map((item) => {
+                const status = produtosStatus[item.fornadaDaVezId];
+                const statusVerificado = status !== undefined;
+                const isIndisponivel = statusVerificado && !status.disponivel;
+                
+                let motivoOverlay = 'INDISPONÍVEL';
+                let textoDisponibilidade = 'Disponível';
+                
+                if (statusVerificado && isIndisponivel) {
+                  textoDisponibilidade = 'Indisponível';
+                  motivoOverlay = 'INDISPONÍVEL';
+                } else if (statusVerificado && !isIndisponivel) {
+                  textoDisponibilidade = 'Disponível';
+                }
+                
+                return (
+                  <div key={`local-${item.type}-${item.id}`} className="flex flex-col gap-3">
+                    <div className="flex items-start gap-3">
+                      <div className="pt-2">
+                        <input
+                          type="checkbox"
+                          checked={!!selectedIds[`${item.type}-${item.id}`]}
+                          onChange={(e) => setSelectedIds((prev) => ({ ...prev, [`${item.type}-${item.id}`]: e.target.checked }))}
+                          className="w-5 h-5 accent-gold cursor-pointer"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <CartItemCard
+                          image={item.image}
+                          title={item.name}
+                          subtitle={item.type}
+                          availableText={textoDisponibilidade}
+                          unitPrice={item.price}
+                          quantity={item.quantity}
+                          onDecrease={() => updateQuantity(item.id, item.type, item.quantity - 1)}
+                          onIncrease={() => updateQuantity(item.id, item.type, item.quantity + 1)}
+                          disableIncrease={isIndisponivel || (Number.isFinite(item.maxQuantity) && item.quantity >= item.maxQuantity)}
+                          disableDecrease={isIndisponivel}
+                          statusLabel="Local"
+                          statusColor="bg-blue"
+                          rightSuffix={`x${item.quantity}`}
+                          totalText="Valor Total Estimado:"
+                          disclaimer="Esse valor não inclui o valor do frete."
+                          selected={!!selectedIds[`${item.type}-${item.id}`]}
+                          onClick={() => setSelectedIds((prev) => ({ ...prev, [`${item.type}-${item.id}`]: !prev[`${item.type}-${item.id}`] }))}
+                          isUnavailable={isIndisponivel}
+                          unavailableReason={motivoOverlay}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <CartItemCard
-                      image={item.image}
-                      title={item.name}
-                      subtitle={item.type}
-                      unitPrice={item.price}
-                      quantity={item.quantity}
-                      onDecrease={() => updateQuantity(item.id, item.type, item.quantity - 1)}
-                      onIncrease={() => updateQuantity(item.id, item.type, item.quantity + 1)}
-                      disableIncrease={Number.isFinite(item.maxQuantity) && item.quantity >= item.maxQuantity}
-                      statusLabel="Local"
-                      statusColor="bg-blue"
-                      rightSuffix={`x${item.quantity}`}
-                      totalText="Valor Total Estimado:"
-                      disclaimer="Esse valor não inclui o valor do frete."
-                      selected={!!selectedIds[`${item.type}-${item.id}`]}
-                      onClick={() => setSelectedIds((prev) => ({ ...prev, [`${item.type}-${item.id}`]: !prev[`${item.type}-${item.id}`] }))}
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               {pedidos.map(({ resumo, pedido }) => (
                 <div key={`pf-${resumo.pedidoFornadaId}`} className="flex items-start gap-3">
                   <div className="pt-2">
@@ -129,45 +276,27 @@ export default function CartPage() {
                 <span>Total</span>
                 <span>R$ {totals.total.toFixed(2).replace(".", ",")}</span>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {localItems.length > 0 && (
-                  <Button
-                    text={`Pagar selecionados (${Object.values(selectedIds).filter(Boolean).length})`}
-                    fontSize="text-sm"
-                    className="py-1 px-3"
-                    onClick={() => {
-                      const selecionados = localItems.filter((it) => selectedIds[`${it.type}-${it.id}`]);
-                      if (selecionados.length === 0) {
-                        toast.warn('Selecione ao menos um item.');
-                        return;
-                      }
-                      if (selecionados.length === 1) {
-                        const item = selecionados[0];
-                        navigate('/pedido-fornada', { state: { produto: {
-                          produto: item.name,
-                          valor: item.price,
-                          imagens: item.image ? [item.image] : [],
-                          fornadaDaVezId: item.fornadaDaVezId,
-                          quantidade: item.maxQuantity === Infinity ? 9999 : item.maxQuantity
-                        }, quantidade: item.quantity } });
-                      } else {
-                        navigate('/pedido-fornada-multiplo', { state: { itens: selecionados, redirectToForm: true } });
-                      }
-                    }}
-                  />
-                )}
+              <div className="grid grid-cols-2 gap-2">
                 <Button
-                  text="Confirmar pagamento"
-                  fontSize="text-sm"
-                  className="py-1 px-3"
+                  text="Confirmar todos"
+                  fontSize="text-xs"
+                  className="py-1 px-2.5"
                   onClick={() => {
-                    // Se houver itens marcados, usa apenas os selecionados; caso contrário, usa todos os itens do carrinho
                     const selecionadosMarcados = localItems.filter((it) => selectedIds[`${it.type}-${it.id}`]);
-                    const itensParaPagar = selecionadosMarcados.length > 0 ? selecionadosMarcados : localItems;
+                    let itensParaPagar = selecionadosMarcados.length > 0 ? selecionadosMarcados : localItems;
+
+                    itensParaPagar = itensParaPagar.filter(item => {
+                      if (item.type === 'Fornada' && item.fornadaDaVezId) {
+                        const status = produtosStatus[item.fornadaDaVezId];
+                        if (status !== undefined && !status.disponivel) {
+                          return false;
+                        }
+                      }
+                      return true;
+                    });
 
                     if (itensParaPagar.length === 0) {
-                      toast.warn('Adicione um item da Fornada antes de confirmar.');
-                      navigate('/fornada');
+                      toast.warn('Não há itens disponíveis para confirmar.');
                       return;
                     }
 
@@ -185,14 +314,78 @@ export default function CartPage() {
                     }
                   }}
                 />
+                {localItems.length > 0 ? (
+                  <Button
+                    text={`Confirmar selecionados (${Object.values(selectedIds).filter(Boolean).length})`}
+                    fontSize="text-xs"
+                    className="py-1 px-2.5"
+                    onClick={() => {
+                      const selecionados = localItems.filter((it) => selectedIds[`${it.type}-${it.id}`]);
+                      if (selecionados.length === 0) {
+                        toast.warn('Selecione ao menos um item.');
+                        return;
+                      }
+                      
+                      const produtosIndisponiveis = selecionados.filter(item => {
+                        const status = produtosStatus[item.fornadaDaVezId];
+                        return status && !status.disponivel;
+                      });
+                      
+                      if (produtosIndisponiveis.length > 0) {
+                        toast.error('Há produtos esgotados, ocultados ou de fornada encerrada selecionados. Remova-os antes de continuar.');
+                        return;
+                      }
+                      
+                      if (selecionados.length === 1) {
+                        const item = selecionados[0];
+                        navigate('/pedido-fornada', { state: { produto: {
+                          produto: item.name,
+                          valor: item.price,
+                          imagens: item.image ? [item.image] : [],
+                          fornadaDaVezId: item.fornadaDaVezId,
+                          quantidade: item.maxQuantity === Infinity ? 9999 : item.maxQuantity
+                        }, quantidade: item.quantity } });
+                      } else {
+                        navigate('/pedido-fornada-multiplo', { state: { itens: selecionados, redirectToForm: true } });
+                      }
+                    }}
+                  />
+                ) : (
+                  <div></div>
+                )}
                 <Button
                   text="Limpar carrinho"
-                  fontSize="text-sm"
-                  className="py-1 px-3"
+                  fontSize="text-xs"
+                  className="py-1 px-2.5"
                   onClick={clearCart}
                   bgColor="bg-gray-200"
                   textColor="text-blue"
                 />
+                {localItems.length > 0 ? (
+                  <Button
+                    text={`Limpar selecionados (${Object.values(selectedIds).filter(Boolean).length})`}
+                    fontSize="text-xs"
+                    className="py-1 px-2.5"
+                    onClick={() => {
+                      const selecionados = localItems.filter((it) => selectedIds[`${it.type}-${it.id}`]);
+                      if (selecionados.length === 0) {
+                        toast.warn('Nenhum item selecionado.');
+                        return;
+                      }
+                      
+                      selecionados.forEach(item => {
+                        removeItem(item.id, item.type);
+                      });
+                      
+                      setSelectedIds({});
+                      toast.success(`${selecionados.length} item(ns) removido(s) do carrinho.`);
+                    }}
+                    bgColor="bg-gray-200"
+                    textColor="text-blue"
+                  />
+                ) : (
+                  <div></div>
+                )}
               </div>
             </aside>
           </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import pt from 'date-fns/locale/pt-BR';
@@ -10,8 +10,59 @@ registerLocale('pt-BR', pt);
 
 const CustomDatePicker = React.forwardRef(({ label, placeholder, value, onChange }, ref) => {
   const [startDate, setStartDate] = useState(() => {
-    return value && !isNaN(new Date(value)) ? new Date(value) : null;
+    if (!value) return null;
+    // Se for string no formato YYYY/MM/DD, converter para Date
+    if (typeof value === 'string' && value.includes('/')) {
+      const parts = value.split('/');
+      if (parts.length === 3 && parts[0].length === 4) {
+        // Formato YYYY/MM/DD
+        const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        return !isNaN(date.getTime()) ? date : null;
+      } else if (parts.length === 2 || (parts.length === 3 && parts[0].length === 2)) {
+        // Formato DD/MM ou DD/MM/YYYY
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const year = parts[2] ? parseInt(parts[2], 10) : new Date().getFullYear();
+        const date = new Date(year, month, day);
+        return !isNaN(date.getTime()) ? date : null;
+      }
+    }
+    const date = new Date(value);
+    return !isNaN(date.getTime()) ? date : null;
   });
+
+  useEffect(() => {
+    if (!value) {
+      setStartDate(null);
+      return;
+    }
+    // Se for string no formato YYYY/MM/DD, converter para Date
+    if (typeof value === 'string' && value.includes('/')) {
+      const parts = value.split('/');
+      if (parts.length === 3 && parts[0].length === 4) {
+        // Formato YYYY/MM/DD
+        const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        if (!isNaN(date.getTime())) {
+          setStartDate(date);
+        }
+        return;
+      } else if (parts.length === 2 || (parts.length === 3 && parts[0].length === 2)) {
+        // Formato DD/MM ou DD/MM/YYYY
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const year = parts[2] ? parseInt(parts[2], 10) : new Date().getFullYear();
+        const date = new Date(year, month, day);
+        if (!isNaN(date.getTime())) {
+          setStartDate(date);
+        }
+        return;
+      }
+    }
+    const date = new Date(value);
+    if (!isNaN(date.getTime())) {
+      setStartDate(date);
+    }
+  }, [value]);
 
   const formatDateForBackend = (date) => {
   if (date instanceof Date && !isNaN(date)) {

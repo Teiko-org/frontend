@@ -1,12 +1,10 @@
-import { MdInsertChartOutlined } from "react-icons/md";
 import { IoMdClipboard } from "react-icons/io";
 import { BsBag } from "react-icons/bs";
 import { RiFileEditLine } from "react-icons/ri";
 import { BiLogOut } from "react-icons/bi";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FaHome } from "react-icons/fa";
-import { MdSpaceDashboard } from "react-icons/md";
-import { useEffect } from "react";
+import { MdSpaceDashboard, MdFactory } from "react-icons/md";
 
 const BarraLateralDashboard = () => {
     const navigate = useNavigate();
@@ -22,7 +20,6 @@ const BarraLateralDashboard = () => {
             const userCart = localStorage.getItem(userCartKey);
             if (userCart) {
                 localStorage.setItem("CART_ITEMS_GUEST", userCart);
-                console.log("Carrinho do usuário migrado para convidado no logout");
             }
         }
 
@@ -54,6 +51,13 @@ const BarraLateralDashboard = () => {
                             <Link to="/dashboard">
                                 <div className={`flex items-center pl-5 py-2 gap-2 ml-3 rounded-l-full transition-colors duration-400 ease-in-out ${isActiveExact('/dashboard') ? 'bg-bgNativeHome text-darkBlue font-semibold' : 'hover:bg-bgNativeHome hover:text-darkBlue'}`}>
                                     <MdSpaceDashboard /> Dashboard
+                                </div>
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to="/producao">
+                                <div className={`flex items-center pl-5 py-2 gap-2 ml-3 rounded-l-full transition-colors duration-400 ease-in-out ${isActiveExact('/producao') ? 'bg-bgNativeHome text-darkBlue font-semibold' : 'hover:bg-bgNativeHome hover:text-darkBlue'}`}>
+                                    <MdFactory /> Produção
                                 </div>
                             </Link>
                         </li>

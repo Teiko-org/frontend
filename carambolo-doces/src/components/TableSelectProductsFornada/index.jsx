@@ -28,6 +28,10 @@ export default function TableSelectProductsFornada() {
 
   React.useEffect(() => {
     getData();
+    const produtosSalvos = JSON.parse(localStorage.getItem("selectedProducts") || "[]");
+    if (produtosSalvos.length > 0) {
+      setSelectedProducts(produtosSalvos);
+    }
   }, []);
 
   const getData = async () => {
@@ -74,13 +78,22 @@ export default function TableSelectProductsFornada() {
   };
 
   const handleQuantidade = (id, delta) => {
-    setSelectedProducts((prevSelected) =>
-      prevSelected.map((item) =>
+    setSelectedProducts((prevSelected) => {
+      const item = prevSelected.find((item) => item.id === id);
+      if (!item) return prevSelected;
+      
+      const novaQuantidade = item.quantidade + delta;
+      
+      if (novaQuantidade <= 0) {
+        return prevSelected.filter((item) => item.id !== id);
+      }
+      
+      return prevSelected.map((item) =>
         item.id === id
-          ? { ...item, quantidade: Math.max(1, item.quantidade + delta) }
+          ? { ...item, quantidade: novaQuantidade }
           : item
-      )
-    );
+      );
+    });
   };
 
   return (
@@ -252,7 +265,7 @@ export default function TableSelectProductsFornada() {
                                 {selected ? selected.quantidade : 0}
                               </div>
                               <button
-                                disabled={!selected || selected.quantidade <= 1}
+                                disabled={!selected}
                                 className="disabled:opacity-50"
                                 onClick={() => handleQuantidade(row.id, -1)}
                               >

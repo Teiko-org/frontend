@@ -42,8 +42,14 @@ function Carambolos() {
         setPageByCategory(initialPages);
         
         // Se uma categoria foi selecionada, marca para scroll
-        if (categoriaSelecionada && agrupados[categoriaSelecionada]) {
-          setScrollToCategory(categoriaSelecionada);
+        if (categoriaSelecionada) {
+          const categoriaNormalizada = categoriaSelecionada.trim();
+          const categoriaEncontrada = Object.keys(agrupados).find(
+            cat => cat && cat.trim().toLowerCase() === categoriaNormalizada.toLowerCase()
+          );
+          if (categoriaEncontrada) {
+            setScrollToCategory(categoriaEncontrada);
+          }
         }
       } catch (error) {
         console.error("Erro ao carregar bolos:", error);

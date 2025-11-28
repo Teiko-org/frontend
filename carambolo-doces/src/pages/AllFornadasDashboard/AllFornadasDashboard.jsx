@@ -148,7 +148,7 @@ function AllFornadasDashboard() {
                 <div className="flex flex-col justify-evenly items-center">
                     <div className="flex flex-row justify-evenly items-center gap-10">
 
-                        <KPIThisMonthFornadas hideConsultar />
+                        <KPIThisMonthFornadas hideConsultar mesSelecionado={mesSelecionado} anoSelecionado={anoSelecionado} />
 
                     </div>
                     <div className="flex flex-col w-full items-center gap-5 pt-5">

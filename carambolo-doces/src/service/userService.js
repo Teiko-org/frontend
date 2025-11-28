@@ -3,10 +3,8 @@ import { axiosApi } from '../provider/AxiosApi.js';
 import { toast } from 'react-toastify';
 
 export const login = async (phone, password) => {
-  // Limpa o telefone e adiciona o código do país 55 (Brasil)
   const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
   const phoneWithCountryCode = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
-  // Para compatibilizar com bases que armazenam SEM DDI, envie apenas os 11 dígitos finais
   const contatoToSend = (cleanPhone.length >= 12 && cleanPhone.startsWith('55'))
     ? cleanPhone.slice(-11)
     : cleanPhone;
@@ -22,25 +20,9 @@ export const login = async (phone, password) => {
 
 export const logOff = () => {
   try {
-    // Migrar carrinho do usuário para convidado antes de fazer logout
-    const userId = localStorage.getItem("userId");
-    if (userId) {
-      const userCartKey = `CART_ITEMS_USER_${userId}`;
-      const userCart = localStorage.getItem(userCartKey);
-      if (userCart) {
-        localStorage.setItem("CART_ITEMS_GUEST", userCart);
-      }
-    }
-
-    // Tentar fazer logout no servidor (pode falhar se o token já estiver inválido)
-    axiosApi.post('usuarios/logOut', {}).catch(() => {
-      console.log("Logout no servidor falhou (token já inválido)");
-    });
+    axiosApi.post('usuarios/logOut', {}).catch(() => {});
     
-    // Limpar todos os dados de autenticação
     clearAuthData();
-    
-    console.log("✅ Logout realizado com sucesso");
   } catch (e) {
     toast.error("Falha ao deslogar");
     console.log("Erro ao deslogar: " + e);
@@ -49,10 +31,8 @@ export const logOff = () => {
 
 export const register = async (name, password, phone) => {
   try {
-    // Limpa o telefone e adiciona o código do país 55 (Brasil)
     const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
     const phoneWithCountryCode = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
-    // Persistir SEM DDI (11 dígitos) para ficar consistente com o login
     const contatoToSend = (cleanPhone.length >= 12 && cleanPhone.startsWith('55'))
       ? cleanPhone.slice(-11)
       : cleanPhone;
@@ -68,7 +48,6 @@ export const register = async (name, password, phone) => {
     toast.success('Cadastro criado com sucesso!');
     return response.data;
   } catch (error) {
-    // Usar phoneWithCountryCode que foi definido no escopo da função
     const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
     const contatoToSend = (cleanPhone.length >= 12 && cleanPhone.startsWith('55'))
       ? cleanPhone.slice(-11)
@@ -78,65 +57,26 @@ export const register = async (name, password, phone) => {
   }
 };
 
-// Função para verificar se um telefone já está cadastrado
-// Nota: Esta função foi removida pois estava causando problemas com o endpoint de login
-// A validação de telefone duplicado agora é feita apenas no momento do cadastro
-// através do tratamento do erro 409 retornado pelo backend
-
 const handleAuthError = (error, phone) => {
-  console.log('=== DEBUG handleAuthError ===');
-  console.log('Error:', error);
-  console.log('Error response:', error.response);
-  console.log('Error status:', error.response?.status);
-  console.log('Phone:', phone);
-  
   if (error.response && error.response.status === 409) {
-    // Formatar o telefone para exibição mais amigável
-    const formattedPhone = phone ? formatPhoneForDisplay(phone) : 'este telefone';
-    console.log('Formatted phone:', formattedPhone);
-    console.log('Exibindo toast de erro 409...');
-    
     toast.error(
-      `Este telefone (${formattedPhone}) já está cadastrado. Tente fazer login ou use outro número.`,
+      'Este telefone já está cadastrado. Tente fazer login ou use outro número.',
       {
-        autoClose: 6000,
+        autoClose: 5000,
         closeOnClick: true,
         pauseOnHover: true,
       }
     );
   } else if (error.response && error.response.status === 500) {
-    console.log('Exibindo toast de erro 500...');
     toast.error('Tivemos problemas para processar seu cadastro. Tente novamente mais tarde!');
   } else if (error.response && error.response.status === 401) {
-    console.log('Exibindo toast de erro 401...');
     toast.error('Telefone ou Senha incorretos.');
   } else if (error.response && error.response.status === 404) {
-    console.log('Exibindo toast de erro 404...');
     toast.error(`Usuário com contato ${phone} não encontrado`);
   } else {
-    console.log('Exibindo toast de erro genérico...');
     toast.error('Erro de autenticação. Tente novamente.');
     console.error('Erro de autenticação', error);
   }
-};
-
-// Função auxiliar para formatar telefone para exibição
-const formatPhoneForDisplay = (phone) => {
-  if (!phone) return '';
-  
-  // Remove todos os caracteres não numéricos
-  const cleanPhone = phone.replace(/\D/g, '');
-  
-  // Se tem código do país 55 (Brasil), formata como (XX) XXXXX-XXXX
-  if (cleanPhone.startsWith('55') && cleanPhone.length >= 12) {
-    const ddd = cleanPhone.substring(2, 4);
-    const firstPart = cleanPhone.substring(4, 9);
-    const secondPart = cleanPhone.substring(9, 13);
-    return `(${ddd}) ${firstPart}-${secondPart}`;
-  }
-  
-  // Para outros formatos, retorna como está
-  return phone;
 };
 
 export const changePassword = async (userId, senhaAtual, novaSenha) => {
@@ -150,7 +90,43 @@ export const changePassword = async (userId, senhaAtual, novaSenha) => {
     clearAuthData();
     return true;
   } catch (error) {
-    toast.error("Erro ao alterar senha: " + (error.response?.data?.message || "Tente novamente"));
+    let errorMessage = "Erro ao alterar senha. Tente novamente.";
+    
+    if (error.response?.status === 400) {
+      const data = error.response.data;
+      
+      if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+        const firstError = data.errors[0];
+        const field = firstError.field || firstError.property || '';
+        const message = firstError.defaultMessage || firstError.message || '';
+        
+        if (field === 'novaSenha' || message.includes('senha') || message.includes('A senha deve ter')) {
+          errorMessage = message || "A senha deve ter no mínimo 6 caracteres, incluir pelo menos uma letra maiúscula, um número e um caractere especial (!@#$%^&*).";
+        } else if (field === 'senhaAtual') {
+          errorMessage = "Senha atual incorreta.";
+        } else {
+          errorMessage = message || errorMessage;
+        }
+      } else if (data.message) {
+        if (data.message.includes("novaSenha") || data.message.includes("Pattern") || data.message.includes("regexp") || data.message.includes("A senha deve ter")) {
+          errorMessage = "A senha deve ter no mínimo 6 caracteres, incluir pelo menos uma letra maiúscula, um número e um caractere especial (!@#$%^&*).";
+        } else if (data.message.includes("igual") || data.message.includes("mesma")) {
+          errorMessage = "A nova senha não pode ser igual à senha atual.";
+        } else {
+          errorMessage = data.message;
+        }
+      } else if (typeof data === 'string' && data.includes("Validation failed")) {
+        errorMessage = "A senha não atende aos requisitos de segurança. Verifique se contém: mínimo 6 caracteres, uma maiúscula, um número e um caractere especial.";
+      } else {
+        errorMessage = "A senha não atende aos requisitos de segurança. Verifique se contém: mínimo 6 caracteres, uma maiúscula, um número e um caractere especial (!@#$%^&*).";
+      }
+    } else if (error.response?.status === 401) {
+      errorMessage = "Senha atual incorreta.";
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    }
+    
+    toast.error(errorMessage);
     throw error;
   }
 };
@@ -170,7 +146,6 @@ export const deleteUser = async (userId) => {
 
 export const getUserData = async (userId) => {
   try {
-    // Verificar se o userId é válido
     if (!userId || userId === 'null' || userId === 'undefined') {
       throw new Error('ID do usuário inválido');
     }
@@ -223,31 +198,24 @@ export const setAuthData = (userId, token) => {
 };
 
 export const clearAuthData = () => {
-  // Limpar dados do localStorage
   localStorage.removeItem("userId");
   localStorage.removeItem("IS_SIGNED");
   localStorage.removeItem("userData");
   
-  // Limpar cookies de autenticação
   document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
   document.cookie = "JSESSIONID=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
   
-  // Disparar evento para notificar outros componentes
   window.dispatchEvent(new Event("storage"));
-  
 };
 
-// Função para verificar e limpar dados de autenticação inválidos
 export const validateAndCleanAuth = () => {
   const isSigned = localStorage.getItem("IS_SIGNED");
   const userId = localStorage.getItem("userId");
   
-  // Se não há dados de autenticação, não fazer nada
   if (!isSigned || !userId) {
     return false;
   }
   
-  // Se os dados parecem inválidos, limpar
   if (userId === 'null' || userId === 'undefined' || userId === '') {
     clearAuthData();
     return false;
@@ -258,13 +226,11 @@ export const validateAndCleanAuth = () => {
 
 export const uploadProfileImage = async (userId, file) => {
   try {
-
-    // Validações no frontend
     if (!file.type.startsWith('image/')) {
       throw new Error('Arquivo deve ser uma imagem');
     }
 
-    if (file.size > 20 * 1024 * 1024) { // 20MB
+    if (file.size > 20 * 1024 * 1024) {
       throw new Error('Arquivo muito grande (máximo 20MB)');
     }
 
@@ -279,7 +245,6 @@ export const uploadProfileImage = async (userId, file) => {
 
     toast.success("Imagem de perfil atualizada com sucesso!");
 
-    // Disparar evento para atualizar outros componentes
     window.dispatchEvent(new CustomEvent("userImageUpdated", {
       detail: { imagemUrl: response.data.imagemUrl }
     }));
