@@ -5,6 +5,7 @@ import Button from "../Button";
 import InputOption from "../InputOption";
 import { axiosApi } from "../../provider/AxiosApi";
 import { toast } from "react-toastify";
+import { fetchAllAdicionais } from "../../service/adicionalService";
 
 export default function ModalCadastroProduto() {
     const [isModalOpen, setIsOpen] = useState(false);
@@ -16,34 +17,15 @@ export default function ModalCadastroProduto() {
     const [categoria, setCategoria] = useState("");
     const [valor, setValor] = useState("");
     const [observacao, setObservacao] = useState([]);
-    const [massa, setMassa] = useState("");
-    const [recheioPedido, setRecheioPedido] = useState("");
-    const [cobertura, setCobertura] = useState("");
-    const [formato, setFormato] = useState("");
-    const [tamanho, setTamanho] = useState("");
-    const [descricao, setDescricao] = useState("");
-    const [categoriaBolo, setCategoriaBolo] = useState("");
-    const [decoracao, setDecoracao] = useState("");
     const [categoriaFornada, setCategoriaFornada] = useState("");
     const [nomeDecoracao, setNomeDecoracao] = useState("");
     const [categoriaDecoracao, setCategoriaDecoracao] = useState("");
+    const [observacoesDecoracao, setObservacoesDecoracao] = useState("");
+    const [allAdicionais, setAllAdicionais] = useState([]);
+    const [adicionaisToRequest, setAdicionaisToRequest] = useState([]);
+    const [descricao, setDescricao] = useState("");
 
-    const [massasDisponiveis, setMassasDisponiveis] = useState([]);
-    const [recheiosDisponiveis, setRecheiosDisponiveis] = useState([]);
-    const [coberturasDisponiveis, setCoberturasDisponiveis] = useState([]);
-    const [formatosDisponiveis, setFormatosDisponiveis] = useState([]);
-    const [tamanhosDisponiveis, setTamanhosDisponiveis] = useState([]);
-    const [decoracoesDisponiveis, setDecoracoesDisponiveis] = useState([]);
-
-    const fetchDecoracoes = async () => {
-        try {
-            const response = await axiosApi.get("/decoracoes");
-            setDecoracoesDisponiveis(response.data);
-            return;
-        } catch (error) {
-            console.error("Erro ao buscar decorações:", error);
-        }
-    };
+    console.log('adicionaisToRequest: ', adicionaisToRequest);
 
     const anexarImagem = (e) => {
         const img = e.target.files[0];
@@ -57,44 +39,25 @@ export default function ModalCadastroProduto() {
         imagemRef.current?.click();
     };
 
-    const alterarObservacao = (opcao) =>
-        observacao.includes(opcao)
-            ? setObservacao(observacao.filter((i) => i !== opcao))
-            : setObservacao([...observacao, opcao]);
+    const handleAdicionaisToAdd = (adicional) => {
+        setAdicionaisToRequest((prev) => {
+            const exists = prev.some((item) => item.id === adicional.id);
+            if (exists) {
+                return prev.filter((item) => item.id !== adicional.id);
+            } else {
+                return [...prev, adicional];
+            }
+        });
+        // Note: To see the updated value, use useEffect or log after render
+    }
+
+    const getAllAdicionais = async () => {
+        setAllAdicionais(await fetchAllAdicionais().then(data => data || []));
+    }
 
     useEffect(() => {
-        setFile(null);
-        setFilePreview(null);
-
-        if (categoria === "Carambolo") {
-            axiosApi
-                .get("/bolos/massa")
-                .then((res) => setMassasDisponiveis(res.data))
-                .catch((err) => console.error("Erro ao buscar massas:", err));
-
-            axiosApi
-                .get("/bolos/recheio-exclusivo")
-                .then((res) => setRecheiosDisponiveis(res.data))
-                .catch((err) => console.error("Erro ao buscar recheios:", err));
-        }
-
-        axiosApi
-            .get("/bolos/cobertura")
-            .then((res) => setCoberturasDisponiveis(res.data))
-            .catch((err) => console.error("Erro ao buscar coberturas:", err));
-
-        axiosApi
-            .get("/bolos/formatos")
-            .then(res => setFormatosDisponiveis(res.data))
-            .catch(err => console.error("Erro ao buscar formatos:", err));
-
-        axiosApi
-            .get("/bolos/tamanhos")
-            .then(res => setTamanhosDisponiveis(res.data))
-            .catch(err => console.error("Erro ao buscar tamanhos:", err));
-
-        fetchDecoracoes();
-    }, [categoria]);
+        getAllAdicionais()
+    }, [])
 
     const cadastrarDecoracao = async (e, naoFecharModal = false) => {
         e?.preventDefault?.();
@@ -105,8 +68,8 @@ export default function ModalCadastroProduto() {
         }
 
         const formData = new FormData();
-        if (observacao && observacao.length > 0) {
-            formData.append("observacao", observacao.join(", "));
+        if (observacoesDecoracao && observacoesDecoracao.length > 0) {
+            formData.append("observacao", observacoesDecoracao);
         } else {
             formData.append("observacao", "");
         }
@@ -116,13 +79,13 @@ export default function ModalCadastroProduto() {
             formData.append("categoria", categoriaDecoracao);
         }
 
+        formData.append("adicionais", adicionaisToRequest.map(item => item.id))
+
         try {
             const response = await axiosApi.post("/decoracoes", formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             toast.success("Decoração cadastrada com sucesso!");
-            
-            await fetchDecoracoes();
 
             setNomeDecoracao("");
             setObservacao([]);
@@ -130,7 +93,7 @@ export default function ModalCadastroProduto() {
             setFilePreview(null);
 
             setCategoriaDecoracao("");
-            
+
             if (categoria === "Decoracao" && !naoFecharModal) {
                 setIsOpen(false);
             }
@@ -140,60 +103,6 @@ export default function ModalCadastroProduto() {
             toast.error("Erro ao cadastrar decoração!");
             console.error("Erro completo:", error);
             throw error;
-        }
-    };
-
-    const cadastrarProduto = async (decoracaoId) => {
-        const decoracaoFinal = decoracaoId || (decoracao ? Number(decoracao) : null);
-
-        const data = {
-            recheioPedidoId: Number(recheioPedido),
-            massaId: Number(massa),
-            coberturaId: Number(cobertura),
-            decoracaoId: decoracaoFinal,
-            formato: formato,
-            tamanho: tamanho,
-            categoria: categoriaBolo
-        };
-
-        try {
-            await axiosApi.post("/bolos", data);
-            return;
-        } catch (error) {
-            toast.error("Erro ao cadastrar produto!");
-            console.error("Erro completo:", error);
-            throw error;
-        }
-    };
-
-    const handleSubmitCarambolo = async (e) => {
-        e.preventDefault();
-        
-        const decoracaoIdSelecionada = decoracao ? Number(decoracao) : null;
-        if (!decoracaoIdSelecionada) {
-            toast.warn("Selecione uma decoração!");
-            return;
-        }
-        if (!categoriaBolo || !categoriaBolo.trim()) {
-            toast.warn("Preencha a categoria para exibição na Home!");
-            return;
-        }
-
-        const selecionada = decoracoesDisponiveis.find(d => d.id === decoracaoIdSelecionada);
-        const payload = {
-            observacao: selecionada?.observacao ?? "",
-            nome: selecionada?.nome ?? "",
-            categoria: categoriaBolo
-        };
-
-        try {
-            await axiosApi.put(`/decoracoes/${decoracaoIdSelecionada}`, payload);
-
-            toast.success("Pré-decoração adicionada à Home!");
-            setIsOpen(false);
-        } catch (error) {
-            toast.error("Erro ao marcar pré-decoração!");
-            console.error(error);
         }
     };
 
@@ -211,13 +120,12 @@ export default function ModalCadastroProduto() {
         }
 
         try {
-            const response = await axiosApi.post("/fornadas/produto-fornada", formData, {
+            await axiosApi.post("/fornadas/produto-fornada", formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             toast.success("Fornada cadastrada com sucesso!");
-            
+
             setProduto("");
-            setDescricao("");
             setValor("");
             setCategoriaFornada("");
             setFile(null);
@@ -245,9 +153,7 @@ export default function ModalCadastroProduto() {
                         onSubmit={
                             categoria === "Fornada"
                                 ? cadastrarFornada
-                                : categoria === "Carambolo"
-                                    ? handleSubmitCarambolo
-                                    : cadastrarDecoracao
+                                : cadastrarDecoracao
                         }
                         className="bg-[#fbe4d6] rounded-md border border-blue-400 max-w-4xl w-full max-h-[90vh] overflow-auto text-[#5c3c10] shadow-xl"
                     >
@@ -260,11 +166,10 @@ export default function ModalCadastroProduto() {
                                     className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
                                 >
                                     <option value="" disabled>
-                                        Selecione uma categoria
+                                        Selecione uma pré definição
                                     </option>
                                     <option value="Fornada">Fornada</option>
-                                    <option value="Carambolo">Carambolo</option>
-                                    <option value="Decoracao">Decoração</option>
+                                    <option value="Decoracao">Decoração Carambolo</option>
                                 </select>
                                 <button
                                     type="button"
@@ -311,40 +216,6 @@ export default function ModalCadastroProduto() {
 
                             {/* Inputs */}
                             <div className="w-1/2 text-sm flex flex-col justify-start overflow-y-auto pr-2 gap-4">
-                                {categoria === "Carambolo" && (
-                                    <>
-                                        <div className="flex flex-col gap-1">
-                                            <label className="font-medium">Decoração</label>
-                                            <select
-                                                value={decoracao}
-                                                onChange={(e) => setDecoracao(e.target.value)}
-                                                className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
-                                            >
-                                                <option value="">Selecione uma decoracao</option>
-                                                {decoracoesDisponiveis.map((d) => (
-                                                    <option key={d.id} value={d.id}>
-                                                        {d.nome}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <label className="font-medium">Categoria</label>
-                                            <input
-                                                type="text"
-                                                value={categoriaBolo}
-                                                onChange={(e) => setCategoriaBolo(e.target.value)}
-                                                placeholder="Digite a categoria do bolo"
-                                                className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
-                                            />
-                                        </div>
-
-                                        <Button type="submit" className="w-fit self-end">
-                                            Selecionar
-                                        </Button>
-                                    </>
-                                )}
-
                                 {categoria === "Fornada" && (
                                     <>
                                         <div className="flex flex-col gap-1">
@@ -407,7 +278,7 @@ export default function ModalCadastroProduto() {
                                         </div>
 
                                         <div className="flex flex-col gap-1">
-                                            <label className="font-medium">Categoria (para exibir na Home)</label>
+                                            <label className="font-medium">Categoria</label>
                                             <input
                                                 type="text"
                                                 value={categoriaDecoracao}
@@ -419,17 +290,30 @@ export default function ModalCadastroProduto() {
 
                                         <div className="flex flex-col gap-1">
                                             <label className="font-medium">Observações</label>
-                                            <div className="flex flex-wrap gap-4">
-                                                {["cereja", "perolado", "glitter", "lacinhos"].map((opcao) => (
-                                                    <InputOption
-                                                        key={opcao}
-                                                        type="checkbox"
-                                                        label={opcao}
-                                                        checked={observacao.includes(opcao)}
-                                                        onChange={() => alterarObservacao(opcao)}
-                                                    />
-                                                ))}
-                                            </div>
+                                            <input
+                                                value={observacoesDecoracao}
+                                                onChange={(e) => setObservacoesDecoracao(e.target.value)}
+                                                className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
+                                                placeholder="Adicione observações sobre a decoração"
+                                            />
+                                        </div>
+
+                                        <div className="flex flex-col gap-1">
+                                            <label className="font-medium">Adicionais</label>
+                                                <div className="max-h-40 overflow-y-auto pr-2">
+                                                    <div className="flex flex-col gap-2">
+                                                        {allAdicionais.map((opcao) => (
+                                                            <div key={opcao.id}>
+                                                                <InputOption
+                                                                    type="checkbox"
+                                                                    label={opcao.descricao}
+                                                                    checked={adicionaisToRequest.some(item => item.id === opcao.id)}
+                                                                    onChange={() => handleAdicionaisToAdd(opcao)}
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
                                         </div>
 
                                         <div className="flex flex-col gap-1">
