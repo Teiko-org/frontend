@@ -28,7 +28,7 @@ jobs:
         # Usamos npm install em vez de npm ci porque o package-lock.json é grande
         # e pode ficar levemente fora de sync após ajustes de deps opcionais (Rollup).
         # Em produção (Dockerfile) continuamos usando npm ci.
-        run: npm install --include=dev --no-audit --no-fund
+        run: npm install --include=dev --include=optional --no-audit --no-fund
 
       # Ainda não temos suite de testes de frontend estável; por enquanto garantimos só o build.
       # - name: Run tests
