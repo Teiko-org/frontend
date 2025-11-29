@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-const { createProxyMiddleware, responseInterceptor } = require('http-proxy-middleware');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
 const port = 8080;
@@ -19,7 +19,7 @@ const pick = () => `http://${upstreams[(rr++) % upstreams.length]}`;
 const distDir = path.join(__dirname, 'dist');
 app.use(express.static(distDir));
 
-// Proxy /api com round-robin por requisição, logs, timeouts e reescrita de URLs absolutas
+// Proxy /api com round-robin por requisição, logs e timeouts
 app.use('/api', (req, res, next) => {
   const target = pick();
   console.log(`[proxy] ${req.method} ${req.url} -> ${target}`);
@@ -31,19 +31,12 @@ app.use('/api', (req, res, next) => {
     timeout: 15000,
     proxyTimeout: 15000,
     pathRewrite: { '^/api': '' },
-    selfHandleResponse: true,
-    onProxyRes: responseInterceptor(async (buffer, proxyRes) => {
-      const ct = String(proxyRes.headers['content-type'] || '').toLowerCase();
-      if (ct.includes('application/json') || ct.includes('text/')) {
-        let body = buffer.toString('utf8');
-        body = body.replace(/http:\/\/localhost:8080\/?/gi, '/api/');
-        body = body.replace(/http:\/\/10\.\d+\.\d+\.\d+:8080\/?/gi, '/api/');
-        return body;
+    onError: (err, _req, proxyRes) => {
+      console.error('[proxy] erro ao chamar backend:', err.message);
+      if (!proxyRes.headersSent) {
+        proxyRes.writeHead(502, { 'Content-Type': 'application/json' });
       }
-      return buffer;
-    }),
-    onProxyReq: (proxyReq) => {
-      proxyReq.setHeader('Connection', 'keep-alive');
+      proxyRes.end(JSON.stringify({ error: 'Bad gateway', message: err.message }));
     },
   })(req, res, next);
 });
@@ -52,7 +45,3 @@ app.use('/api', (req, res, next) => {
 app.get(/^(?!\/api).*/, (_req, res) => res.sendFile(path.join(distDir, 'index.html')));
 
 app.listen(port, () => console.log(`[frontend] Servindo em http://0.0.0.0:${port} | UPSTREAMS: ${upstreams.join(', ')}`));
-
-
-
-
