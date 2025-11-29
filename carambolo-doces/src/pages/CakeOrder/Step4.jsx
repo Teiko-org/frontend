@@ -450,7 +450,9 @@ const Step4 = () => {
                     {...field}
                     className="border-2 border-gold rounded-lg px-4 py-2 w-full"
                     onChange={(e) => {
-                      field.onChange(e);
+                      // Permitir apenas dígitos no número
+                      const onlyDigits = e.target.value.replace(/\D/g, "");
+                      field.onChange(onlyDigits);
                       clearErrors("numero");
                     }}
                     onKeyPress={preventEnterSubmit}
