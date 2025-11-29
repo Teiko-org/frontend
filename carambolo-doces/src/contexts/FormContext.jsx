@@ -217,44 +217,17 @@ export const FormProvider = ({ children }) => {
         return;
       }
       
-      // Buscar ou criar recheio pedido baseado no recheio selecionado
+      // Criar sempre um registro de recheio-pedido para o recheio selecionado
       let recheioPedidoId = null;
       try {
-        // Primeiro, tentar buscar um recheio-pedido existente que contenha este recheio unitário
-        const response = await axiosApi.get("/bolos/recheio-pedido");
-        if (response.data && response.data.length > 0) {
-          const recheioExistente = response.data.find(r => 
-            r.sabor1 === dadosMontagem.recheioId || r.sabor2 === dadosMontagem.recheioId
-          );
-          if (recheioExistente) {
-            recheioPedidoId = recheioExistente.id;
-          } else {
-            // Se não encontrar, criar um novo recheio-pedido com o recheio selecionado
-            const recheioPedidoData = {
-              recheioUnitarioId1: dadosMontagem.recheioId,
-              recheioUnitarioId2: null,
-              recheioExclusivo: null
-            };
-            const novoRecheioPedido = await registerRecheioPedido(recheioPedidoData);
-            recheioPedidoId = novoRecheioPedido;
-          }
-        } else {
-          // Se não houver nenhum recheio-pedido, criar um novo
-          const recheioPedidoData = {
-            recheioUnitarioId1: dadosMontagem.recheioId,
-            recheioUnitarioId2: null,
-            recheioExclusivo: null
-          };
-          const novoRecheioPedido = await registerRecheioPedido(recheioPedidoData);
-          recheioPedidoId = novoRecheioPedido;
-        }
+        const recheioPedidoData = {
+          recheioUnitarioId1: dadosMontagem.recheioId,
+          recheioUnitarioId2: null,
+          recheioExclusivo: null,
+        };
+        recheioPedidoId = await registerRecheioPedido(recheioPedidoData);
       } catch (error) {
         console.error('Erro ao processar recheio:', error);
-        toast.error("Erro ao processar o recheio selecionado. Por favor, tente novamente.");
-        return;
-      }
-      
-      if (!recheioPedidoId) {
         toast.error("Não foi possível processar o recheio selecionado. Por favor, selecione outro recheio.");
         return;
       }

@@ -461,6 +461,7 @@ const handleConfirmFinalizar = async () => {
               isOpen={isModalFinalizarOpen}
               onClose={() => setIsModalFinalizarOpen(false)}
               onFinalize={handleConfirmFinalizar}
+              valorEstimado={valorEstimado}
             />
           )}
         </div>
