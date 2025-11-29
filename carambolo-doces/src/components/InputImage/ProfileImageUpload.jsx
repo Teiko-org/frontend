@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { LuUpload } from "react-icons/lu";
 import Button from "../Button";
 import { uploadProfileImage } from "../../service/userService";
+import userIcon from "../../assets/user_icon.png";
 
 const ProfileImageUpload = ({ currentImageUrl, userId, onImageUpdate }) => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -73,7 +74,7 @@ const ProfileImageUpload = ({ currentImageUrl, userId, onImageUpdate }) => {
         <img
           width={190}
           height={190}
-          src={previewUrl || "/src/assets/user_icon.png"}
+          src={previewUrl || userIcon}
           alt="Imagem de Perfil"
           className="rounded-full object-cover"
           style={{ width: '190px', height: '190px' }}
