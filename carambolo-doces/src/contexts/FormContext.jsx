@@ -232,6 +232,11 @@ export const FormProvider = ({ children }) => {
         return;
       }
 
+      if (!recheioPedidoId) {
+        toast.error("Não foi possível processar o recheio selecionado. Por favor, selecione outro recheio.");
+        return;
+      }
+
       let decoracaoCriadaId = null;
       try {
         if (Array.isArray(imagens) && imagens.length > 0) {
@@ -249,11 +254,15 @@ export const FormProvider = ({ children }) => {
           });
           decoracaoCriadaId = resp?.data?.id ?? null;
           console.log("✅ Decoração criada com sucesso:", decoracaoCriadaId);
+
+          if (!decoracaoCriadaId) {
+            throw new Error("Decoração criada sem ID válido");
+          }
         }
       } catch (e) {
         console.error("❌ Erro ao enviar imagens de referência:", e);
-        console.log("⚠️ Continuando sem decoração...");
-        // Continua o processo mesmo se a decoração falhar
+        toast.error("Não foi possível salvar a decoração/imagens de referência. Tente novamente.");
+        return;
       }
 
       const tamanhoMapeado = mapTamanhoToEnum(dadosMontagem.tamanho);
