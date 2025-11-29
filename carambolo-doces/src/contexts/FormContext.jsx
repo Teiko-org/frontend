@@ -70,7 +70,12 @@ export const FormProvider = ({ children }) => {
 
   const registerAddress = async (endereco) => {
     try {
-      const response = await axiosApi.post("/enderecos", endereco);
+      const payload = {
+        ...endereco,
+        cep: (endereco.cep || "").replace(/\D/g, ""),
+        numero: endereco.numero != null ? String(endereco.numero).trim() : "",
+      };
+      const response = await axiosApi.post("/enderecos", payload);
       return response.data.id;
     } catch (error) {
       console.error('Erro ao registrar endereço:', error);
