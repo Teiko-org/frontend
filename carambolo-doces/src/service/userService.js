@@ -57,6 +57,8 @@ export const register = async (name, password, phone) => {
   }
 };
 
+const LOGIN_ERROR_TOAST_ID = 'login-invalid-credentials';
+
 const handleAuthError = (error, phone) => {
   if (error.response && error.response.status === 409) {
     toast.error(
@@ -70,7 +72,26 @@ const handleAuthError = (error, phone) => {
   } else if (error.response && error.response.status === 500) {
     toast.error('Tivemos problemas para processar seu cadastro. Tente novamente mais tarde!');
   } else if (error.response && error.response.status === 401) {
-    toast.error('Telefone ou Senha incorretos.');
+    if (toast.isActive(LOGIN_ERROR_TOAST_ID)) {
+      toast.dismiss(LOGIN_ERROR_TOAST_ID);
+      setTimeout(() => {
+        toast.error('Telefone ou Senha incorretos.', {
+          toastId: LOGIN_ERROR_TOAST_ID,
+          autoClose: 4000,
+          closeOnClick: true,
+          pauseOnHover: true,
+          hideProgressBar: false,
+        });
+      }, 10);
+    } else {
+      toast.error('Telefone ou Senha incorretos.', {
+        toastId: LOGIN_ERROR_TOAST_ID,
+        autoClose: 4000,
+        closeOnClick: true,
+        pauseOnHover: true,
+        hideProgressBar: false,
+      });
+    }
   } else if (error.response && error.response.status === 404) {
     toast.error(`Usuário com contato ${phone} não encontrado`);
   } else {
