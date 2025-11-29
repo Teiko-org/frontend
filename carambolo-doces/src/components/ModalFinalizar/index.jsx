@@ -8,7 +8,7 @@ export default function ModalFinalizar({
   isOpen,
   onClose,
   onFinalize,
-  valorEstimado = 999.99,
+  valorEstimado = 0,
   horariosEntrega = [
     'SEG - 14:00 as 19:00',
     'TER - 14:00 as 19:00',
@@ -77,7 +77,11 @@ export default function ModalFinalizar({
 
             <div className="pt-12 text-white font-bold">
               <TextGradiante>
-                <span className="">VALOR ESTIMADO:</span> R$ {valorEstimado.toFixed(2)}
+                <span className="">VALOR ESTIMADO:</span>{" "}
+                R$ {Number(valorEstimado || 0).toLocaleString("pt-BR", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </TextGradiante>
             </div>
           </div>
