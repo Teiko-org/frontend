@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { getUserData } from "../../service/userService";
+import userIcon from "../../assets/user_icon.png";
 
 const ProfileImageDisplay = ({ userId, size = 190, className = "" }) => {
   const [imageUrl, setImageUrl] = useState(null);
@@ -39,7 +40,7 @@ const ProfileImageDisplay = ({ userId, size = 190, className = "" }) => {
     <img
       width={size}
       height={size}
-      src={imageUrl || "/src/assets/user_icon.png"}
+      src={imageUrl || userIcon}
       alt="Imagem de Perfil"
       className={`rounded-full object-cover ${className}`}
       style={{ width: `${size}px`, height: `${size}px` }}
