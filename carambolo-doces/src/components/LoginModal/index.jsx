@@ -5,11 +5,10 @@ import RegisterModal from "../RegisterModal";
 import userIcon from "../../assets/user_icon.png";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
+import "react-toastify/dist/ReactToastify.css";
 import { login, getUserData } from "../../service/userService";
 import { useCart } from "../../contexts/CartContext";
 import PhoneInputLogin from "../PhoneInput/PhoneInputLogin";
-import userIcon from '../../assets/user_icon.png'; // added import
 
 function LoginModal({ onClose }) {
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm();
@@ -88,9 +87,15 @@ function LoginModal({ onClose }) {
               />
             </div>
 
-            <p className="text-center text-base font-normal text-white mt-4">
-              Não tem uma conta? <span onClick={handleRegisterClick} className="text-gradient font-bold cursor-pointer">Cadastre-se</span>
-            </p>
+            <div className="flex flex-col items-center mt-4">
+              <button
+                type="button"
+                onClick={handleRegisterClick}
+                className="text-white underline"
+              >
+                Não tem uma conta? Cadastre-se
+              </button>
+            </div>
           </form>
         </ModalBaseLogin>
       ) : (
