@@ -33,10 +33,10 @@ export default function ModalFinalizar({
   const navigate = useNavigate();
 
   return (
-    <ModalBase isOpen={isOpen} onClose={onClose} width="700px" height="auto">
-      <div className="flex flex-col h-full justify-between">
-        <div className="flex justify-between font-montserrat text-sm">
-          <div className="space-y-4">
+    <ModalBase isOpen={isOpen} onClose={onClose} width="800px" height="auto">
+      <div className="flex flex-col h-full justify-between space-y-8 px-4 py-2">
+        <div className="flex justify-between gap-12 font-montserrat text-sm leading-relaxed">
+          <div className="space-y-6">
             <div>
               <TextGradiante>
                 <p className="text-sm font-semibold font-montserrat mb-1">
@@ -51,7 +51,7 @@ export default function ModalFinalizar({
               </ul>
             </div>
 
-            <div>
+            <div className="mt-2">
               <TextGradiante>
                 <p className="text-sm font-semibold mb-1">Horários Retirada:</p>
               </TextGradiante>
@@ -75,7 +75,7 @@ export default function ModalFinalizar({
               </ul>
             </div>
 
-            <div className="pt-12 text-white font-bold">
+            <div className="pt-10 text-white font-bold text-center">
               <TextGradiante>
                 <span className="">VALOR ESTIMADO:</span>{" "}
                 R$ {Number(valorEstimado || 0).toLocaleString("pt-BR", {
