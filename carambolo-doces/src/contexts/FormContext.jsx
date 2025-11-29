@@ -226,9 +226,9 @@ export const FormProvider = ({ children }) => {
       let recheioPedidoId = null;
       try {
         const recheioPedidoData = {
-          recheioUnitarioId1: dadosMontagem.recheioId,
-          recheioUnitarioId2: null,
-          recheioExclusivo: null,
+          idExclusivo: null,
+          idUnitario1: dadosMontagem.recheioId,
+          idUnitario2: null,
         };
         recheioPedidoId = await registerRecheioPedido(recheioPedidoData);
       } catch (error) {
