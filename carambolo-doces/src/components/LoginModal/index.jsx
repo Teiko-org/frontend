@@ -5,7 +5,7 @@ import RegisterModal from "../RegisterModal";
 import userIcon from "../../assets/user_icon.png";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
+import "react-toastify/dist/ReactToastify.css";
 import { login, getUserData } from "../../service/userService";
 import { useCart } from "../../contexts/CartContext";
 import PhoneInputLogin from "../PhoneInput/PhoneInputLogin";
