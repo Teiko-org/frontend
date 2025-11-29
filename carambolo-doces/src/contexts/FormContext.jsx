@@ -227,8 +227,10 @@ export const FormProvider = ({ children }) => {
       try {
         const recheioPedidoData = {
           idExclusivo: null,
+          // Regra do backend: ou 1 exclusivo OU 2 unitários preenchidos.
+          // Como aqui o usuário escolhe 1 recheio unitário, enviamos o mesmo ID nos dois campos.
           idUnitario1: dadosMontagem.recheioId,
-          idUnitario2: null,
+          idUnitario2: dadosMontagem.recheioId,
         };
         recheioPedidoId = await registerRecheioPedido(recheioPedidoData);
       } catch (error) {
