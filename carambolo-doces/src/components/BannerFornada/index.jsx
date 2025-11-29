@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getFornadaAtiva } from '../../service/fornadaService';
+import bannerFornada from '../../assets/img_banner_fornada.png';
 
 const BannerFornada = ({ fornada }) => {
   const [fornadaData, setFornadaData] = useState(fornada);
@@ -122,7 +123,10 @@ const BannerFornada = ({ fornada }) => {
       : 'Aguardando próxima fornada';
 
   return (
-    <section className="relative h-[150px] w-full bg-cover bg-center m-auto items-end" style={{ backgroundImage: 'url(src/assets/img_banner_fornada.png)' }}>
+    <section
+      className="relative h-[150px] w-full bg-cover bg-center m-auto items-end"
+      style={{ backgroundImage: `url(${bannerFornada})` }}
+    >
       <div className="flex justify-between h-full w-full items-center justify-end pl-[350px] pr-[70px]">
         <div className="text-white flex flex-col w-1/2 mx-auto justify-center">
           <h2 className="text-xl font-bold mb-3 text-pink">Fornada</h2>
