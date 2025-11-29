@@ -6,6 +6,7 @@ import LoginModal from "../LoginModal";
 import ProfileImageDisplay from "../InputImage/ProfileImageDisplay";
 import { axiosApi } from "../../provider/AxiosApi";
 import IconCart from "../IconCart";
+import logoCarambolo from "../../assets/LogoCarambolo.png";
 import { useCart } from "../../contexts/CartContext";
 import { getBolosComImagens } from "../../service/boloService";
 
@@ -138,7 +139,7 @@ function Header() {
 
         <div className="flex-1 flex justify-center">
           <Link to="/">
-            <img src="src/assets/LogoCarambolo.png" alt="Logo" className="h-20 cursor-pointer" />
+            <img src={logoCarambolo} alt="Logo" className="h-20 cursor-pointer" />
           </Link>
         </div>
         <div className="flex flex-1 justify-center items-center space-x-12">

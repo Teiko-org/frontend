@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import ModalBaseLogin from "../ModalBaseLogin";
 import Button from "../Button";
 import RegisterModal from "../RegisterModal";
+import userIcon from "../../assets/user_icon.png";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
@@ -50,7 +51,7 @@ function LoginModal({ onClose }) {
         <ModalBaseLogin title="Login" onClose={onClose}>
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="flex flex-col items-center mb-6">
-              <img src="src/assets/user_icon.png" alt="Ícone de Usuário" />
+              <img src={userIcon} alt="Ícone de Usuário" />
             </div>
 
             <label htmlFor="phone" className="text-white mb-1">Telefone Celular</label>
