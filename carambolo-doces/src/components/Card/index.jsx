@@ -4,6 +4,8 @@ import AvailableBox from "../AvailableBox";
 import SoldOutBox from "../SoldOutBox";
 import { toast } from "react-toastify";
 import { useCart } from "../../contexts/CartContext";
+import defaultBoloImg from "../../assets/image_card.png";
+import defaultFornadaImg from "../../assets/image_fornada.png";
 
 function Card({ available, type, produto, nome, preco, imagem, boloData, onClick }) {
   const navigate = useNavigate();
@@ -72,7 +74,7 @@ function Card({ available, type, produto, nome, preco, imagem, boloData, onClick
       return normalizeImageUrl(imagemUrl);
     }
     
-    return type === "Bolo" ? "src/assets/image_card.png" : "src/assets/image_fornada.png";
+    return type === "Bolo" ? defaultBoloImg : defaultFornadaImg;
   };
 
   const getProductName = () => {
@@ -145,7 +147,7 @@ function Card({ available, type, produto, nome, preco, imagem, boloData, onClick
             alt={getProductName()}
             className="w-[286px] h-[300px] object-cover rounded-tr-lg"
             onError={(e) => {
-              e.target.src = type === "Bolo" ? "src/assets/image_card.png" : "src/assets/image_fornada.png";
+              e.target.src = type === "Bolo" ? defaultBoloImg : defaultFornadaImg;
             }}
           />
           {type === 'Fornada' && available && (
