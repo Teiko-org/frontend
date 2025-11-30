@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AvailableBox from "../AvailableBox";
-import SoldOutBox from "../SoldOutBox";
+// import SoldOutBox from "../SoldOutBox";
 import { toast } from "react-toastify";
 import { useCart } from "../../contexts/CartContext";
 import defaultBoloImg from "../../assets/image_card.png";
 import defaultFornadaImg from "../../assets/image_fornada.png";
+import soldOutImg from "../../assets/card_esgotado.png"; // alterado para a nova imagem
 
 function Card({ available, type, produto, nome, preco, imagem, boloData, onClick }) {
   const navigate = useNavigate();
@@ -136,11 +137,11 @@ function Card({ available, type, produto, nome, preco, imagem, boloData, onClick
 
   return (
     <div
-      className={`group relative w-[280px] h-[410px] ${type === "Fornada" && !available ? 'opacity-75 cursor-not-allowed' : 'cursor-pointer'} transition-transform duration-200 hover:scale-105`}
+      className={`group relative w-[280px] h-[410px] ${type === "Fornada" && !available ? 'cursor-not-allowed' : 'cursor-pointer'} transition-transform duration-200 hover:scale-105`}
       onClick={handleClick}
     >
       <div className="absolute top-2 left-2 w-full h-full border-2 border-goldCard rounded-tr-2xl"></div>
-      <div className={`relative ${type === "Fornada" && !available ? 'opacity-75' : ''} bg-white shadow-lg border-2 border-gold rounded-tr-2xl w-full h-full`}>
+      <div className={`relative bg-white shadow-lg border-2 border-gold rounded-tr-2xl w-full h-full`}>
         <div className="px-3 pt-3 pb-2 flex justify-center items-center relative">
           <img
             src={getImageSrc()}
@@ -224,7 +225,20 @@ function Card({ available, type, produto, nome, preco, imagem, boloData, onClick
           </div>
         </div>
       </div>
-      {type === "Fornada" && (available ? <AvailableBox quantity={getQuantity()} quantityText={getQuantityText()} /> : <SoldOutBox />)}
+      {type === "Fornada" && (
+        available
+          ? <AvailableBox quantity={getQuantity()} quantityText={getQuantityText()} />
+          : (
+            <div className="absolute inset-0 flex items-center justify-center z-20">
+              <img
+                src={soldOutImg}
+                alt="Esgotado"
+                className="w-full h-full object-cover rounded-tr-2xl"
+                draggable={false}
+              />
+            </div>
+          )
+      )}
     </div>
   );
 }

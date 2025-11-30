@@ -54,27 +54,29 @@ function LoginModal({ onClose }) {
               <img src={userIcon} alt="Ícone de Usuário" />
             </div>
 
-            <label htmlFor="phone" className="text-white mb-1">Telefone Celular</label>
-            <PhoneInputLogin
-              {...register("phone", { required: "Telefone é obrigatório" })}
-              value={phoneValue}
-              onChange={(value) => {
-                setPhoneValue(value);
-                setValue('phone', value);
-              }}
-              placeholder="(XX) XXXXX-XXXX"
-              className={`mb-1 w-full py-2 px-4 rounded-lg ${errors.phone && 'border-red-600'}`}
-            />
-            {errors.phone && <span className="text-red-600 text-sm">{errors.phone.message}</span>}
+            <div className="flex flex-col gap-1">
+              <label htmlFor="phone" className="text-white">Telefone Celular</label>
+              <PhoneInputLogin
+                {...register("phone", { required: "Telefone é obrigatório" })}
+                value={phoneValue}
+                onChange={(value) => {
+                  setPhoneValue(value);
+                  setValue('phone', value);
+                }}
+                placeholder="(XX) XXXXX-XXXX"
+                className={`w-full py-2 px-4 rounded-lg ${errors.phone ? 'mb-1' : ''}`}
+              />
+              {errors.phone && <span className="text-red-600 text-sm mb-1">{errors.phone.message}</span>}
 
-            <label htmlFor="password" className="text-white mb-1">Senha</label>
-            <input
-              {...register("password", { required: "Senha é obrigatória" })}
-              type="password"
-              placeholder="Senha"
-              className={`mb-1 w-full py-2 px-4 rounded-lg ${errors.password && 'border-red-600'}`}
-            />
-            {errors.password && <span className="text-red-600 text-sm">{errors.password.message}</span>}
+              <label htmlFor="password" className="text-white">Senha</label>
+              <input
+                {...register("password", { required: "Senha é obrigatória" })}
+                type="password"
+                placeholder="Senha"
+                className={`w-full py-2 px-4 rounded-lg ${errors.password ? 'mb-1' : ''}`}
+              />
+              {errors.password && <span className="text-red-600 text-sm mb-1">{errors.password.message}</span>}
+            </div>
 
             <div className="flex flex-col items-center mt-6">
               <Button
@@ -88,13 +90,15 @@ function LoginModal({ onClose }) {
             </div>
 
             <div className="flex flex-col items-center mt-4">
-              <button
-                type="button"
-                onClick={handleRegisterClick}
-                className="text-white underline"
-              >
-                Não tem uma conta? Cadastre-se
-              </button>
+              <p className="text-center text-base font-normal text-white">
+                Não tem uma conta?{" "}
+                <span
+                  onClick={handleRegisterClick}
+                  className="text-gradient font-bold cursor-pointer"
+                >
+                  Cadastre-se
+                </span>
+              </p>
             </div>
           </form>
         </ModalBaseLogin>

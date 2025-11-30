@@ -143,17 +143,23 @@ export default function ProductList() {
         <div className='flex flex-col w-[100%] h-[70%]'>
             <div className='flex flex-row justify-between items-center bg-gradient-blue h-[4.6875rem] w-full'>
                 <h1 className='bg-gradient-gold text-transparent bg-clip-text pl-[5%] text-[1.5rem] font-bold'>Listagem de produtos</h1>
-                <div className='pr-[5%] w-[45%] flex flex-row justify-between'>
-                    <div className='h-[100%] w-[60%] flex relative'>
+                <div className='flex flex-1 flex-row items-center justify-end pr-[5%]'>
+                    <div className="relative flex items-center w-[250px] mr-2">
                         <input
                             type="text"
-                            placeholder='Procurar por produto'
-                            className='h-[38px] w-[100%] pl-2 rounded-lg'
+                            placeholder="Procurar produto"
+                            className="h-[38px] w-full pl-2 pr-10 rounded-lg border border-gold focus:outline-none focus:border-blue transition-all duration-300 ease-in-out"
+                            value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                        <LuSearch className='absolute left-[90%] top-1.5 text-[1.625rem] text-[#A47032]'/>
+                        <LuSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-[1.625rem] text-[#A47032] pointer-events-none" />
                     </div>
-                    <Button text={'FILTRAR'} children={<CiFilter className='text-[1.625rem]'/>} onClick={() => setFilterModalOpen(true)} className='flex flex-row items-center' />
+                    <Button
+                        text={'FILTRAR'}
+                        children={<CiFilter className='text-[1.625rem]'/>}
+                        onClick={() => setFilterModalOpen(true)}
+                        className='flex flex-row items-center'
+                    />
                     {isFilterModalOpen && (
                         <ModalFilterProduct products={products} setFilterModalOpen={setFilterModalOpen} onClose={() => setFilterModalOpen(false)} />
                     )}
