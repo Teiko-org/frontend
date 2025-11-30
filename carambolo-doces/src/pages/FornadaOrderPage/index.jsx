@@ -15,6 +15,7 @@ import { listUserAddresses } from "../../service/addressService";
 import { getProdutoFornadaById } from "../../service/fornadaService";
 import { toast } from "react-toastify";
 import { useCart } from "../../contexts/CartContext";
+import defaultFornadaImg from "../../assets/image_fornada.png";
 
 function FornadaOrderPage() {
     const { removeByFornadaId } = useCart();
@@ -39,7 +40,7 @@ function FornadaOrderPage() {
         valorUnitario: produtoSelecionado?.valor || 12.00,
         fornadaDaVezId: produtoSelecionado?.fornadaDaVezId,
         imagens: produtoSelecionado?.imagens || []
-    }
+    };
 
     const [amount, setAmount] = useState(location.state?.quantidade || 1);
 
@@ -61,7 +62,35 @@ function FornadaOrderPage() {
     const [referencia, setReferencia] = useState("");
     const [dataEntrega, setDataEntrega] = useState("");
     const [horario, setHorario] = useState("");
-    
+
+    const getImagemPrincipal = () => {
+        const normalizeImageUrl = (url) => {
+            if (!url) return url;
+            try {
+                const parsed = new URL(url, window.location.origin);
+                const isLocalhost = parsed.hostname === 'localhost' && (parsed.port === '8080' || parsed.port === '');
+                const isPrivate10 = /^10\.\d+\.\d+\.\d+$/.test(parsed.hostname) && (parsed.port === '8080' || parsed.port === '');
+                if (isLocalhost || isPrivate10) {
+                    return `/api${parsed.pathname}${parsed.search}`;
+                }
+                if (parsed.origin === window.location.origin && parsed.pathname.startsWith('/files')) {
+                    return `/api${parsed.pathname}${parsed.search}`;
+                }
+                return url;
+            } catch (_e) {
+                if (url.startsWith('/files')) return `/api${url}`;
+                if (url.startsWith('files/')) return `/api/${url}`;
+                return url;
+            }
+        };
+
+        if (doceFornada.imagens && doceFornada.imagens.length > 0) {
+            const primeira = doceFornada.imagens[0];
+            const url = typeof primeira === "object" && primeira.url ? primeira.url : primeira;
+            return normalizeImageUrl(url);
+        }
+        return defaultFornadaImg;
+    };
 
     useEffect(() => {
         const checkUserAndLoadAddresses = async () => {
@@ -366,15 +395,12 @@ function FornadaOrderPage() {
                 <div className="flex flex-col items-center px-20">
                     <h1 className="font-bold text-blue text-3xl py-6">{doceFornada.nome}</h1>
                     <img
-                        src={
-                            doceFornada.imagens && doceFornada.imagens.length > 0
-                                ? (typeof doceFornada.imagens[0] === 'object' && doceFornada.imagens[0].url
-                                    ? doceFornada.imagens[0].url
-                                    : doceFornada.imagens[0])
-                                : "src/assets/imagemBrownie.png"
-                        }
+                        src={getImagemPrincipal()}
                         alt={doceFornada.nome}
                         className="w-[320px] h-[320px] object-cover rounded-lg border-2 border-goldCard mb-2"
+                        onError={(e) => {
+                            e.target.src = defaultFornadaImg;
+                        }}
                     />
                     <span><span className="text-gradient font-bold text-lg">VALOR UNITÁRIO:</span> R$ {doceFornada.valorUnitario.toFixed(2)}</span>
                 </div>
