@@ -48,7 +48,6 @@ export default function ModalCadastroProduto() {
                 return [...prev, adicional];
             }
         });
-        // Note: To see the updated value, use useEffect or log after render
     }
 
     const getAllAdicionais = async () => {

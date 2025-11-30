@@ -1,73 +1,56 @@
 import { useState, useRef, useEffect } from "react";
-import { X } from "lucide-react";
+import { X, Upload } from "lucide-react";
+import { RiFileTextLine } from "react-icons/ri";
 import Button from "../Button";
 import InputOption from "../InputOption";
 import { axiosApi } from "../../provider/AxiosApi";
+import { toast } from "react-toastify";
+import { fetchAllAdicionais } from "../../service/adicionalService";
 
 export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProdutoEditado }) {
     const [file, setFile] = useState(null);
-    const [filePreview, setFilePreview] = useState(produto?.imagemUrl || null);
+    const [filePreview, setFilePreview] = useState(null);
     const imagemRef = useRef(null);
 
-    // Campos editáveis
-    const [nome, setNome] = useState(produto?.produto || "");
-    const [categoria, setCategoria] = useState(produto?.categoria || "");
-    const [valor, setValor] = useState(produto?.valor || "");
-    const [descricao, setDescricao] = useState(produto?.descricao || "");
-    const [quantidade, setQuantidade] = useState(produto?.quantidade || "");
-    // Campos específicos de bolo
-    const [massa, setMassa] = useState(produto?.massaId || "");
-    const [recheioPedido, setRecheioPedido] = useState(produto?.recheioPedidoId || "");
-    const [cobertura, setCobertura] = useState(produto?.coberturaId || "");
-    const [formato, setFormato] = useState(produto?.formato || "");
-    const [tamanho, setTamanho] = useState(produto?.tamanho || "");
-    const [decoracao, setDecoracao] = useState(produto?.decoracaoId || "");
-
-    // Listas de opções
-    const [massasDisponiveis, setMassasDisponiveis] = useState([]);
-    const [recheiosDisponiveis, setRecheiosDisponiveis] = useState([]);
-    const [coberturasDisponiveis, setCoberturasDisponiveis] = useState([]);
-    const [formatosDisponiveis, setFormatosDisponiveis] = useState([]);
-    const [tamanhosDisponiveis, setTamanhosDisponiveis] = useState([]);
-    const [decoracoesDisponiveis, setDecoracoesDisponiveis] = useState([]);
+    const [produtoNome, setProdutoNome] = useState("");
+    const [categoria, setCategoria] = useState("");
+    const [valor, setValor] = useState("");
+    const [observacao, setObservacao] = useState("");
+    const [categoriaFornada, setCategoriaFornada] = useState("");
+    const [nomeDecoracao, setNomeDecoracao] = useState("");
+    const [categoriaDecoracao, setCategoriaDecoracao] = useState("");
+    const [observacoesDecoracao, setObservacoesDecoracao] = useState("");
+    const [allAdicionais, setAllAdicionais] = useState([]);
+    const [adicionaisToRequest, setAdicionaisToRequest] = useState([]);
 
     useEffect(() => {
         if (!isOpen) return;
-        setNome(produto?.produto || "");
+        // inicializa campos a partir do produto recebido
+        setProdutoNome(produto?.produto || produto?.nome || "");
         setCategoria(produto?.categoria || "");
-        setValor(produto?.valor || "");
-        setDescricao(produto?.descricao || "");
-        setQuantidade(produto?.quantidade || "");
-        setMassa(produto?.massaId || "");
-        setRecheioPedido(produto?.recheioPedidoId || "");
-        setCobertura(produto?.coberturaId || "");
-        // Corrige aqui: só seta formato se for válido
-        setFormato(
-            produto?.formato === "CIRCULO" || produto?.formato === "CORACAO"
-                ? produto?.formato
-                : ""
-        );
-        setTamanho(produto?.tamanho || "");
-        setDecoracao(produto?.decoracaoId || "");
-        setFilePreview(produto?.imagemUrl || null);
+        setValor(produto?.valor ?? produto?.preco ?? "");
+        setObservacao(produto?.descricao || "");
+        setCategoriaFornada(produto?.categoria || "");
+        setNomeDecoracao(produto?.nomeDecoracao || "");
+        setCategoriaDecoracao("");
+        setObservacoesDecoracao(produto?.observacao || "");
+        setFilePreview(produto?.imagemUrl || produto?.imagens?.[0] || null);
+        // se o produto já tem adicionais, pré-seleciona
+        if (produto?.adicionais && Array.isArray(produto.adicionais)) {
+            setAdicionaisToRequest(produto.adicionais.map(a => ({ id: a.id, descricao: a.descricao })));
+        } else {
+            setAdicionaisToRequest([]);
+        }
     }, [isOpen, produto]);
 
+    const getAllAdicionais = async () => {
+        setAllAdicionais(await fetchAllAdicionais().then(data => data || []));
+    }
+
     useEffect(() => {
         if (!isOpen) return;
-        // Busca listas de opções
-        if (categoria.toLowerCase().includes("carambolo")) {
-            axiosApi.get("/bolos/massa").then(res => setMassasDisponiveis(res.data));
-            axiosApi.get("/bolos/recheio-exclusivo").then(res => setRecheiosDisponiveis(res.data));
-        }
-        axiosApi.get("/bolos/cobertura").then(res => setCoberturasDisponiveis(res.data));
-        axiosApi.get("/bolos/formatos").then(res => {
-            // Filtra apenas os formatos válidos
-            const validos = res.data.filter(f => f === "CIRCULO" || f === "CORACAO");
-            setFormatosDisponiveis(validos);
-        });
-        axiosApi.get("/bolos/tamanhos").then(res => setTamanhosDisponiveis(res.data));
-        axiosApi.get("/decoracoes").then(res => setDecoracoesDisponiveis(res.data));
-    }, [isOpen, categoria]);
+        getAllAdicionais();
+    }, [isOpen]);
 
     const anexarImagem = (e) => {
         const img = e.target.files[0];
@@ -76,159 +59,253 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
             setFilePreview(URL.createObjectURL(img));
         }
     };
+
     const exibirImagem = () => imagemRef.current?.click();
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            if (categoria.toLowerCase().includes("fornada")) {
-                // Atualiza produto de fornada
-                const data = {
-                    id: produto.id,
-                    produto: nome,
-                    descricao,
-                    valor: Number(valor),
-                    categoria,
-                };
-                await axiosApi.put(`/fornadas/produto-fornada/${produto.id}`, data, {
-                    headers: { "Content-Type": "application/json" }
-                });
-            } else if (categoria.toLowerCase().includes("carambolo")) {
-                // Atualiza decoração antes do bolo
-                if (formato !== "CIRCULO" && formato !== "CORACAO") {
-                    alert("Selecione um formato válido!");
-                    return;
-                }
-                // Atualiza decoração
-                const decoracaoIdToUpdate = produto?.decoracaoId || decoracao;
-                let nomeDecoracao = nome;
-                if (decoracaoIdToUpdate) {
-                    await axiosApi.put(`/decoracoes/${decoracaoIdToUpdate}`, {
-                        nome: nome,
-                        observacao: descricao
-                    }, {
-                        headers: { "Content-Type": "application/json" }
-                    });
-                    // Atualiza o nome da decoração para o payload do bolo
-                    nomeDecoracao = nome;
-                }
-                // Atualiza bolo (carambolo)
-                const data = {
-                    produto: nomeDecoracao, // <-- Adicione esta linha!
-                    recheioPedidoId: recheioPedido ? Number(recheioPedido) : null,
-                    massaId: massa ? Number(massa) : null,
-                    coberturaId: cobertura ? Number(cobertura) : null,
-                    decoracaoId: decoracao ? Number(decoracao) : null,
-                    formato: formato || null,
-                    tamanho: tamanho || null,
-                    categoria,
-                };
-                await axiosApi.put(`/bolos/${produto.id}`, data, {
-                    headers: { "Content-Type": "application/json" }
-                });
+    const handleAdicionaisToAdd = (adicional) => {
+        setAdicionaisToRequest((prev) => {
+            const exists = prev.some((item) => item.id === adicional.id);
+            if (exists) {
+                return prev.filter((item) => item.id !== adicional.id);
             } else {
-                alert("Categoria inválida! Informe se é Fornada ou Carambolo.");
-                return;
+                return [...prev, adicional];
             }
-            alert("Produto atualizado com sucesso!");
+        });
+    }
+
+    const editarDecoracao = async (e) => {
+        e?.preventDefault?.();
+
+        if (!nomeDecoracao) {
+            toast.warn("Preencha o nome da decoração!");
+            return;
+        }
+
+        const decoracaoId = produto?.decoracaoId || produto?.id;
+        const formData = new FormData();
+        formData.append("nome", nomeDecoracao);
+        formData.append("observacao", observacoesDecoracao || "");
+        if (file) formData.append("imagens", file);
+        formData.append("adicionais", adicionaisToRequest.map(item => item.id));
+
+        try {
+            await axiosApi.put(`/decoracoes/${decoracaoId}`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            toast.success("Decoração atualizada com sucesso!");
             onProdutoEditado && onProdutoEditado();
             onClose();
         } catch (error) {
-            alert("Erro ao atualizar produto!");
+            toast.error("Erro ao atualizar decoração!");
             console.error(error);
         }
-    };
+    }
+
+    const editarFornada = async (e) => {
+        e?.preventDefault?.();
+
+        const formData = new FormData();
+        formData.append("produto", produtoNome);
+        formData.append("descricao", observacao);
+        formData.append("valor", valor);
+        formData.append("categoria", categoriaFornada || categoria);
+        if (file) formData.append("imagens", file);
+
+        try {
+            await axiosApi.put(`/fornadas/produto-fornada/${produto.id}`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            toast.success("Fornada atualizada com sucesso!");
+            onProdutoEditado && onProdutoEditado();
+            onClose();
+        } catch (error) {
+            toast.error("Erro ao atualizar fornada!");
+            console.error(error);
+        }
+    }
 
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <form onSubmit={handleSubmit} className="bg-[#fbe4d6] rounded-md border border-blue-400 max-w-4xl w-full max-h-[90vh] overflow-auto text-[#5c3c10] shadow-xl">
+            <form
+                onSubmit={categoria === "Fornada" ? editarFornada : editarDecoracao}
+                className="bg-[#fbe4d6] rounded-md border border-blue-400 max-w-4xl w-full max-h-[90vh] overflow-auto text-[#5c3c10] shadow-xl"
+            >
                 <header className="flex justify-between items-center px-6 py-3 border-b border-orange-300 bg-[#fbe4d6]">
                     <h2 className="font-semibold text-lg">Editar Produto</h2>
-                    <button type="button" onClick={onClose} className="text-red-600 hover:scale-110 transition-transform">
-                        <X size={26} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <select
+                            value={categoria}
+                            onChange={(e) => setCategoria(e.target.value)}
+                            className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
+                        >
+                            <option value="" disabled>
+                                Selecione uma pré definição
+                            </option>
+                            <option value="Fornada">Fornada</option>
+                            <option value="Decoracao">Decoração Carambolo</option>
+                        </select>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="text-red-600 hover:scale-110 transition-transform"
+                        >
+                            <X size={26} />
+                        </button>
+                    </div>
                 </header>
-                <section className="flex justify-center px-8 gap-8 py-4 h-[557px] overflow-y-auto">
+
+                <section className="flex px-8 gap-8 py-4 h-[557px] overflow-y-auto">
+                    {/* Imagem */}
+                    <div className="w-1/2 flex flex-col items-center justify-center gap-4">
+                        <div className="flex flex-col gap-4 items-center border-[3px] border-[#d6a87c] rounded-md p-2 px-1 w-72 h-80">
+                            <div className="border-2 border-dashed border-[#d6a87c] rounded-md p-4 flex flex-col items-center justify-center gap-3 bg-white w-64 h-64 overflow-hidden">
+                                {filePreview ? (
+                                    <img
+                                        src={filePreview}
+                                        alt="Prévia"
+                                        className="w-full h-full object-contain rounded-md"
+                                    />
+                                ) : (
+                                    <RiFileTextLine size={100} className="text-goldCard" />
+                                )}
+                            </div>
+
+                            <Button
+                                type="button"
+                                className="text-sm flex flex-row gap-2 items-center"
+                                onClick={exibirImagem}
+                            >
+                                <Upload size={16} /> Atualizar Imagem
+                            </Button>
+                            <input
+                                type="file"
+                                ref={imagemRef}
+                                accept="image/*"
+                                className="hidden"
+                                onChange={anexarImagem}
+                            />
+                        </div>
+                    </div>
+
                     {/* Inputs */}
                     <div className="w-1/2 text-sm flex flex-col justify-start overflow-y-auto pr-2 gap-4">
-                        {/* Campos comuns */}
-                        <div className="flex flex-col gap-1">
-                            <label className="font-medium">Nome do produto</label>
-                            <input type="text" value={nome} onChange={e => setNome(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]" />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                            <label className="font-medium">Categoria</label>
-                            <input type="text" value={categoria} onChange={e => setCategoria(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]" />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                            <label className="font-medium">Valor</label>
-                            <input type="number" step="0.01" value={valor} onChange={e => setValor(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]" />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                            <label className="font-medium">Descrição</label>
-                            <textarea value={descricao} onChange={e => setDescricao(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]" />
-                        </div>
-                        {categoria.toLowerCase().includes("carambolo") && (
+                        {categoria === "Fornada" && (
                             <>
                                 <div className="flex flex-col gap-1">
-                                    <label className="font-medium">Massa</label>
-                                    <select value={massa} onChange={e => setMassa(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]">
-                                        <option value="">Selecione uma massa</option>
-                                        {massasDisponiveis.map((m) => (
-                                            <option key={m.id} value={m.id}>{m.sabor}</option>
-                                        ))}
-                                    </select>
+                                    <label className="font-medium">Nome do produto</label>
+                                    <input
+                                        type="text"
+                                        value={produtoNome}
+                                        onChange={(e) => setProdutoNome(e.target.value)}
+                                        className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
+                                    />
                                 </div>
+
                                 <div className="flex flex-col gap-1">
-                                    <label className="font-medium">Recheio</label>
-                                    <select value={recheioPedido} onChange={e => setRecheioPedido(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]">
-                                        <option value="">Selecione um recheio</option>
-                                        {recheiosDisponiveis.map((r) => (
-                                            <option key={r.id} value={r.id}>{r.nome}</option>
-                                        ))}
-                                    </select>
+                                    <label className="font-medium">Descrição</label>
+                                    <textarea
+                                        value={observacao}
+                                        onChange={(e) => setObservacao(e.target.value)}
+                                        className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
+                                    ></textarea>
                                 </div>
+
                                 <div className="flex flex-col gap-1">
-                                    <label className="font-medium">Cobertura</label>
-                                    <select value={cobertura} onChange={e => setCobertura(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]">
-                                        <option value="">Selecione uma cobertura</option>
-                                        {coberturasDisponiveis.map((c) => (
-                                            <option key={c.id} value={c.id}>{c.descricao}</option>
-                                        ))}
-                                    </select>
+                                    <label className="font-medium">Categoria</label>
+                                    <input
+                                        type="string"
+                                        value={categoriaFornada}
+                                        onChange={(e) => setCategoriaFornada(e.target.value)}
+                                        className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
+                                    />
                                 </div>
+
                                 <div className="flex flex-col gap-1">
-                                    <label className="font-medium">Formato</label>
-                                    <select value={formato} onChange={e => setFormato(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]">
-                                        <option value="">Selecione um formato</option>
-                                        {formatosDisponiveis.map((f) => (
-                                            <option key={f} value={f}>{f.charAt(0).toUpperCase() + f.slice(1).toLowerCase()}</option>
-                                        ))}
-                                    </select>
+                                    <label className="font-medium">Valor</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={valor}
+                                        onChange={(e) => setValor(e.target.value)}
+                                        className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
+                                    />
                                 </div>
-                                <div className="flex flex-col gap-1">
-                                    <label className="font-medium">Tamanho</label>
-                                    <select value={tamanho} onChange={e => setTamanho(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]">
-                                        <option value="">Selecione um tamanho</option>
-                                        {tamanhosDisponiveis.map((t) => (
-                                            <option key={t.id ?? t.nome ?? t} value={t.id ?? t.nome ?? t}>{(t.nome ?? t.toString()).charAt(0).toUpperCase() + (t.nome ?? t.toString()).slice(1).toLowerCase()}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                    <label className="font-medium">Decoração</label>
-                                    <select value={decoracao} onChange={e => setDecoracao(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]">
-                                        <option value="">Selecione uma decoração</option>
-                                        {decoracoesDisponiveis.map((d) => (
-                                            <option key={d.id} value={d.id}>{d.nome}</option>
-                                        ))}
-                                    </select>
-                                </div>
+
+                                <Button type="submit" className="w-fit self-end">
+                                    Salvar Alterações
+                                </Button>
                             </>
                         )}
-                        <Button type="submit" className="w-full">Salvar Alterações</Button>
+
+                        {categoria === "Decoracao" && (
+                            <>
+                                <div className="flex flex-col gap-1">
+                                    <label className="font-medium">Nome da Decoração</label>
+                                    <input
+                                        type="text"
+                                        value={nomeDecoracao}
+                                        onChange={(e) => setNomeDecoracao(e.target.value)}
+                                        className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
+                                        placeholder="Digite o nome da decoração"
+                                    />
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                    <label className="font-medium">Categoria</label>
+                                    <input
+                                        type="text"
+                                        value={categoriaDecoracao}
+                                        onChange={(e) => setCategoriaDecoracao(e.target.value)}
+                                        className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
+                                        placeholder="Ex.: Vintage, Birthday, ..."
+                                    />
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                    <label className="font-medium">Observações</label>
+                                    <input
+                                        value={observacoesDecoracao}
+                                        onChange={(e) => setObservacoesDecoracao(e.target.value)}
+                                        className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
+                                        placeholder="Adicione observações sobre a decoração"
+                                    />
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                    <label className="font-medium">Adicionais</label>
+                                    <div className="max-h-40 overflow-y-auto pr-2">
+                                        <div className="flex flex-col gap-2">
+                                            {allAdicionais.map((opcao) => (
+                                                <div key={opcao.id}>
+                                                    <InputOption
+                                                        type="checkbox"
+                                                        label={opcao.descricao}
+                                                        checked={adicionaisToRequest.some(item => item.id === opcao.id)}
+                                                        onChange={() => handleAdicionaisToAdd(opcao)}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col gap-1">
+                                    <input
+                                        type="file"
+                                        ref={imagemRef}
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={anexarImagem}
+                                    />
+                                </div>
+
+                                <Button type="submit" className="w-fit self-end">
+                                    Salvar Alterações
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </section>
             </form>
