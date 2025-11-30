@@ -62,6 +62,7 @@
   color: #374151;
   width: 100%;
   box-sizing: border-box;
+  border-radius: 0.5rem !important; /* Força o arredondamento (equivalente ao rounded-lg do Tailwind) */
 }
 
 .phone-input-custom-input::placeholder {
