@@ -467,12 +467,15 @@ function FornadaDashboard() {
       if (sucesso) {
         toast.success("Fornada encerrada com sucesso!");
 
+        // Limpa seleção de produtos da fornada encerrada
         localStorage.removeItem("selectedProducts");
 
+        // Garante que o estado local reflita o encerramento imediatamente
         setFornadaAtual(null);
         setFornadaProxima(null);
+        setFornadaData(null);
 
-        await carregarDadosFornada();
+        // As KPIs se baseiam em chamadas próprias à API e usam essa chave para refetch
         setKpiRefreshKey((v) => v + 1);
       } else {
         toast.error("Erro ao encerrar fornada!");
