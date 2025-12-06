@@ -18,7 +18,6 @@ export default function Products() {
                 <div className=" border-gold h-full border-2 rounded-lg overflow-hidden w-[90%] flex flex-col justify-between items-end">
                     <ProductList></ProductList>
                     <ModalCadastroProduto />
-
                 </div>
             </div>
         </div>

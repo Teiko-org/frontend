@@ -7,7 +7,7 @@ const InputOption = ({ type, label, checked, onChange }) => {
         type={type}
         checked={checked}
         onChange={onChange}
-        className="hidden peer"
+        className="sr-only peer"
       />
       <div
         className={`flex items-center justify-center mr-2 w-6 h-6 cursor-pointer ${

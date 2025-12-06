@@ -21,6 +21,7 @@ import ModalFilterProduct from '../ModalFilterProduct';
 import ModalEdicaoProduto from '../ModalEdicaoProduto';
 import { findAllBolo, findAllFornada, handleDeleteBolo, handleVisibilityBolo, handleVisibilityProdutoFornada } from '../../service/productService';
 import { getProdutosCadastrados } from '../../service/dashboardService';
+import { getAllDecoracoes } from '../../service/decoracaoService';
 import { LuSearch } from "react-icons/lu";
 
 const columns = [
@@ -45,20 +46,58 @@ export default function ProductList() {
 
     const fetchProducts = async () => {
         try {
-            // Usar o novo serviço que retorna apenas produtos cadastrados
+            // Buscar produtos cadastrados (fornadas)
             const produtosCadastrados = await getProdutosCadastrados();
-            // Mapear para a estrutura esperada pelo componente
-            const produtosMapeados = (produtosCadastrados || []).map(produto => ({
+            
+            // Mapear fornadas para a estrutura esperada
+            const fornadas = (produtosCadastrados || []).map(produto => ({
                 tipo: produto.tipo,
                 categoria: produto.categoria,
                 descricao: produto.descricao || null,
                 isAtivo: produto.ativo,
                 produto: produto.nome,
+                nome: produto.nome,
                 id: produto.id,
                 valor: produto.preco,
-                quantidade: produto.quantidade || 0
+                preco: produto.preco,
+                quantidade: produto.quantidade || 0,
+                nomeDecoracao: produto.nomeDecoracao || produto.nome,
+                categoriaDecoracao: produto.categoriaDecoracao || "",
+                observacoesDecoracao: produto.observacoesDecoracao || "",
+                observacao: produto.observacao || "",
+                imagemUrl: produto.imagemUrl || produto.image || null,
+                imagens: produto.imagens || [],
+                adicionais: produto.adicionais || [],
+                decoracaoId: produto.decoracaoId || produto.id
             }));
-            setProducts(produtosMapeados);
+
+            // Buscar decorações
+            const decoracoes = await getAllDecoracoes();
+            
+            // Mapear decorações para a estrutura esperada
+            const decoracoesMapeadas = (decoracoes || []).map(decoracao => ({
+                tipo: 'DECORACAO',
+                categoria: decoracao.categoria || 'Decoração',
+                descricao: decoracao.observacao || null,
+                isAtivo: true,
+                produto: decoracao.nome,
+                nome: decoracao.nome,
+                id: decoracao.id,
+                decoracaoId: decoracao.id,
+                valor: 0, // Decorações geralmente não têm preço direto
+                preco: 0,
+                quantidade: 0,
+                nomeDecoracao: decoracao.nome,
+                categoriaDecoracao: decoracao.categoria || "",
+                observacoesDecoracao: decoracao.observacao || "",
+                observacao: decoracao.observacao || "",
+                imagemUrl: decoracao.imagens?.[0] || null,
+                imagens: decoracao.imagens || [],
+                adicionais: decoracao.adicionais || []
+            }));
+
+            // Combinar fornadas e decorações
+            setProducts([...fornadas, ...decoracoesMapeadas]);
         } catch (error) {
             console.error("Erro ao carregar produtos cadastrados:", error);
             // Fallback para o método antigo se o novo falhar
@@ -138,6 +177,26 @@ export default function ProductList() {
     const formatCurrency = (value) => {
         return `R$ ${value?.toFixed(2).replace('.', ',') || '0,00'}`;
     };
+
+    const determineInitialCategory = (row) => {
+        if (!row) return '';
+        const tipo = (row.tipo || '').toLowerCase();
+        const categoria = (row.categoria || '').toLowerCase();
+        
+        // Se é decoração
+        if (tipo.includes('decoracao')) return 'Decoracao';
+        
+        // Se é fornada
+        if (categoria.includes('fornada') || tipo.includes('fornada')) return 'Fornada';
+        
+        // Se é bolo/carambolo
+        if (categoria.includes('carambolo') || tipo.includes('carambolo') || tipo.includes('bolo')) return 'Decoracao';
+        
+        // fallback: if produto looks like a fornada by quantity
+        if (typeof row.quantidade === 'number' && row.quantidade > 0) return 'Fornada';
+        
+        return categoria ? categoria.charAt(0).toUpperCase() + categoria.slice(1) : 'Decoracao';
+    }
 
     return (
         <div className='flex flex-col w-[100%] h-[70%]'>
@@ -354,6 +413,7 @@ export default function ProductList() {
                 <ModalEdicaoProduto
                     isOpen={isModalEdicaoOpen}
                     produto={produtoSelecionado}
+                    initialCategoria={determineInitialCategory(produtoSelecionado)}
                     onProdutoEditado={fetchProducts}
                     onClose={() => {
                         setModalEdicaoOpen(false);
