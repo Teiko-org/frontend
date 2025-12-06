@@ -7,7 +7,7 @@ import { axiosApi } from "../../provider/AxiosApi";
 import { toast } from "react-toastify";
 import { fetchAllAdicionais } from "../../service/adicionalService";
 
-export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProdutoEditado }) {
+export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProdutoEditado, initialCategoria }) {
     const [file, setFile] = useState(null);
     const [filePreview, setFilePreview] = useState(null);
     const imagemRef = useRef(null);
@@ -27,7 +27,8 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
         if (!isOpen) return;
         // inicializa campos a partir do produto recebido
         setProdutoNome(produto?.produto || produto?.nome || "");
-        setCategoria(produto?.categoria || "");
+        // set category based on initialCategoria prop (coming from ProductList)
+        setCategoria(initialCategoria || produto?.categoria || "");
         setValor(produto?.valor ?? produto?.preco ?? "");
         setObservacao(produto?.descricao || "");
         setCategoriaFornada(produto?.categoria || "");
@@ -134,18 +135,8 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
             >
                 <header className="flex justify-between items-center px-6 py-3 border-b border-orange-300 bg-[#fbe4d6]">
                     <h2 className="font-semibold text-lg">Editar Produto</h2>
-                    <div className="flex items-center gap-2">
-                        <select
-                            value={categoria}
-                            onChange={(e) => setCategoria(e.target.value)}
-                            className="border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-[#d6a87c]"
-                        >
-                            <option value="" disabled>
-                                Selecione uma pré definição
-                            </option>
-                            <option value="Fornada">Fornada</option>
-                            <option value="Decoracao">Decoração Carambolo</option>
-                        </select>
+                    <div className="flex items-center gap-4">
+                        <span className="text-sm text-[#5c3c10]">{categoria === 'Fornada' ? 'Fornada' : categoria === 'Decoracao' ? 'Decoração Carambolo' : (categoria || 'Fornada')}</span>
                         <button
                             type="button"
                             onClick={onClose}

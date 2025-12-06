@@ -139,6 +139,17 @@ export default function ProductList() {
         return `R$ ${value?.toFixed(2).replace('.', ',') || '0,00'}`;
     };
 
+    const determineInitialCategory = (row) => {
+        if (!row) return '';
+        const tipo = (row.tipo || '').toLowerCase();
+        const categoria = (row.categoria || '').toLowerCase();
+        if (categoria.includes('fornada') || tipo.includes('fornada')) return 'Fornada';
+        if (categoria.includes('carambolo') || tipo.includes('carambolo') || tipo.includes('bolo')) return 'Decoracao';
+        // fallback: if produto looks like a fornada by quantity
+        if (typeof row.quantidade === 'number') return 'Fornada';
+        return categoria ? categoria.charAt(0).toUpperCase() + categoria.slice(1) : 'Fornada';
+    }
+
     return (
         <div className='flex flex-col w-[100%] h-[70%]'>
             <div className='flex flex-row justify-between items-center bg-gradient-blue h-[4.6875rem] w-full'>
@@ -348,6 +359,7 @@ export default function ProductList() {
                 <ModalEdicaoProduto
                     isOpen={isModalEdicaoOpen}
                     produto={produtoSelecionado}
+                    initialCategoria={determineInitialCategory(produtoSelecionado)}
                     onProdutoEditado={fetchProducts}
                     onClose={() => {
                         setModalEdicaoOpen(false);
