@@ -430,6 +430,12 @@ const handleConfirmFinalizar = async () => {
                 {entregaRetiradaData.complemento}
               </div>
             </div>
+            {/* Frase dourada sobre entrega por parceiros terceirizados */}
+            <div className="flex justify-center mt-6 mb-2">
+              <span className="block text-gold text-xs font-semibold opacity-80 text-center">
+                As entregas são realizadas por parceiros terceirizados.
+              </span>
+            </div>
           </>
         ) : (
           <div className="text-blue mt-2">

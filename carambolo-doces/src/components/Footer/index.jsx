@@ -57,6 +57,11 @@ function Footer() {
           </p>
         </div>
       </div>
+      <div className="w-full text-center mt-10 mb-0.5">
+        <span className="text-gold text-xs opacity-80">
+          As entregas são realizadas por parceiros terceirizados.
+        </span>
+      </div>
     </footer>
   );
 }

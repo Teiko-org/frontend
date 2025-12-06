@@ -614,6 +614,12 @@ function FornadaOrderPage() {
                                             readOnly={selectedAddressId && selectedAddressId !== "novo"}
                                         />
                                     </div>
+                                    {/* Frase dourada sobre entrega por parceiros terceirizados */}
+                                    <div className="flex justify-center mt-6 mb-2 col-span-12">
+                                        <span className="block text-gold text-xs font-semibold opacity-80 text-center">
+                                            As entregas são realizadas por parceiros terceirizados.
+                                        </span>
+                                    </div>
                                 </>
                             )}
                             {deliveryOption === "Retirada" && (
