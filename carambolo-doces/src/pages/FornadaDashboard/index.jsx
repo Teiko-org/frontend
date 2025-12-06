@@ -20,7 +20,7 @@ const parseLocalDate = (dateStr) => {
 };
 import KPILastFornada from "../../components/KPILastFornada";
 import KPIThisMonthFornadas from "../../components/KPIThisMonthFornadas";
-import { getFornadaAtiva, getProdutosFornadaComImagens, getProximaFornada, encerrarFornada, getProdutosPorFornadaId } from "../../service/fornadaService";
+import { listFornadas, encerrarFornada, getProdutosPorFornadaId, getFornadaAtiva } from "../../service/fornadaService";
 import { atualizarFornadaDaVez, excluirFornadaDaVez } from "../../service/fornadaDaVezService";
 import { FaRegEdit, FaPlus, FaSave, FaTimes } from "react-icons/fa";
 import ModalConfirmarEdicao from "../../components/ModalConfirmarEdicao";
@@ -319,33 +319,42 @@ function FornadaDashboard() {
 
   const carregarDadosFornada = async () => {
     try {
-      try {
-        const fornadaAtiva = await getFornadaAtiva();
-        if (fornadaAtiva) {
-          setFornadaAtual(fornadaAtiva);
-        } else {
-          setFornadaAtual(null);
+      const fornadas = await listFornadas();
+      const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+
+      const ativas = (fornadas || []).filter(f => (f.isAtivo ?? f.ativo) === true);
+
+      let atual = null;
+      let proxima = null;
+
+      if (ativas.length > 0) {
+        const ordenadas = [...ativas].sort(
+          (a, b) => new Date(a.dataInicio) - new Date(b.dataInicio)
+        );
+
+        for (const f of ordenadas) {
+          const ini = parseLocalDate(f.dataInicio); ini.setHours(0, 0, 0, 0);
+          const fim = parseLocalDate(f.dataFim); fim.setHours(23, 59, 59, 999);
+
+          if (!atual && hoje >= ini && hoje <= fim) {
+            atual = f;
+          } else if (!proxima && ini > hoje) {
+            proxima = f;
+          }
         }
-      } catch (error) {
-        console.error("Erro ao buscar fornada ativa:", error);
-        setFornadaAtual(null);
       }
 
-      try {
-        const proximaFornada = await getProximaFornada();
-        if (proximaFornada) {
-          setFornadaProxima(proximaFornada);
-        } else {
-          setFornadaProxima(null);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar próxima fornada:", error);
-        setFornadaProxima(null);
-      }
-      
+      setFornadaAtual(atual);
+      setFornadaProxima(proxima);
+      setFornadaData(atual || null);
+
+      // força KPIs a recarregarem seus dados da API
       setKpiRefreshKey((v) => v + 1);
     } catch (error) {
       console.error("Erro geral ao carregar dados da fornada:", error);
+      setFornadaAtual(null);
+      setFornadaProxima(null);
+      setFornadaData(null);
     }
   };
 
@@ -362,21 +371,7 @@ function FornadaDashboard() {
   });
 
   useEffect(() => {
-    if (!fornadaAtual) {
-      const fetchFornadaAtiva = async () => {
-        try {
-          const fornadaAtiva = await getFornadaAtiva();
-          if (fornadaAtiva && fornadaAtiva.dataFim) {
-            setFornadaData(fornadaAtiva);
-          }
-        } catch (error) {
-          console.error('Erro ao buscar fornada ativa:', error);
-        }
-      };
-      fetchFornadaAtiva();
-    } else {
-      setFornadaData(fornadaAtual);
-    }
+    setFornadaData(fornadaAtual || null);
   }, [fornadaAtual]);
 
   useEffect(() => {
