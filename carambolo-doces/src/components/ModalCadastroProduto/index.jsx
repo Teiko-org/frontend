@@ -25,8 +25,6 @@ export default function ModalCadastroProduto() {
     const [adicionaisToRequest, setAdicionaisToRequest] = useState([]);
     const [descricao, setDescricao] = useState("");
 
-    console.log('adicionaisToRequest: ', adicionaisToRequest);
-
     const anexarImagem = (e) => {
         const img = e.target.files[0];
         if (img) {

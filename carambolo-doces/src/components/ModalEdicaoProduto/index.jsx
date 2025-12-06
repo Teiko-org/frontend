@@ -6,6 +6,7 @@ import InputOption from "../InputOption";
 import { axiosApi } from "../../provider/AxiosApi";
 import { toast } from "react-toastify";
 import { fetchAllAdicionais } from "../../service/adicionalService";
+import { updateDecoracao, getDecoraceosComAdicionais } from "../../service/decoracaoService";
 
 export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProdutoEditado, initialCategoria }) {
     const [file, setFile] = useState(null);
@@ -28,29 +29,79 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
         // inicializa campos a partir do produto recebido
         setProdutoNome(produto?.produto || produto?.nome || "");
         // set category based on initialCategoria prop (coming from ProductList)
-        setCategoria(initialCategoria || produto?.categoria || "");
+        const categoria = initialCategoria || produto?.categoria || "";
+        setCategoria(categoria);
         setValor(produto?.valor ?? produto?.preco ?? "");
         setObservacao(produto?.descricao || "");
         setCategoriaFornada(produto?.categoria || "");
-        setNomeDecoracao(produto?.nomeDecoracao || "");
-        setCategoriaDecoracao("");
-        setObservacoesDecoracao(produto?.observacao || "");
-        setFilePreview(produto?.imagemUrl || produto?.imagens?.[0] || null);
+        setNomeDecoracao(produto?.nomeDecoracao || produto?.nome || "");
+        setCategoriaDecoracao(produto?.categoriaDecoracao || "");
+        setObservacoesDecoracao(produto?.observacoesDecoracao || produto?.observacao || "");
+        setFilePreview(produto?.imagemUrl || produto?.imagens?.[0] || produto?.image || null);
         // se o produto já tem adicionais, pré-seleciona
         if (produto?.adicionais && Array.isArray(produto.adicionais)) {
             setAdicionaisToRequest(produto.adicionais.map(a => ({ id: a.id, descricao: a.descricao })));
         } else {
             setAdicionaisToRequest([]);
         }
-    }, [isOpen, produto]);
+    }, [isOpen, produto, initialCategoria]);
 
     const getAllAdicionais = async () => {
         setAllAdicionais(await fetchAllAdicionais().then(data => data || []));
     }
 
+    const getDecoracacaoAdicionais = async () => {
+        try {
+            const decoracoesComAdicionais = await getDecoraceosComAdicionais();
+            
+            if (!decoracoesComAdicionais || decoracoesComAdicionais.length === 0) {
+                return;
+            }
+
+            // Find the decoration data for the current product being edited
+            const decoracaoId = produto?.decoracaoId || produto?.id;
+            const decoracaoData = decoracoesComAdicionais.find(d => d.decoracaoId === decoracaoId);
+
+            if (!decoracaoData || !decoracaoData.adicionaisPossiveis) {
+                return;
+            }
+
+            // Get the description of adicionais from the general list
+            const allAdicionaisLocal = await fetchAllAdicionais();
+            
+            // Create a map of adicional descriptions to ids
+            const adicionaisMap = {};
+            if (allAdicionaisLocal && Array.isArray(allAdicionaisLocal)) {
+                allAdicionaisLocal.forEach(adicional => {
+                    adicionaisMap[adicional.descricao] = adicional.id;
+                });
+            }
+
+            // Match the descriptions from decoracaoData.adicionaisPossiveis with the ids
+            const decoracaoAdicionaisIds = decoracaoData.adicionaisPossiveis
+                .map(descricao => adicionaisMap[descricao])
+                .filter(id => id !== undefined);
+
+            // Pre-select adicionais that belong to this decoration
+            const selectedAdicionais = allAdicionaisLocal.filter(adicional =>
+                decoracaoAdicionaisIds.includes(adicional.id)
+            ).map(a => ({ id: a.id, descricao: a.descricao }));
+
+            setAdicionaisToRequest(selectedAdicionais);
+        } catch (error) {
+            console.error("Erro ao buscar adicionais da decoração:", error);
+        }
+    }
+
     useEffect(() => {
         if (!isOpen) return;
         getAllAdicionais();
+        
+        // If it's a decoration, get decoration-specific adicionais
+        const categoria = initialCategoria || produto?.categoria || "";
+        if (categoria === "Decoracao" || categoria?.toLowerCase().includes("decoracao")) {
+            getDecoracacaoAdicionais();
+        }
     }, [isOpen]);
 
     const anexarImagem = (e) => {
@@ -85,14 +136,26 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
         const decoracaoId = produto?.decoracaoId || produto?.id;
         const formData = new FormData();
         formData.append("nome", nomeDecoracao);
+        formData.append("categoria", categoriaDecoracao || "");
         formData.append("observacao", observacoesDecoracao || "");
-        if (file) formData.append("imagens", file);
-        formData.append("adicionais", adicionaisToRequest.map(item => item.id));
+        
+        // Adicionar adicionais como string separada por vírgula
+        if (adicionaisToRequest && adicionaisToRequest.length > 0) {
+            const adicionaisIds = adicionaisToRequest.map(item => item.id).join(",");
+            formData.append("adicionais", adicionaisIds);
+        } else {
+            formData.append("adicionais", "");
+        }
+        
+        // Adicionar imagem apenas se um novo arquivo foi selecionado
+        if (file) {
+            formData.append("imagens", file);
+        }
+
+        console.log('decoracaoId: ', decoracaoId)
 
         try {
-            await axiosApi.put(`/decoracoes/${decoracaoId}`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            const response = await updateDecoracao(decoracaoId, formData);
             toast.success("Decoração atualizada com sucesso!");
             onProdutoEditado && onProdutoEditado();
             onClose();
@@ -136,7 +199,7 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
                 <header className="flex justify-between items-center px-6 py-3 border-b border-orange-300 bg-[#fbe4d6]">
                     <h2 className="font-semibold text-lg">Editar Produto</h2>
                     <div className="flex items-center gap-4">
-                        <span className="text-sm text-[#5c3c10]">{categoria === 'Fornada' ? 'Fornada' : categoria === 'Decoracao' ? 'Decoração Carambolo' : (categoria || 'Fornada')}</span>
+                        <span className="text-sm text-[#5c3c10]">{categoria || 'Carregando...'}</span>
                         <button
                             type="button"
                             onClick={onClose}
@@ -182,7 +245,7 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
 
                     {/* Inputs */}
                     <div className="w-1/2 text-sm flex flex-col justify-start overflow-y-auto pr-2 gap-4">
-                        {categoria === "Fornada" && (
+                    {(categoria === "Fornada" || categoria?.toLowerCase() === "fornada") && (
                             <>
                                 <div className="flex flex-col gap-1">
                                     <label className="font-medium">Nome do produto</label>
@@ -230,7 +293,7 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
                             </>
                         )}
 
-                        {categoria === "Decoracao" && (
+                        {(categoria === "Decoracao" || categoria?.toLowerCase().includes("decoracao") || categoria?.toLowerCase().includes("decoração")) && (
                             <>
                                 <div className="flex flex-col gap-1">
                                     <label className="font-medium">Nome da Decoração</label>
