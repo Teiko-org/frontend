@@ -466,6 +466,12 @@ function FornadaDashboard() {
       
       if (sucesso) {
         toast.success("Fornada encerrada com sucesso!");
+
+        localStorage.removeItem("selectedProducts");
+
+        setFornadaAtual(null);
+        setFornadaProxima(null);
+
         await carregarDadosFornada();
         setKpiRefreshKey((v) => v + 1);
       } else {
