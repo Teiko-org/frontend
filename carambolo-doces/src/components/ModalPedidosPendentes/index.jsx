@@ -50,18 +50,29 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
       const token = typeof window !== 'undefined' ? localStorage.getItem('JWT_TOKEN') : null;
       const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
       
-      // Buscar cada pedido individualmente pelos IDs
-      const promessasPedidos = idsValidos.map(async (id) => {
+      // Buscar cada pedido individualmente pelos IDs com timeout
+      // Limitar a 50 pedidos para evitar sobrecarga
+      const idsLimitados = idsValidos.slice(0, 50);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 3000)
+      );
+      
+      const promessasPedidos = idsLimitados.map(async (id) => {
         try {
-          const response = await axiosApi.get(`/resumo-pedido/${id}`, config);
+          const response = await Promise.race([
+            axiosApi.get(`/resumo-pedido/${id}`, { ...config, timeout: 3000 }),
+            timeoutPromise
+          ]);
           return response.data;
         } catch (error) {
-          console.warn(`Erro ao buscar pedido ${id}:`, error);
+          console.warn(`Erro ao buscar pedido ${id}:`, error.message || error);
           return null;
         }
       });
       
-      const pedidosEncontrados = await Promise.all(promessasPedidos);
+      const pedidosEncontrados = await Promise.allSettled(promessasPedidos).then(results =>
+        results.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean)
+      );
       const pedidosFiltrados = pedidosEncontrados.filter(p => 
         p !== null && (p.status === "PENDENTE" || p.status === "PAGO")
       );
@@ -74,9 +85,18 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
         pedido && pedido.pedidoBoloId
       );
       
-      const promessasDetalhes = pedidosValidos.map(async (pedido) => {
+      // Limitar a 30 pedidos para processar detalhes (evitar sobrecarga)
+      const pedidosParaProcessar = pedidosValidos.slice(0, 30);
+      const timeoutDetalhes = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 3000)
+      );
+      
+      const promessasDetalhes = pedidosParaProcessar.map(async (pedido) => {
         try {
-          const detalhes = await orderCakeDetails(pedido.pedidoBoloId);
+          const detalhes = await Promise.race([
+            orderCakeDetails(pedido.pedidoBoloId),
+            timeoutDetalhes
+          ]);
           const tamanho = detalhes.tamanho || "TAMANHO_11";
           
           // Buscar informações do cliente e valor do pedido
@@ -95,13 +115,15 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
             valor
           };
         } catch (error) {
-          console.warn(`Erro ao buscar detalhes do pedido ${pedido.id}:`, error);
+          console.warn(`Erro ao buscar detalhes do pedido ${pedido.id}:`, error.message || error);
           return null;
         }
       });
 
-      // Aguardar todos os detalhes serem buscados
-      const resultados = await Promise.all(promessasDetalhes);
+      // Aguardar todos os detalhes serem buscados com Promise.allSettled para não falhar tudo se um falhar
+      const resultados = await Promise.allSettled(promessasDetalhes).then(results =>
+        results.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean)
+      );
       
       // Filtrar resultados nulos e agrupar por tamanho
       const resultadosValidos = resultados.filter(r => r !== null);

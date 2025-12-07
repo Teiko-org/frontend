@@ -20,14 +20,24 @@ export async function getPedidosPendentesPorMassa() {
       response.data.map(async (massa) => {
         try {
           // Buscar pedidos por massa com status PENDENTE ou PAGO (que ainda precisam ser produzidos)
-          // Como o endpoint não suporta múltiplos status, vamos buscar ambos e combinar
+          // Usar Promise.race com timeout para evitar travamentos
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), 5000)
+          );
+          
           const [pendentesResponse, pagosResponse] = await Promise.all([
-            axiosApi.get(`/resumo-pedido/pedido-bolo/por-massa/${massa.massaId}?status=PENDENTE`, config)
-              .then(res => res.status === 204 ? { data: [] } : res)
-              .catch(() => ({ data: [] })),
-            axiosApi.get(`/resumo-pedido/pedido-bolo/por-massa/${massa.massaId}?status=PAGO`, config)
-              .then(res => res.status === 204 ? { data: [] } : res)
-              .catch(() => ({ data: [] }))
+            Promise.race([
+              axiosApi.get(`/resumo-pedido/pedido-bolo/por-massa/${massa.massaId}?status=PENDENTE`, { ...config, timeout: 5000 })
+                .then(res => res.status === 204 ? { data: [] } : res)
+                .catch(() => ({ data: [] })),
+              timeoutPromise
+            ]).catch(() => ({ data: [] })),
+            Promise.race([
+              axiosApi.get(`/resumo-pedido/pedido-bolo/por-massa/${massa.massaId}?status=PAGO`, { ...config, timeout: 5000 })
+                .then(res => res.status === 204 ? { data: [] } : res)
+                .catch(() => ({ data: [] })),
+              timeoutPromise
+            ]).catch(() => ({ data: [] }))
           ]);
           
           // Combinar arrays e remover duplicatas baseado no ID
@@ -87,14 +97,24 @@ export async function getPedidosPendentesPorRecheio() {
       response.data.map(async (recheio) => {
         try {
           // Buscar pedidos por recheio com status PENDENTE ou PAGO (que ainda precisam ser produzidos)
-          // Como o endpoint não suporta múltiplos status, vamos buscar ambos e combinar
+          // Usar Promise.race com timeout para evitar travamentos
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), 5000)
+          );
+          
           const [pendentesResponse, pagosResponse] = await Promise.all([
-            axiosApi.get(`/resumo-pedido/pedido-bolo/por-recheio/${recheio.recheioId}?status=PENDENTE`, config)
-              .then(res => res.status === 204 ? { data: [] } : res)
-              .catch(() => ({ data: [] })),
-            axiosApi.get(`/resumo-pedido/pedido-bolo/por-recheio/${recheio.recheioId}?status=PAGO`, config)
-              .then(res => res.status === 204 ? { data: [] } : res)
-              .catch(() => ({ data: [] }))
+            Promise.race([
+              axiosApi.get(`/resumo-pedido/pedido-bolo/por-recheio/${recheio.recheioId}?status=PENDENTE`, { ...config, timeout: 5000 })
+                .then(res => res.status === 204 ? { data: [] } : res)
+                .catch(() => ({ data: [] })),
+              timeoutPromise
+            ]).catch(() => ({ data: [] })),
+            Promise.race([
+              axiosApi.get(`/resumo-pedido/pedido-bolo/por-recheio/${recheio.recheioId}?status=PAGO`, { ...config, timeout: 5000 })
+                .then(res => res.status === 204 ? { data: [] } : res)
+                .catch(() => ({ data: [] })),
+              timeoutPromise
+            ]).catch(() => ({ data: [] }))
           ]);
           
           // Combinar arrays e remover duplicatas baseado no ID
