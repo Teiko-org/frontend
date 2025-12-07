@@ -16,6 +16,7 @@ import { getProdutoFornadaById } from "../../service/fornadaService";
 import { toast } from "react-toastify";
 import { useCart } from "../../contexts/CartContext";
 import defaultFornadaImg from "../../assets/image_fornada.png";
+import { validateBrazilianPhone } from "../../utils/phoneValidation";
 
 function FornadaOrderPage() {
     const { removeByFornadaId } = useCart();
@@ -254,6 +255,13 @@ function FornadaOrderPage() {
         }
         if (!telefone) {
             toast.warn("Por favor, preencha o telefone!");
+            return;
+        }
+        
+        // Validação melhorada de telefone
+        const phoneValidation = validateBrazilianPhone(telefone, { allowCountryCode: true, requireMobile: false });
+        if (!phoneValidation.valid) {
+            toast.warn(phoneValidation.error || "Telefone inválido!");
             return;
         }
         if (deliveryOption === "Entrega" && !cep) {

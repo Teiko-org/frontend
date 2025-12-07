@@ -16,6 +16,7 @@ import { listUserAddresses } from "../../service/addressService";
 import { getProdutoFornadaById } from "../../service/fornadaService";
 import Carousel from "../../components/Carousel";
 import defaultImageCard from "../../assets/image_card.png";
+import { validateBrazilianPhone } from "../../utils/phoneValidation";
 
 export default function FornadaMultiOrderPage() {
   const { removeByFornadaId, removeItem } = useCart();
@@ -172,8 +173,14 @@ export default function FornadaMultiOrderPage() {
 
   const validate = () => {
     if (!nome?.trim()) { setErrors((p)=>({ ...p, nome:true })); t.warn("Por favor, preencha seu nome!"); return false; }
-    const telDigits = String(telefone || '').replace(/\D/g, '');
-    if (telDigits.length < 10) { setErrors((p)=>({ ...p, telefone:true })); t.warn("Telefone inválido!"); return false; }
+    
+    // Validação melhorada de telefone
+    const phoneValidation = validateBrazilianPhone(telefone, { allowCountryCode: true, requireMobile: false });
+    if (!phoneValidation.valid) {
+      setErrors((p)=>({ ...p, telefone:true }));
+      t.warn(phoneValidation.error || "Telefone inválido!");
+      return false;
+    }
     if (!dataEntrega) { setErrors((p)=>({ ...p, dataEntrega:true })); t.warn("Selecione a data de entrega!"); return false; }
     const d = new Date(dataEntrega); const today = new Date(); today.setHours(0,0,0,0);
     if (d < today) { setErrors((p)=>({ ...p, dataEntrega:true })); t.warn("A data não pode ser no passado!"); return false; }

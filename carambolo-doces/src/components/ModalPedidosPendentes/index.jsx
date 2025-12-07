@@ -2,6 +2,7 @@ import { axiosApi } from "../../provider/AxiosApi";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import orderSummary from "../../services/orderSummary";
 import orderCakeDetails from "../../service/orderCakeDetails";
+import { formatBrazilianPhone } from "../../utils/phoneValidation";
 
 export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, pedidosIds }) {
   const [pedidosAgrupados, setPedidosAgrupados] = useState({});
@@ -222,14 +223,7 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
 
   const formatarTelefoneCompleto = (telefone) => {
     if (!telefone) return "";
-    const cleaned = telefone.replace(/\D/g, "");
-    if (cleaned.length === 11) {
-      return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
-    }
-    if (cleaned.length === 10) {
-      return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`;
-    }
-    return telefone;
+    return formatBrazilianPhone(telefone) || telefone;
   };
 
   const formatarData = (dataString) => {
