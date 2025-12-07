@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import orderSummary from "../../services/orderSummary";
 import orderCakeDetails from "../../service/orderCakeDetails";
 
@@ -10,14 +10,32 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
   const [detalhesPedido, setDetalhesPedido] = useState(null);
   const [loadingDetalhes, setLoadingDetalhes] = useState(false);
   const [pedidoAtivo, setPedidoAtivo] = useState(null);
+  const pedidosIdsRef = useRef(null);
+  const carregouRef = useRef(false);
+  const carregandoRef = useRef(false);
+
+  // Compara arrays por valor, não por referência
+  const pedidosIdsString = useMemo(() => {
+    if (!pedidosIds || !Array.isArray(pedidosIds)) return "";
+    return JSON.stringify([...pedidosIds].sort());
+  }, [pedidosIds]);
 
   useEffect(() => {
-    if (isOpen && pedidosIds && pedidosIds.length > 0) {
-      loadPedidos();
+    // Evita carregar múltiplas vezes com os mesmos IDs ou se já está carregando
+    if (carregandoRef.current) {
+      return;
     }
-  }, [isOpen, pedidosIds]);
+    
+    if (pedidosIdsString === pedidosIdsRef.current && carregouRef.current) {
+      return;
+    }
 
-  const loadPedidos = async () => {
+    if (isOpen && pedidosIds && pedidosIds.length > 0) {
+      pedidosIdsRef.current = pedidosIdsString;
+      carregouRef.current = true;
+      carregandoRef.current = true;
+      
+      const loadPedidos = async () => {
     try {
       setLoading(true);
       const todosPedidos = await orderSummary();
@@ -84,8 +102,20 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
       });
     } finally {
       setLoading(false);
+      carregandoRef.current = false;
     }
-  };
+      };
+      
+      loadPedidos();
+    } else if (!isOpen) {
+      // Reset quando o modal fecha
+      carregouRef.current = false;
+      pedidosIdsRef.current = null;
+      carregandoRef.current = false;
+      setPedidosAgrupados({});
+      setLoading(false);
+    }
+  }, [isOpen, pedidosIdsString]);
 
   const formatarTelefone = (telefone) => {
     if (!telefone) return "";
