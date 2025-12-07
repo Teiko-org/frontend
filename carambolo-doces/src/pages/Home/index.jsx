@@ -14,6 +14,7 @@ import { findFeaturedDecoracoes } from "../../service/productService";
 import { getBolosComImagens } from "../../service/boloService";
 import { getProdutosMaisPedidos } from "../../service/dashboardService";
 import Carousel from "../../components/Carousel";
+import defaultImageCard from "../../assets/image_card.png";
 import './cardsTransition.css';
 
 function Home() {
@@ -76,7 +77,7 @@ function Home() {
         (bolosAtivos || []).forEach((b) => {
           if (!b?.categoria) return;
           if (!porCategoria.has(b.categoria)) {
-            const imagem = b.imagens?.[0] ?? "src/assets/image_card.png";
+            const imagem = b.imagens?.[0] ?? defaultImageCard;
             porCategoria.set(b.categoria, { image: imagem, title: b.categoria, categoria: b.categoria, id: b.boloId ?? b.id });
           }
         });
@@ -98,7 +99,7 @@ function Home() {
             nome: p.nome,
             quantidade: p.quantidade,
             valorTotal: p.valorTotal,
-            imagens: ["src/assets/image_card.png"],
+            imagens: [defaultImageCard],
           }));
         try {
           const { axiosApi } = await import("../../provider/AxiosApi");
@@ -164,7 +165,7 @@ function Home() {
             nome: p.nome,
             quantidade: p.quantidade,
             valorTotal: p.valorTotal,
-            imagens: ["src/assets/image_card.png"],
+            imagens: [defaultImageCard],
           }));
 
         const { axiosApi } = await import("../../provider/AxiosApi");
@@ -230,7 +231,7 @@ function Home() {
   const slidesMaisPedidos = useMemo(() => {
     if (!carambolosMaisPedidos || carambolosMaisPedidos.length === 0) return [];
     const base = carambolosMaisPedidos.map((p) => ({
-      image: p.imagens?.[0] ?? "src/assets/image_card.png",
+      image: p.imagens?.[0] ?? defaultImageCard,
       title: p.nome || "Carambolo",
       id: p.id,
       categoria: p.categoria,

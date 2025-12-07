@@ -5,6 +5,7 @@ import HeaderDashboard from "../../components/headerDashboard";
 import PrincipaisClientes from "../../components/PrincipaisClientes";
 import UltimosPedidos from "../../components/UltimosPedidos";
 import { axiosApi } from "../../provider/AxiosApi";
+import defaultImageCard from "../../assets/image_card.png";
 import {
   getQtdClientesUnicos,
   getQtdPedidosTotal,
@@ -398,10 +399,10 @@ export default function Dashboard() {
                   <div key={`${p.tipo}-${p.id}`} className="grid grid-cols-4 items-center py-2 border-b border-gold/40 text-sm">
                     <div>
                       <img
-                        src={p.imagemUrl || "src/assets/image_card.png"}
+                        src={p.imagemUrl || defaultImageCard}
                         alt={p.nome}
                         className="w-12 h-12 object-cover rounded"
-                        onError={(e) => { e.currentTarget.src = "src/assets/image_card.png"; }}
+                        onError={(e) => { e.currentTarget.src = defaultImageCard; }}
                       />
                     </div>
                     <div className="pr-2 truncate">{p.nome}</div>

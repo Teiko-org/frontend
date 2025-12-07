@@ -15,6 +15,7 @@ import { IoIosInformationCircle } from "react-icons/io";
 import { listUserAddresses } from "../../service/addressService";
 import { getProdutoFornadaById } from "../../service/fornadaService";
 import Carousel from "../../components/Carousel";
+import defaultImageCard from "../../assets/image_card.png";
 
 export default function FornadaMultiOrderPage() {
   const { removeByFornadaId, removeItem } = useCart();
@@ -284,7 +285,7 @@ export default function FornadaMultiOrderPage() {
           {itens.length > 0 && (
             <div className="w-[360px]">
               <Carousel
-                slides={itens.map((i, k) => ({ id: k + 1, image: i.image ?? "src/assets/image_card.png", title: i.name }))}
+                slides={itens.map((i, k) => ({ id: k + 1, image: i.image ?? defaultImageCard, title: i.name }))}
                 imageHeightClass="h-[360px]"
                 itemsPerView={1}
                 showTitles={false}

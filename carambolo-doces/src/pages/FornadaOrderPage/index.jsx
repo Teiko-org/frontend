@@ -176,7 +176,6 @@ function FornadaOrderPage() {
                 return;
             }
 
-            toast.info("🔍 Buscando CEP...");
             const response = await axios.get(
                 `https://viacep.com.br/ws/${cepOnlyNumbers}/json/`
             );
@@ -185,16 +184,13 @@ function FornadaOrderPage() {
                 setCidade(response.data.localidade || "");
                 setBairro(response.data.bairro || "");
                 setRua(response.data.logradouro || "");
-                toast.success("✅ CEP encontrado!");
             } else {
                 console.error("CEP não encontrado.");
                 clearAddressFields();
-                toast.error("❌ CEP não encontrado!");
             }
         } catch (error) {
             console.error("Erro ao buscar o CEP:", error);
             clearAddressFields();
-            toast.error("❌ Erro ao buscar CEP. Verifique a conexão!");
         }
     };
 

@@ -10,6 +10,8 @@ import { axiosApi } from "../../provider/AxiosApi";
 import { toast } from "react-toastify";
 import CartItemCard from "../../components/CartItemCard";
 import ModalBaseForm from "../../components/ModalBaseForm";
+import defaultImageCard from "../../assets/image_card.png";
+import defaultImageFornada from "../../assets/image_fornada.png";
 
 export default function CartPage() {
   const { items: localItems, clearCart, updateQuantity, removeItem } = useCart();
@@ -309,7 +311,7 @@ export default function CartPage() {
                   </div>
                   <div className="flex-1">
                     <CartItemCard
-                      image={"src/assets/image_fornada.png"}
+                      image={defaultImageFornada}
                       title={`Pedido #${resumo.id}`}
                       subtitle={`Status: ${resumo.status}`}
                       unitPrice={Number(resumo.valor || 0) / Math.max(1, Number(pedido.quantidade || 1))}
@@ -468,7 +470,7 @@ export default function CartPage() {
             <div className="grid grid-cols-2 gap-4">
               {localItems.filter((it) => selectedIds[`${it.type}-${it.id}`]).map((it) => (
                 <div key={`modal-${it.type}-${it.id}`} className="flex items-center gap-3 bg-white border-2 border-gold rounded-xl p-3">
-                  <img src={it.image ?? 'src/assets/image_card.png'} className="w-16 h-16 rounded object-cover border border-gold" />
+                  <img src={it.image ?? defaultImageCard} className="w-16 h-16 rounded object-cover border border-gold" />
                   <div className="flex-1">
                     <div className="text-black font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>{it.name}</div>
                     <div className="text-black/70 text-sm">Qtd: {it.quantity} • R$ {Number(it.price).toFixed(2).replace('.', ',')}</div>
