@@ -63,6 +63,10 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
                   src={slide.image}
                   alt={slide.title || `Slide ${index + 1}`}
                   className={`w-full object-cover ${imageHeightClass}`}
+                  onError={(e) => {
+                    // Se a imagem falhar, não faz nada (já deve ter fallback no componente pai)
+                    console.warn(`Erro ao carregar imagem do slide ${index + 1}`);
+                  }}
                 />
                 {showTitles && slide.title && (
                   <div className={`absolute left-1/2 -translate-x-1/2 ${

@@ -16,6 +16,7 @@ import { listUserAddresses } from "../../service/addressService";
 import { getProdutoFornadaById } from "../../service/fornadaService";
 import Carousel from "../../components/Carousel";
 import defaultImageCard from "../../assets/image_card.png";
+import defaultImageFornada from "../../assets/image_fornada.png";
 import { validateBrazilianPhone } from "../../utils/phoneValidation";
 
 export default function FornadaMultiOrderPage() {
@@ -339,7 +340,11 @@ export default function FornadaMultiOrderPage() {
           {itens.length > 0 && (
             <div className="w-[360px]">
               <Carousel
-                slides={itens.map((i, k) => ({ id: k + 1, image: i.image ?? defaultImageCard, title: i.name }))}
+                slides={itens.map((i, k) => ({ 
+                  id: k + 1, 
+                  image: i.image ?? defaultImageFornada, 
+                  title: i.name 
+                }))}
                 imageHeightClass="h-[360px]"
                 itemsPerView={1}
                 showTitles={false}

@@ -159,17 +159,44 @@ export function CartProvider({ children }) {
         updated[index] = { ...updated[index], quantity: nextQty, maxQuantity: max };
         return updated;
       }
+      
+      // Função para normalizar URL de imagem
+      const normalizeImageUrl = (url) => {
+        if (!url) return url;
+        try {
+          const parsed = new URL(url, window.location.origin);
+          const isLocalhost = parsed.hostname === 'localhost' && (parsed.port === '8080' || parsed.port === '');
+          const isPrivate10 = /^10\.\d+\.\d+\.\d+$/.test(parsed.hostname) && (parsed.port === '8080' || parsed.port === '');
+          if (isLocalhost || isPrivate10) {
+            return `/api${parsed.pathname}${parsed.search}`;
+          }
+          if (parsed.origin === window.location.origin && parsed.pathname.startsWith('/files')) {
+            return `/api${parsed.pathname}${parsed.search}`;
+          }
+          return url;
+        } catch (_e) {
+          if (url.startsWith('/files')) return `/api${url}`;
+          if (url.startsWith('files/')) return `/api/${url}`;
+          return url;
+        }
+      };
+      
+      // Buscar imagem: primeiro de product.image, depois de product.imagens, depois undefined (será mockada no componente)
+      let imageUrl = product.image;
+      if (!imageUrl && product.imagens && product.imagens.length > 0) {
+        const primeiraImagem = product.imagens[0];
+        imageUrl = typeof primeiraImagem === "object" && primeiraImagem.url 
+          ? primeiraImagem.url 
+          : primeiraImagem;
+      }
+      
       return [
         ...prev,
         {
           id: product.id,
           name: product.name ?? product.produto ?? product.categoria ?? "Produto",
           price: product.price ?? product.valor ?? 0,
-          image:
-            product.image ??
-            (product.imagens && product.imagens[0]
-              ? (typeof product.imagens[0] === "object" ? product.imagens[0].url : product.imagens[0])
-              : undefined),
+          image: imageUrl ? normalizeImageUrl(imageUrl) : undefined,
           type: product.type ?? "Produto",
           fornadaDaVezId: product.fornadaDaVezId ?? product.fornadaDaVezId,
           quantity: Math.max(1, Math.min(product.maxQuantity ?? Infinity, quantity)),

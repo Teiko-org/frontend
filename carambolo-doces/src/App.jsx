@@ -63,6 +63,7 @@ function App() {
         theme="colored"
         enableMultiContainer={false}
         limit={3}
+        closeButton={true}
       />
     </BrowserRouter>
   );
