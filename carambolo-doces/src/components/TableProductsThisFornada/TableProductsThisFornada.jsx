@@ -31,12 +31,19 @@ export default function TableProductsThisFornada(props) {
     const getData = async () => {
         try {
             const response = await productsThisFornadasService(props.idFornada);
-            console.log(response);
+            console.log("Produtos recebidos do backend:", response);
 
-            setProducts(Array.isArray(response) ? response : []);
+            // Filtrar duplicados baseado em fornadaDaVezId (único)
+            const produtosUnicos = Array.isArray(response) 
+                ? response.filter((produto, index, self) => 
+                    index === self.findIndex(p => p.fornadaDaVezId === produto.fornadaDaVezId)
+                  )
+                : [];
+            
+            console.log("Produtos únicos após filtro:", produtosUnicos);
+            setProducts(produtosUnicos);
         } catch (error) {
-            console.log(error);
-
+            console.error("Erro ao buscar produtos:", error);
             setProducts([]);
         }
     };
@@ -135,7 +142,7 @@ export default function TableProductsThisFornada(props) {
                                         hover
                                         role="checkbox"
                                         tabIndex={-1}
-                                        key={row.id}
+                                        key={row.fornadaDaVezId || `${row.id}-${index}`}
                                         className={`${index % 2 === 0 ? "bg-[#FFEEE7]" : "bg-none"}`}
                                         sx={{
                                             boxShadow: "none",
