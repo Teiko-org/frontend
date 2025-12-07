@@ -6,6 +6,7 @@ import Select from "../../components/Select";
 import InputOption from "../../components/InputOption";
 import CustomDatePicker from "../../components/DatePicker";
 import PhoneInputCustom from "../../components/PhoneInput/PhoneInputCustom";
+import { validateBrazilianPhone } from "../../utils/phoneValidation";
 import CampoComGradiente from "../../components/gradientField";
 import { searchAddressByCep } from "../../service/viaCepService";
 import { listUserAddresses } from "../../service/addressService";
@@ -232,7 +233,13 @@ const Step4 = () => {
               name="telefone"
               control={control}
               defaultValue=""
-              rules={{ required: "Telefone é obrigatório" }}
+              rules={{ 
+                required: "Telefone é obrigatório",
+                validate: (value) => {
+                  const validation = validateBrazilianPhone(value, { allowCountryCode: true, requireMobile: false });
+                  return validation.valid || validation.error || "Telefone inválido";
+                }
+              }}
               render={({ field }) => (
                 <PhoneInputCustom
                   value={field.value}

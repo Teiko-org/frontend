@@ -11,6 +11,7 @@ import {
   getPedidosProximosEntrega,
   getMassasMaisPedidasPorMes,
 } from "../../service/producaoService";
+import { formatBrazilianPhone } from "../../utils/phoneValidation";
 
 const ClipboardIcon = () => (
   <svg width="30" height="32" viewBox="0 0 30 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -102,11 +103,7 @@ export default function Producao() {
 
   const formatarTelefone = (telefone) => {
     if (!telefone) return "";
-    const cleaned = telefone.replace(/\D/g, "");
-    if (cleaned.length === 11) {
-      return `+55 (${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
-    }
-    return telefone;
+    return formatBrazilianPhone(telefone) || telefone;
   };
 
   const formatarValor = (valor) => {

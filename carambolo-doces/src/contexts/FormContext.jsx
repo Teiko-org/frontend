@@ -159,6 +159,13 @@ export const FormProvider = ({ children }) => {
         toast.warn("Por favor, preencha o telefone!");
         return;
       }
+      
+      // Validação melhorada de telefone
+      const phoneValidation = validateBrazilianPhone(dadosEntrega.telefone, { allowCountryCode: true, requireMobile: false });
+      if (!phoneValidation.valid) {
+        toast.warn(phoneValidation.error || "Telefone inválido!");
+        return;
+      }
       if (!dadosEntrega.data) {
         toast.warn("Por favor, selecione a data de entrega!");
         return;
