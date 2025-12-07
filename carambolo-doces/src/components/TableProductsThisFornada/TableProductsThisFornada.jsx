@@ -7,11 +7,20 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import { productsThisFornadasService } from "../../service/productsFornadasService";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 export default function TableProductsThisFornada(props) {
 
+    const storageKey = `fornada_table_pagination_${props.idFornada}`;
     const [products, setProducts] = React.useState([]);
     const [searchTerm, setSearchTerm] = React.useState(props.searchTerm || "");
+    const [currentPage, setCurrentPage] = React.useState(() => {
+        const savedPage = sessionStorage.getItem(storageKey);
+        return savedPage ? parseInt(savedPage, 10) : 0;
+    });
+    const [pageSize, setPageSize] = React.useState(props.pageSize || 10);
+    const [totalPages, setTotalPages] = React.useState(0);
+    const [totalElements, setTotalElements] = React.useState(0);
     const compact = !!props.compact; // modo compacto apenas na tela de "consultar fornadas"
 
     // Colunas conforme o modo
@@ -28,28 +37,38 @@ export default function TableProductsThisFornada(props) {
             { id: "quantidade", label: "QUANTIDADE", minWidth: 50, align: "left" },
           ];
 
-    const getData = async () => {
+    const getData = async (page = 0, size = pageSize) => {
         try {
-            const response = await productsThisFornadasService(props.idFornada);
-            console.log("Produtos recebidos do backend:", response);
-
-            // Filtrar duplicados baseado em fornadaDaVezId (único)
-            const produtosUnicos = Array.isArray(response) 
-                ? response.filter((produto, index, self) => 
-                    index === self.findIndex(p => p.fornadaDaVezId === produto.fornadaDaVezId)
-                  )
-                : [];
+            const response = await productsThisFornadasService(props.idFornada, page, size);
             
-            console.log("Produtos únicos após filtro:", produtosUnicos);
-            setProducts(produtosUnicos);
+            // Handle both paginated response and direct array response
+            if (response.content && Array.isArray(response.content)) {
+                setProducts(response.content);
+                setTotalPages(response.totalPages || 0);
+                setTotalElements(response.totalElements || 0);
+                setCurrentPage(page);
+            } else if (Array.isArray(response)) {
+                // Fallback for non-paginated responses
+                setProducts(response);
+                setTotalPages(1);
+                setTotalElements(response.length);
+                setCurrentPage(0);
+            } else {
+                setProducts([]);
+                setTotalPages(0);
+                setTotalElements(0);
+            }
         } catch (error) {
-            console.error("Erro ao buscar produtos:", error);
+            console.log(error);
             setProducts([]);
+            setTotalPages(0);
+            setTotalElements(0);
         }
     };
 
     React.useEffect(() => {
-        getData();
+        setCurrentPage(0);
+        getData(0, pageSize);
     }, [props.idFornada]);
 
     React.useEffect(() => {
@@ -71,20 +90,29 @@ export default function TableProductsThisFornada(props) {
         return matchProduct || matchCategory;
     });
 
+    const handleNextPage = () => {
+        if (currentPage < totalPages - 1) {
+            getData(currentPage + 1, pageSize);
+        }
+    };
+
+    const handlePreviousPage = () => {
+        if (currentPage > 0) {
+            getData(currentPage - 1, pageSize);
+        }
+    };
+
     return (
-        <div className={`flex flex-col ${compact ? "w-[720px] h-[180px] ml-auto mr-0" : "w-[90%] h-[320px]"}`}>
+        <div className={`flex flex-col ${compact ? "w-[720px] h-[280px] ml-auto mr-0" : "w-[90%] h-[420px]"} border-2 border-gold rounded-2xl overflow-hidden`}>
 
             <div className="flex-1 overflow-hidden">
                 <Paper
-                    className="rounded-lg h-full"
+                    className="h-full"
                     sx={{
                         width: "100%",
                         height: "100%",
-                        border: "2px solid #A47032",
-                        borderRadius: "1rem",
-                        borderTopLeftRadius: props.roundedTop ? "1rem" : 0,
-                        borderTopRightRadius: props.roundedTop ? "1rem" : 0,
-                        // overflow: "hidden",
+                        border: "none",
+                        borderRadius: "0",
                         boxShadow: "none",
                     }}
                 >
@@ -234,6 +262,31 @@ export default function TableProductsThisFornada(props) {
                     </TableContainer>
                 </Paper>
             </div>
+
+            {/* Pagination Controls */}
+        
+                <div className="flex justify-center items-center gap-4 mt-4 mb-4">
+                    <button
+                        onClick={handlePreviousPage}
+                        disabled={currentPage === 0}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-gold bg-bgHome text-blue font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:scale-105 transition-transform duration-200"
+                    >
+                        <FaChevronLeft /> Anterior
+                    </button>
+
+                    <span className="text-blue font-bold">
+                        Página {currentPage + 1} de {totalPages}
+                    </span>
+
+                    <button
+                        onClick={handleNextPage}
+                        disabled={currentPage === totalPages - 1}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-gold bg-bgHome text-blue font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:scale-105 transition-transform duration-200"
+                    >
+                        Próxima <FaChevronRight />
+                    </button>
+                </div>
+            
         </div>
     );
 }
