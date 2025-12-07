@@ -15,6 +15,8 @@ import { IoIosInformationCircle } from "react-icons/io";
 import { listUserAddresses } from "../../service/addressService";
 import { getProdutoFornadaById } from "../../service/fornadaService";
 import Carousel from "../../components/Carousel";
+import defaultImageCard from "../../assets/image_card.png";
+import { validateBrazilianPhone } from "../../utils/phoneValidation";
 
 export default function FornadaMultiOrderPage() {
   const { removeByFornadaId, removeItem } = useCart();
@@ -171,8 +173,14 @@ export default function FornadaMultiOrderPage() {
 
   const validate = () => {
     if (!nome?.trim()) { setErrors((p)=>({ ...p, nome:true })); t.warn("Por favor, preencha seu nome!"); return false; }
-    const telDigits = String(telefone || '').replace(/\D/g, '');
-    if (telDigits.length < 10) { setErrors((p)=>({ ...p, telefone:true })); t.warn("Telefone inválido!"); return false; }
+    
+    // Validação melhorada de telefone
+    const phoneValidation = validateBrazilianPhone(telefone, { allowCountryCode: true, requireMobile: false });
+    if (!phoneValidation.valid) {
+      setErrors((p)=>({ ...p, telefone:true }));
+      t.warn(phoneValidation.error || "Telefone inválido!");
+      return false;
+    }
     if (!dataEntrega) { setErrors((p)=>({ ...p, dataEntrega:true })); t.warn("Selecione a data de entrega!"); return false; }
     const d = new Date(dataEntrega); const today = new Date(); today.setHours(0,0,0,0);
     if (d < today) { setErrors((p)=>({ ...p, dataEntrega:true })); t.warn("A data não pode ser no passado!"); return false; }
@@ -195,10 +203,23 @@ export default function FornadaMultiOrderPage() {
     setIsSubmitting(true);
     t.info("Processando seus pedidos...");
     try {
+      // Validar todos os produtos antes de processar
       for (const it of itens) {
+        if (!it.fornadaDaVezId) {
+          t.error(`Produto "${it.name}" inválido! Por favor, remova do carrinho e adicione novamente.`);
+          setIsSubmitting(false);
+          return;
+        }
+        
         const produtoAtualizado = await getProdutoFornadaById(it.fornadaDaVezId);
-        if (!produtoAtualizado || (produtoAtualizado.quantidade ?? 0) < it.quantity) {
-          t.error(`Estoque insuficiente para ${it.name}. Disponível: ${produtoAtualizado?.quantidade ?? 0}`);
+        if (!produtoAtualizado || !produtoAtualizado.fornada) {
+          t.error(`Produto "${it.name}" não está mais disponível na fornada atual!`);
+          setIsSubmitting(false);
+          return;
+        }
+        
+        if ((produtoAtualizado.quantidade ?? 0) < it.quantity) {
+          t.error(`Estoque insuficiente para "${it.name}". Disponível: ${produtoAtualizado.quantidade ?? 0}, Solicitado: ${it.quantity}`);
           setIsSubmitting(false);
           return;
         }
@@ -229,24 +250,58 @@ export default function FornadaMultiOrderPage() {
       const mensagens = [];
       const idsResumo = [];
       for (const it of itens) {
-        const pedido = {
-          fornadaDaVezId: it.fornadaDaVezId,
-          usuarioId: null,
-          quantidade: Number(it.quantity),
-          dataPrevisaoEntrega: dataEntrega,
-          tipoEntrega: deliveryOption.toUpperCase(),
-          nomeCliente: nome,
-          telefoneCliente: telefone,
-          enderecoId: enderecoId,
-          horarioRetirada: horario,
-        };
-        const pedidoId = await registerFornadaOrder(pedido);
-        const resumo = await registerFornadaOrderSummary(pedidoId, dataEntrega, horario);
-        if (resumo?.mensagem) mensagens.push(resumo.mensagem);
-        if (resumo?.id) idsResumo.push(resumo.id);
-        // remove do carrinho local
-        try { removeItem(it.id, it.type); } catch {}
-        try { removeByFornadaId(it.fornadaDaVezId); } catch {}
+        // Validar se o fornadaDaVezId está presente
+        if (!it.fornadaDaVezId) {
+          t.error(`Produto "${it.name}" inválido! Por favor, remova do carrinho e adicione novamente.`);
+          continue;
+        }
+        
+        try {
+          // Verificar se o produto ainda está disponível antes de criar o pedido
+          const produtoAtualizado = await getProdutoFornadaById(it.fornadaDaVezId);
+          if (!produtoAtualizado || !produtoAtualizado.fornada) {
+            t.error(`Produto "${it.name}" não está mais disponível na fornada atual!`);
+            continue;
+          }
+          
+          if ((produtoAtualizado.quantidade ?? 0) < it.quantity) {
+            t.error(`Estoque insuficiente para "${it.name}". Disponível: ${produtoAtualizado.quantidade ?? 0}, Solicitado: ${it.quantity}`);
+            continue;
+          }
+          
+          const pedido = {
+            fornadaDaVezId: it.fornadaDaVezId,
+            usuarioId: null,
+            quantidade: Number(it.quantity),
+            dataPrevisaoEntrega: dataEntrega,
+            tipoEntrega: deliveryOption.toUpperCase(),
+            nomeCliente: nome,
+            telefoneCliente: telefone,
+            enderecoId: enderecoId,
+            horarioRetirada: horario,
+          };
+          
+          const pedidoId = await registerFornadaOrder(pedido);
+          const resumo = await registerFornadaOrderSummary(pedidoId, dataEntrega, horario);
+          if (resumo?.mensagem) mensagens.push(resumo.mensagem);
+          if (resumo?.id) idsResumo.push(resumo.id);
+          // remove do carrinho local
+          try { removeItem(it.id, it.type); } catch {}
+          try { removeByFornadaId(it.fornadaDaVezId); } catch {}
+        } catch (error) {
+          console.error(`Erro ao processar pedido para "${it.name}":`, error);
+          if (error.response?.status === 422) {
+            t.error(error.response.data?.message || `Erro ao processar "${it.name}": ${error.message}`);
+          } else {
+            t.error(`Erro ao processar "${it.name}". Tente novamente.`);
+          }
+        }
+      }
+      
+      if (idsResumo.length === 0) {
+        t.error("Nenhum pedido foi criado. Verifique os erros acima.");
+        setIsSubmitting(false);
+        return;
       }
 
       try {
@@ -284,7 +339,7 @@ export default function FornadaMultiOrderPage() {
           {itens.length > 0 && (
             <div className="w-[360px]">
               <Carousel
-                slides={itens.map((i, k) => ({ id: k + 1, image: i.image ?? "src/assets/image_card.png", title: i.name }))}
+                slides={itens.map((i, k) => ({ id: k + 1, image: i.image ?? defaultImageCard, title: i.name }))}
                 imageHeightClass="h-[360px]"
                 itemsPerView={1}
                 showTitles={false}

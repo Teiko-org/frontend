@@ -14,6 +14,7 @@ import { findFeaturedDecoracoes } from "../../service/productService";
 import { getBolosComImagens } from "../../service/boloService";
 import { getProdutosMaisPedidos } from "../../service/dashboardService";
 import Carousel from "../../components/Carousel";
+import defaultImageCard from "../../assets/image_card.png";
 import './cardsTransition.css';
 
 function Home() {
@@ -78,7 +79,7 @@ function Home() {
         (bolosAtivos || []).forEach((b) => {
           if (!b?.categoria) return;
           if (!porCategoria.has(b.categoria)) {
-            const imagem = b.imagens?.[0] ?? "src/assets/image_card.png";
+            const imagem = b.imagens?.[0] ?? defaultImageCard;
             porCategoria.set(b.categoria, { image: imagem, title: b.categoria, categoria: b.categoria, id: b.boloId ?? b.id });
           }
         });
@@ -100,28 +101,50 @@ function Home() {
             nome: p.nome,
             quantidade: p.quantidade,
             valorTotal: p.valorTotal,
-            imagens: ["src/assets/image_card.png"],
+            imagens: [defaultImageCard],
           }));
         try {
           const { axiosApi } = await import("../../provider/AxiosApi");
           const { data: todosDetalhes } = await axiosApi.get('/bolos/detalhe');
-          const enriquecidos = await Promise.all(
-            apenasBolos.map(async (p) => {
+          
+          // Coletar todos os IDs de decoração únicos
+          const decoracaoIds = [...new Set(
+            apenasBolos
+              .map(p => {
+                const detalhe = todosDetalhes.find((d) => d.boloId === p.id);
+                return detalhe?.decoracaoId;
+              })
+              .filter(Boolean)
+          )];
+          
+          // Buscar todas as decorações de uma vez em paralelo
+          const decoracoesMap = new Map();
+          if (decoracaoIds.length > 0) {
+            const decoracoesPromises = decoracaoIds.map(id => 
+              axiosApi.get(`/decoracoes/${id}`).then(r => [id, r.data]).catch(() => [id, null])
+            );
+            const decoracoesResults = await Promise.all(decoracoesPromises);
+            decoracoesResults.forEach(([id, data]) => {
+              if (data) decoracoesMap.set(id, data);
+            });
+          }
+          
+          // Enriquecer os bolos usando o mapa de decorações
+          const enriquecidos = apenasBolos.map((p) => {
               try {
                 const detalheBolo = todosDetalhes.find((d) => d.boloId === p.id);
                 const categoria = detalheBolo?.categoria;
                 const decoracaoId = detalheBolo?.decoracaoId;
-                if (decoracaoId) {
-                  const { data: decoracao } = await axiosApi.get(`/decoracoes/${decoracaoId}`);
+              if (decoracaoId && decoracoesMap.has(decoracaoId)) {
+                const decoracao = decoracoesMap.get(decoracaoId);
                   const imagemUrl = decoracao?.imagens?.[0];
                   return { ...p, imagens: [imagemUrl || p.imagens?.[0]], categoria };
                 }
                 return { ...p, categoria };
               } catch {
-                return null;
+              return p;
               }
-            })
-          );
+          });
           setCarambolosMaisPedidos(enriquecidos.filter(Boolean));
         } catch {
           setCarambolosMaisPedidos(apenasBolos);
@@ -144,28 +167,50 @@ function Home() {
             nome: p.nome,
             quantidade: p.quantidade,
             valorTotal: p.valorTotal,
-            imagens: ["src/assets/image_card.png"],
+            imagens: [defaultImageCard],
           }));
 
         const { axiosApi } = await import("../../provider/AxiosApi");
         const { data: todosDetalhes } = await axiosApi.get('/bolos/detalhe');
-        const enriquecidos = await Promise.all(
-          apenasBolos.map(async (p) => {
+        
+        // Coletar todos os IDs de decoração únicos
+        const decoracaoIds = [...new Set(
+          apenasBolos
+            .map(p => {
+              const detalhe = todosDetalhes.find((d) => d.boloId === p.id);
+              return detalhe?.decoracaoId;
+            })
+            .filter(Boolean)
+        )];
+        
+        // Buscar todas as decorações de uma vez em paralelo
+        const decoracoesMap = new Map();
+        if (decoracaoIds.length > 0) {
+          const decoracoesPromises = decoracaoIds.map(id => 
+            axiosApi.get(`/decoracoes/${id}`).then(r => [id, r.data]).catch(() => [id, null])
+          );
+          const decoracoesResults = await Promise.all(decoracoesPromises);
+          decoracoesResults.forEach(([id, data]) => {
+            if (data) decoracoesMap.set(id, data);
+          });
+        }
+        
+        // Enriquecer os bolos usando o mapa de decorações
+        const enriquecidos = apenasBolos.map((p) => {
             try {
               const detalheBolo = todosDetalhes.find((d) => d.boloId === p.id);
               const categoria = detalheBolo?.categoria;
               const decoracaoId = detalheBolo?.decoracaoId;
-              if (decoracaoId) {
-                const { data: decoracao } = await axiosApi.get(`/decoracoes/${decoracaoId}`);
+            if (decoracaoId && decoracoesMap.has(decoracaoId)) {
+              const decoracao = decoracoesMap.get(decoracaoId);
                 const imagemUrl = decoracao?.imagens?.[0];
                 return { ...p, imagens: [imagemUrl || p.imagens?.[0]], categoria };
               }
               return { ...p, categoria };
             } catch {
-              return null;
+            return p;
             }
-          })
-        );
+        });
         setCarambolosMaisPedidos(enriquecidos.filter(Boolean));
       } catch {}
     };
@@ -188,7 +233,7 @@ function Home() {
   const slidesMaisPedidos = useMemo(() => {
     if (!carambolosMaisPedidos || carambolosMaisPedidos.length === 0) return [];
     const base = carambolosMaisPedidos.map((p) => ({
-      image: p.imagens?.[0] ?? "src/assets/image_card.png",
+      image: p.imagens?.[0] ?? defaultImageCard,
       title: p.nome || "Carambolo",
       id: p.id,
       categoria: p.categoria,

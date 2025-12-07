@@ -1,6 +1,8 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { axiosApi } from "../../provider/AxiosApi";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import orderSummary from "../../services/orderSummary";
 import orderCakeDetails from "../../service/orderCakeDetails";
+import { formatBrazilianPhone } from "../../utils/phoneValidation";
 
 export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, pedidosIds }) {
   const [pedidosAgrupados, setPedidosAgrupados] = useState({});
@@ -20,6 +22,153 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
     return JSON.stringify([...pedidosIds].sort());
   }, [pedidosIds]);
 
+  // Função auxiliar para extrair número do tamanho (ex: "TAMANHO_17" -> 17)
+  const extrairNumeroTamanho = (tamanho) => {
+    if (!tamanho || typeof tamanho !== 'string') return 0;
+    const match = tamanho.match(/\d+/);
+    return match ? parseInt(match[0], 10) : 0;
+  };
+
+  const loadPedidos = async () => {
+    try {
+      setLoading(true);
+      // Resetar estados de detalhes ao carregar novos pedidos
+      setModalDetalhesOpen(false);
+      setPedidoSelecionado(null);
+      setDetalhesPedido(null);
+      setPedidoAtivo(null);
+      
+      // Garantir que pedidosIds seja um array válido
+      const idsValidos = Array.isArray(pedidosIds) ? pedidosIds : [];
+      
+      if (idsValidos.length === 0) {
+        setPedidosAgrupados({});
+        setLoading(false);
+        return;
+      }
+      
+      // Buscar pedidos diretamente pelos IDs para garantir que todos sejam encontrados
+      const token = typeof window !== 'undefined' ? localStorage.getItem('JWT_TOKEN') : null;
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+      
+      // Buscar cada pedido individualmente pelos IDs com timeout
+      // Limitar a 50 pedidos para evitar sobrecarga
+      const idsLimitados = idsValidos.slice(0, 50);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 5000)
+      );
+      
+      const promessasPedidos = idsLimitados.map(async (id) => {
+        try {
+          const response = await Promise.race([
+            axiosApi.get(`/resumo-pedido/${id}`, { ...config, timeout: 5000 }),
+            timeoutPromise
+          ]);
+          return response.data;
+        } catch (error) {
+          console.warn(`Erro ao buscar pedido ${id}:`, error.message || error);
+          return null;
+        }
+      });
+      
+      const pedidosEncontrados = await Promise.allSettled(promessasPedidos).then(results =>
+        results.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean)
+      );
+      const pedidosFiltrados = pedidosEncontrados.filter(p => 
+        p !== null && (p.status === "PENDENTE" || p.status === "PAGO")
+      );
+
+      const agrupados = {};
+
+      // Processar todos os pedidos encontrados usando Promise.all para processar em paralelo
+      // Filtrar apenas pedidos válidos com pedidoBoloId
+      const pedidosValidos = pedidosFiltrados.filter(pedido => 
+        pedido && pedido.pedidoBoloId
+      );
+      
+      // Limitar a 30 pedidos para processar detalhes (evitar sobrecarga)
+      const pedidosParaProcessar = pedidosValidos.slice(0, 30);
+      const timeoutDetalhes = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 5000)
+      );
+      
+      const promessasDetalhes = pedidosParaProcessar.map(async (pedido) => {
+        try {
+          const detalhes = await Promise.race([
+            orderCakeDetails(pedido.pedidoBoloId),
+            timeoutDetalhes
+          ]);
+          const tamanho = detalhes.tamanho || "TAMANHO_11";
+          
+          // Buscar informações do cliente e valor do pedido
+          const nomeCliente = detalhes.nomeCliente || pedido.nomeCliente || "Cliente";
+          const telefone = detalhes.telefone || pedido.telefone || "";
+          const tipoEntrega = detalhes.tipoEntrega || pedido.tipoEntrega || "RETIRADA";
+          const valor = pedido.valor || 0;
+          
+          return {
+            pedido,
+            detalhes,
+            tamanho,
+            nomeCliente,
+            telefone,
+            tipoEntrega,
+            valor
+          };
+        } catch (error) {
+          console.warn(`Erro ao buscar detalhes do pedido ${pedido.id}:`, error.message || error);
+          return null;
+        }
+      });
+
+      // Aguardar todos os detalhes serem buscados com Promise.allSettled para não falhar tudo se um falhar
+      const resultados = await Promise.allSettled(promessasDetalhes).then(results =>
+        results.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean)
+      );
+      
+      // Filtrar resultados nulos e agrupar por tamanho
+      const resultadosValidos = resultados.filter(r => r !== null);
+      
+      resultadosValidos.forEach((resultado) => {
+        const { pedido, detalhes, tamanho, nomeCliente, telefone, tipoEntrega, valor } = resultado;
+        
+        if (!agrupados[tamanho]) {
+          agrupados[tamanho] = [];
+        }
+        
+        // Adicionar cada pedido ao array do tamanho correspondente
+        agrupados[tamanho].push({
+          ...pedido,
+          detalhes,
+          nomeCliente,
+          telefone,
+          tipoEntrega,
+          valorTotal: valor
+        });
+      });
+
+      // Ordenar os tamanhos numericamente
+      const agrupadosOrdenados = {};
+      const tamanhosOrdenados = Object.keys(agrupados).sort((a, b) => {
+        const numA = extrairNumeroTamanho(a);
+        const numB = extrairNumeroTamanho(b);
+        return numA - numB;
+      });
+      
+      tamanhosOrdenados.forEach(tamanho => {
+        agrupadosOrdenados[tamanho] = agrupados[tamanho];
+      });
+
+      setPedidosAgrupados(agrupadosOrdenados);
+    } catch (error) {
+      console.warn("Erro ao carregar pedidos:", error);
+      setPedidosAgrupados({});
+    } finally {
+      setLoading(false);
+      carregandoRef.current = false;
+    }
+  };
+
   useEffect(() => {
     // Evita carregar múltiplas vezes com os mesmos IDs ou se já está carregando
     if (carregandoRef.current) {
@@ -34,78 +183,6 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
       pedidosIdsRef.current = pedidosIdsString;
       carregouRef.current = true;
       carregandoRef.current = true;
-
-  const loadPedidos = async () => {
-    try {
-      setLoading(true);
-      const todosPedidos = await orderSummary();
-      const pedidosFiltrados = todosPedidos.filter((p) => pedidosIds.includes(p.id) && p.status === "PENDENTE");
-
-      const agrupados = {};
-
-      for (const pedido of pedidosFiltrados) {
-        if (pedido.pedidoBoloId) {
-          try {
-            const detalhes = await orderCakeDetails(pedido.pedidoBoloId);
-            const tamanho = detalhes.tamanho || "Não especificado";
-            
-            if (!agrupados[tamanho]) {
-              agrupados[tamanho] = [];
-            }
-            
-            agrupados[tamanho].push({
-              ...pedido,
-              detalhes
-            });
-          } catch (error) {
-            console.warn("Erro ao buscar detalhes do pedido:", error);
-          }
-        }
-      }
-
-      setPedidosAgrupados(agrupados);
-    } catch (error) {
-      console.warn("Erro ao carregar pedidos:", error);
-      setPedidosAgrupados({
-        "11": [
-          {
-            id: 1,
-            nomeCliente: "Raíne Neres Teixeira Jardim",
-            telefone: "+55 (11) 968090-282",
-            tipoEntrega: "Retirada",
-            valorTotal: 999.99
-          },
-          {
-            id: 2,
-            nomeCliente: "Raíne Neres Teixeira Jardim",
-            telefone: "+55 (11) 968090-282",
-            tipoEntrega: "Retirada",
-            valorTotal: 999.99
-          },
-          {
-            id: 3,
-            nomeCliente: "Raíne Neres Teixeira Jardim",
-            telefone: "+55 (11) 968090-282",
-            tipoEntrega: "Retirada",
-            valorTotal: 999.99
-          }
-        ],
-        "13": [
-          {
-            id: 4,
-            nomeCliente: "Raíne Neres Teixeira Jardim",
-            telefone: "+55 (11) 968090-282",
-            tipoEntrega: "Retirada",
-            valorTotal: 999.99
-          }
-        ]
-      });
-    } finally {
-      setLoading(false);
-      carregandoRef.current = false;
-    }
-  };
-      
       loadPedidos();
     } else if (!isOpen) {
       // Reset quando o modal fecha
@@ -113,12 +190,27 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
       pedidosIdsRef.current = null;
       carregandoRef.current = false;
       setPedidosAgrupados({});
+      setModalDetalhesOpen(false);
+      setPedidoSelecionado(null);
+      setDetalhesPedido(null);
+      setPedidoAtivo(null);
       setLoading(false);
     }
   }, [isOpen, pedidosIdsString]);
 
   const formatarTelefone = (telefone) => {
     if (!telefone) return "";
+    // Remove todos os caracteres não numéricos
+    const cleaned = telefone.replace(/\D/g, "");
+    
+    // Formata para (XX) XXXXX-XXXX (11 dígitos) ou (XX) XXXX-XXXX (10 dígitos)
+    if (cleaned.length === 11) {
+      return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
+    }
+    if (cleaned.length === 10) {
+      return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`;
+    }
+    // Se não tiver 10 ou 11 dígitos, retorna como está
     return telefone;
   };
 
@@ -131,14 +223,7 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
 
   const formatarTelefoneCompleto = (telefone) => {
     if (!telefone) return "";
-    const cleaned = telefone.replace(/\D/g, "");
-    if (cleaned.length === 11) {
-      return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
-    }
-    if (cleaned.length === 10) {
-      return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`;
-    }
-    return telefone;
+    return formatBrazilianPhone(telefone) || telefone;
   };
 
   const formatarData = (dataString) => {
@@ -204,6 +289,20 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
   };
 
   const getTamanhoTexto = (tamanho) => {
+    if (!tamanho) return "Não especificado";
+    
+    // Se já está no formato "11cm", retornar como está
+    if (tamanho.includes("cm")) {
+      return tamanho;
+    }
+    
+    // Extrair número do tamanho (ex: "TAMANHO_17" -> "17cm")
+    const numero = extrairNumeroTamanho(tamanho);
+    if (numero > 0) {
+      return `${numero}cm`;
+    }
+    
+    // Fallback para mapeamento direto
     const tamanhos = {
       "TAMANHO_5": "5cm",
       "TAMANHO_7": "7cm",
@@ -225,11 +324,21 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
     return formatos[formato] || formato;
   };
 
+  const handleBackdropClick = (e) => {
+    // Fechar apenas se clicar no backdrop (não nos elementos filhos)
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black bg-opacity-60 flex justify-center items-center p-5 overflow-auto">
-      <div className="flex gap-4 items-start flex-shrink-0">
+    <div 
+      className="fixed inset-0 z-[9999] bg-black bg-opacity-60 flex justify-center items-center p-5 overflow-auto"
+      onClick={handleBackdropClick}
+    >
+      <div className="flex gap-4 items-start flex-shrink-0" onClick={(e) => e.stopPropagation()}>
         <div className="bg-bgHome border-2 border-gold rounded-xl w-[352px] h-[740px] flex flex-col shadow-xl overflow-hidden">
         <header className="bg-gradient-to-b from-[#1C3B57] to-[#0F2A3D] px-4 py-3 flex items-center justify-center rounded-t-xl relative">
           <h2 className="text-sm font-bold font-montserrat text-gold text-center">{nome}</h2>
@@ -254,7 +363,7 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
             Object.entries(pedidosAgrupados).map(([tamanho, pedidos]) => (
               <div key={tamanho} className="mb-3">
                 <h3 className="text-xs font-bold text-darkBlue mb-2 text-center">
-                  Pedidos de {tipo} - Tamanho {tamanho}
+                  Pedidos de {tipo} - Tamanho {getTamanhoTexto(tamanho)}
                 </h3>
                 <div className="space-y-2">
                   {pedidos.map((pedido, index) => (
@@ -264,16 +373,19 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
                     >
                       <div className="flex-1 min-w-0">
                         <div className="font-bold text-darkBlue text-sm mb-1">
-                          {pedido.nomeCliente || "Cliente"}
+                          {pedido.nomeCliente || pedido.detalhes?.nomeCliente || "Cliente"}
                         </div>
                         <div className="text-xs text-darkBlue mb-0.5">
-                          {formatarTelefone(pedido.telefone)}
+                          {formatarTelefone(pedido.telefone || pedido.detalhes?.telefone || "")}
                         </div>
                         <div className="text-xs text-darkBlue mb-0.5">
-                          {pedido.tipoEntrega || "Retirada"}
+                          {pedido.tipoEntrega === "ENTREGA" ? "Entrega" : 
+                           pedido.tipoEntrega === "RETIRADA" ? "Retirada" : 
+                           pedido.detalhes?.tipoEntrega === "ENTREGA" ? "Entrega" :
+                           pedido.detalhes?.tipoEntrega === "RETIRADA" ? "Retirada" : "Retirada"}
                         </div>
                         <div className="text-xs font-semibold text-darkBlue">
-                          {formatarValor(pedido.valorTotal)}
+                          {formatarValor(pedido.valorTotal || pedido.valor || 0)}
                         </div>
                       </div>
                       <button

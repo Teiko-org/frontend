@@ -11,6 +11,7 @@ import {
   getPedidosProximosEntrega,
   getMassasMaisPedidasPorMes,
 } from "../../service/producaoService";
+import { formatBrazilianPhone } from "../../utils/phoneValidation";
 
 const ClipboardIcon = () => (
   <svg width="30" height="32" viewBox="0 0 30 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -28,22 +29,13 @@ const ClipboardIcon = () => (
 export default function Producao() {
   const [massasPendentes, setMassasPendentes] = useState([]);
   const [recheiosPendentes, setRecheiosPendentes] = useState([]);
-  const [pedidosProximos, setPedidosProximos] = useState([
-    {
-      id: 1,
-      nomeCliente: "Raíne Neres Teixeira Jardim",
-      telefone: "+55 (11) 968090-282",
-      tipoEntrega: "Retirada",
-      valorTotal: 999.99,
-      dataEntrega: "2025-10-26"
-    }
-  ]);
+  const [pedidosProximos, setPedidosProximos] = useState([]);
   const [dadosGrafico, setDadosGrafico] = useState({
     labels: [],
     serie: [],
     massaSelecionada: "Cacau Expresso"
   });
-  const [anoSelecionado, setAnoSelecionado] = useState(2025);
+  const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
   const [tipoGrafico, setTipoGrafico] = useState("Massas");
   const [loading, setLoading] = useState(true);
   const [modalPedidosOpen, setModalPedidosOpen] = useState(false);
@@ -54,26 +46,51 @@ export default function Producao() {
     const load = async () => {
       try {
         setLoading(true);
-        const [massas, recheios, grafico] = await Promise.all([
-          getPedidosPendentesPorMassa().catch(() => []),
-          getPedidosPendentesPorRecheio().catch(() => []),
-          getMassasMaisPedidasPorMes(anoSelecionado).catch(() => ({
-            labels: [],
-            serie: [],
-            massaSelecionada: "Cacau Expresso"
-          })),
-        ]);
+        
+        // Timeout de segurança de 15 segundos
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout ao carregar dados')), 15000)
+        );
+        
+        const [massas, recheios, pedidos, grafico] = await Promise.race([
+          Promise.all([
+            getPedidosPendentesPorMassa().catch(() => []),
+            getPedidosPendentesPorRecheio().catch(() => []),
+            getPedidosProximosEntrega(7).catch(() => []),
+            getMassasMaisPedidasPorMes(anoSelecionado, tipoGrafico).catch(() => ({
+              labels: [],
+              serie: [],
+              massaSelecionada: tipoGrafico === "Massas" ? "Cacau Expresso" : tipoGrafico === "Recheios" ? "Brigadeiro" : "Decoração"
+            })),
+          ]),
+          timeoutPromise
+        ]).catch(() => [[], [], [], {
+          labels: [],
+          serie: [],
+          massaSelecionada: tipoGrafico === "Massas" ? "Cacau Expresso" : tipoGrafico === "Recheios" ? "Brigadeiro" : "Decoração"
+        }]);
+        
         setMassasPendentes(massas);
         setRecheiosPendentes(recheios);
+        setPedidosProximos(pedidos);
         setDadosGrafico(grafico);
       } catch (error) {
         console.warn("Erro ao carregar dados de produção:", error);
+        // Garantir que os estados sejam definidos mesmo em caso de erro
+        setMassasPendentes([]);
+        setRecheiosPendentes([]);
+        setPedidosProximos([]);
+        setDadosGrafico({
+          labels: [],
+          serie: [],
+          massaSelecionada: tipoGrafico === "Massas" ? "Cacau Expresso" : tipoGrafico === "Recheios" ? "Brigadeiro" : "Decoração"
+        });
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, [anoSelecionado]);
+  }, [anoSelecionado, tipoGrafico]);
 
   const formatarData = (dataString) => {
     if (!dataString) return "";
@@ -86,11 +103,7 @@ export default function Producao() {
 
   const formatarTelefone = (telefone) => {
     if (!telefone) return "";
-    const cleaned = telefone.replace(/\D/g, "");
-    if (cleaned.length === 11) {
-      return `+55 (${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`;
-    }
-    return telefone;
+    return formatBrazilianPhone(telefone) || telefone;
   };
 
   const formatarValor = (valor) => {
@@ -281,7 +294,7 @@ export default function Producao() {
                   {pedidosProximos.length === 0 ? (
                     <div className="text-gray-500 text-sm">Nenhum pedido próximo da entrega</div>
                   ) : (
-                    pedidosProximos.slice(0, 1).map((pedido) => (
+                    pedidosProximos.slice(0, 5).map((pedido) => (
                       <div key={pedido.id} className="bg-[#F6EFE4] border border-gold rounded-xl p-3">
                         <div className="flex items-start justify-between mb-2">
                           <div className="font-semibold text-darkBlue">{pedido.nomeCliente || "Cliente"}</div>
@@ -305,20 +318,26 @@ export default function Producao() {
                     ))
                   )}
                 </div>
-                <button
-                  onClick={() => navigate("/dashboard-kanban-pedidos")}
-                  className="mt-4 w-full bg-white border border-gold rounded-lg px-3 py-2 text-sm font-bold text-gold font-montserrat hover:bg-bgNativeHome transition-colors"
-                >
-                  Ver Outros 99 Pedidos
-                </button>
+                {pedidosProximos.length > 5 && (
+                  <button
+                    onClick={() => navigate("/dashboard-kanban-pedidos")}
+                    className="mt-4 w-full bg-white border border-gold rounded-lg px-3 py-2 text-sm font-bold text-gold font-montserrat hover:bg-bgNativeHome transition-colors"
+                  >
+                    Ver Outros {pedidosProximos.length - 5} Pedidos
+                  </button>
+                )}
               </div>
             </div>
 
             <div className="w-[92%] border-2 border-gold rounded-xl overflow-hidden mb-6">
               <div className="bg-gradient-to-b from-[#1C3B57] to-[#0F2A3D] text-gold px-5 py-3 flex items-center justify-between">
                 <div>
-                  <div className="text-xl font-bold tracking-wide">Massas Mais Pedidas Por Mês - {anoSelecionado}</div>
-                  <div className="text-[11px] opacity-90">Lorem ipsum dolor sit amet, consectetur</div>
+                  <div className="text-xl font-bold tracking-wide">
+                    {tipoGrafico === "Massas" ? "Massas" : tipoGrafico === "Recheios" ? "Recheios" : "Decorações"} Mais Pedidas Por Mês - {anoSelecionado}
+                  </div>
+                  <div className="text-[11px] opacity-90">
+                    {dadosGrafico.massaSelecionada && `Item mais pedido: ${dadosGrafico.massaSelecionada}`}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <select
@@ -334,9 +353,9 @@ export default function Producao() {
                     value={anoSelecionado}
                     onChange={(e) => setAnoSelecionado(Number(e.target.value))}
                   >
-                    <option value={2024}>2024</option>
-                    <option value={2025}>2025</option>
-                    <option value={2026}>2026</option>
+                    {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map((ano) => (
+                      <option key={ano} value={ano}>{ano}</option>
+                    ))}
                   </select>
                 </div>
               </div>

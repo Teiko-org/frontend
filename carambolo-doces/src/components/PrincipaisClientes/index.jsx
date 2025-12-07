@@ -71,7 +71,7 @@ function PrincipaisClientes() {
         {clientes.length > 0 ? (
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             {clientes.map((cliente, index) => (
-              <div key={index} className="bg-bgHome border border-gold/40 rounded-lg p-3 mb-2 last:mb-0">
+              <div key={index} className="bg-bgHome border border-gold/40 rounded-lg py-2 px-0 mx-1 mb-2 last:mb-0">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-pink-200 rounded-full flex items-center justify-center">
                     <div className="w-8 h-8 bg-pink-100 rounded-full flex items-center justify-center">

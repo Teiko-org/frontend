@@ -42,6 +42,7 @@ export const axiosApi = axios.create({
         "Content-Type": "application/json",
     },
     withCredentials: true,
+    timeout: 10000, // Timeout padrão de 10 segundos
 })
 
 // Interceptor para configurar cookies corretamente

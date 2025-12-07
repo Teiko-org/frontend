@@ -9,6 +9,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { login, getUserData } from "../../service/userService";
 import { useCart } from "../../contexts/CartContext";
 import PhoneInputLogin from "../PhoneInput/PhoneInputLogin";
+import { validateBrazilianPhone } from "../../utils/phoneValidation";
 
 function LoginModal({ onClose }) {
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm();
@@ -57,11 +58,17 @@ function LoginModal({ onClose }) {
             <div className="flex flex-col gap-1">
               <label htmlFor="phone" className="text-white">Telefone Celular</label>
               <PhoneInputLogin
-                {...register("phone", { required: "Telefone é obrigatório" })}
+                {...register("phone", { 
+                  required: "Telefone é obrigatório",
+                  validate: (value) => {
+                    const validation = validateBrazilianPhone(value, { allowCountryCode: true, requireMobile: true });
+                    return validation.valid || validation.error || "Telefone inválido";
+                  }
+                })}
                 value={phoneValue}
                 onChange={(value) => {
                   setPhoneValue(value);
-                  setValue('phone', value);
+                  setValue('phone', value, { shouldValidate: true });
                 }}
                 placeholder="(XX) XXXXX-XXXX"
                 className={`w-full py-2 px-4 rounded-lg ${errors.phone ? 'mb-1' : ''}`}
