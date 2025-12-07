@@ -350,13 +350,17 @@ export default function CartPage() {
                   fontSize="text-xs"
                   className="py-1 px-2.5"
                   onClick={() => {
-                    const selecionadosMarcados = localItems.filter((it) => selectedIds[`${it.type}-${it.id}`]);
-                    let itensParaPagar = selecionadosMarcados.length > 0 ? selecionadosMarcados : localItems;
-
-                    itensParaPagar = itensParaPagar.filter(item => {
+                    // "Confirmar todos" ignora checkboxes e pega todos os itens disponíveis
+                    let itensParaPagar = localItems.filter(item => {
+                      // Filtrar apenas itens de fornada disponíveis
                       if (item.type === 'Fornada' && item.fornadaDaVezId) {
                         const status = produtosStatus[item.fornadaDaVezId];
+                        // Se o status foi verificado e não está disponível, remover
                         if (status !== undefined && !status.disponivel) {
+                          return false;
+                        }
+                        // Se não tem fornadaDaVezId válido, remover
+                        if (!item.fornadaDaVezId) {
                           return false;
                         }
                       }
