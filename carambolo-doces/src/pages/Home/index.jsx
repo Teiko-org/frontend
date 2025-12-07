@@ -103,23 +103,45 @@ function Home() {
         try {
           const { axiosApi } = await import("../../provider/AxiosApi");
           const { data: todosDetalhes } = await axiosApi.get('/bolos/detalhe');
-          const enriquecidos = await Promise.all(
-            apenasBolos.map(async (p) => {
-              try {
-                const detalheBolo = todosDetalhes.find((d) => d.boloId === p.id);
-                const categoria = detalheBolo?.categoria;
-                const decoracaoId = detalheBolo?.decoracaoId;
-                if (decoracaoId) {
-                  const { data: decoracao } = await axiosApi.get(`/decoracoes/${decoracaoId}`);
-                  const imagemUrl = decoracao?.imagens?.[0];
-                  return { ...p, imagens: [imagemUrl || p.imagens?.[0]], categoria };
-                }
-                return { ...p, categoria };
-              } catch {
-                return null;
+          
+          // Coletar todos os IDs de decoração únicos
+          const decoracaoIds = [...new Set(
+            apenasBolos
+              .map(p => {
+                const detalhe = todosDetalhes.find((d) => d.boloId === p.id);
+                return detalhe?.decoracaoId;
+              })
+              .filter(Boolean)
+          )];
+          
+          // Buscar todas as decorações de uma vez em paralelo
+          const decoracoesMap = new Map();
+          if (decoracaoIds.length > 0) {
+            const decoracoesPromises = decoracaoIds.map(id => 
+              axiosApi.get(`/decoracoes/${id}`).then(r => [id, r.data]).catch(() => [id, null])
+            );
+            const decoracoesResults = await Promise.all(decoracoesPromises);
+            decoracoesResults.forEach(([id, data]) => {
+              if (data) decoracoesMap.set(id, data);
+            });
+          }
+          
+          // Enriquecer os bolos usando o mapa de decorações
+          const enriquecidos = apenasBolos.map((p) => {
+            try {
+              const detalheBolo = todosDetalhes.find((d) => d.boloId === p.id);
+              const categoria = detalheBolo?.categoria;
+              const decoracaoId = detalheBolo?.decoracaoId;
+              if (decoracaoId && decoracoesMap.has(decoracaoId)) {
+                const decoracao = decoracoesMap.get(decoracaoId);
+                const imagemUrl = decoracao?.imagens?.[0];
+                return { ...p, imagens: [imagemUrl || p.imagens?.[0]], categoria };
               }
-            })
-          );
+              return { ...p, categoria };
+            } catch {
+              return p;
+            }
+          });
           setCarambolosMaisPedidos(enriquecidos.filter(Boolean));
         } catch {
           setCarambolosMaisPedidos(apenasBolos);
@@ -147,23 +169,45 @@ function Home() {
 
         const { axiosApi } = await import("../../provider/AxiosApi");
         const { data: todosDetalhes } = await axiosApi.get('/bolos/detalhe');
-        const enriquecidos = await Promise.all(
-          apenasBolos.map(async (p) => {
-            try {
-              const detalheBolo = todosDetalhes.find((d) => d.boloId === p.id);
-              const categoria = detalheBolo?.categoria;
-              const decoracaoId = detalheBolo?.decoracaoId;
-              if (decoracaoId) {
-                const { data: decoracao } = await axiosApi.get(`/decoracoes/${decoracaoId}`);
-                const imagemUrl = decoracao?.imagens?.[0];
-                return { ...p, imagens: [imagemUrl || p.imagens?.[0]], categoria };
-              }
-              return { ...p, categoria };
-            } catch {
-              return null;
+        
+        // Coletar todos os IDs de decoração únicos
+        const decoracaoIds = [...new Set(
+          apenasBolos
+            .map(p => {
+              const detalhe = todosDetalhes.find((d) => d.boloId === p.id);
+              return detalhe?.decoracaoId;
+            })
+            .filter(Boolean)
+        )];
+        
+        // Buscar todas as decorações de uma vez em paralelo
+        const decoracoesMap = new Map();
+        if (decoracaoIds.length > 0) {
+          const decoracoesPromises = decoracaoIds.map(id => 
+            axiosApi.get(`/decoracoes/${id}`).then(r => [id, r.data]).catch(() => [id, null])
+          );
+          const decoracoesResults = await Promise.all(decoracoesPromises);
+          decoracoesResults.forEach(([id, data]) => {
+            if (data) decoracoesMap.set(id, data);
+          });
+        }
+        
+        // Enriquecer os bolos usando o mapa de decorações
+        const enriquecidos = apenasBolos.map((p) => {
+          try {
+            const detalheBolo = todosDetalhes.find((d) => d.boloId === p.id);
+            const categoria = detalheBolo?.categoria;
+            const decoracaoId = detalheBolo?.decoracaoId;
+            if (decoracaoId && decoracoesMap.has(decoracaoId)) {
+              const decoracao = decoracoesMap.get(decoracaoId);
+              const imagemUrl = decoracao?.imagens?.[0];
+              return { ...p, imagens: [imagemUrl || p.imagens?.[0]], categoria };
             }
-          })
-        );
+            return { ...p, categoria };
+          } catch {
+            return p;
+          }
+        });
         setCarambolosMaisPedidos(enriquecidos.filter(Boolean));
       } catch {}
     };
