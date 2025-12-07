@@ -31,6 +31,24 @@ const toastStyles = `
     background: #EF4444 !important;
     color: white !important;
   }
+  .Toastify__toast {
+    animation: Toastify__slideInRight 0.3s ease-out, Toastify__slideOutRight 0.3s ease-in !important;
+  }
+  .Toastify__toast--rtl {
+    animation: Toastify__slideInLeft 0.3s ease-out, Toastify__slideOutLeft 0.3s ease-in !important;
+  }
+  .Toastify__toast-body {
+    margin: auto 0;
+    flex: 1 1 auto;
+  }
+  .Toastify__close-button {
+    color: #fff;
+    opacity: 0.7;
+    cursor: pointer;
+  }
+  .Toastify__close-button:hover {
+    opacity: 1;
+  }
 `;
 
 // Adicionar estilos ao head
@@ -52,17 +70,17 @@ function App() {
       </ServerIdProvider>
       <ToastContainer
         position="top-right"
-        autoClose={5000}
+        autoClose={3000}
         hideProgressBar={false}
         newestOnTop={true}
-        closeOnClick
+        closeOnClick={true}
         rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
+        pauseOnFocusLoss={false}
+        draggable={false}
+        pauseOnHover={false}
         theme="colored"
         enableMultiContainer={false}
-        limit={3}
+        limit={5}
         closeButton={true}
       />
     </BrowserRouter>
