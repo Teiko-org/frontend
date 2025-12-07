@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, useRef } from "react";
 import { FormContext } from "../../contexts/FormContext";
 import { useFormContext, Controller } from "react-hook-form";
 import Button from "../../components/Button";
@@ -10,6 +10,8 @@ import { validateBrazilianPhone } from "../../utils/phoneValidation";
 import CampoComGradiente from "../../components/gradientField";
 import { searchAddressByCep } from "../../service/viaCepService";
 import { listUserAddresses } from "../../service/addressService";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const Step4 = () => {
   const { nextStep, prevStep, appendFormData, valorEstimado } = useContext(FormContext);
@@ -25,6 +27,7 @@ const Step4 = () => {
   const [userAddresses, setUserAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState("");
   const isSignedIn = !!localStorage.getItem("IS_SIGNED");
+  const cepErrorShownRef = useRef(false);
 
   useEffect(() => {
     const loadAddresses = async () => {
@@ -94,17 +97,57 @@ const Step4 = () => {
     const formattedValue = formatCep(value);
     setValue("cep", formattedValue);
     clearErrors("cep");
-
     if (formattedValue.replace("-", "").length === 8) {
       fetchAddressByCep(formattedValue);
     } else {
+      // reset flag quando não está no comprimento válido
+      cepErrorShownRef.current = false;
       cleanAddressFields();
     }
   };
 
   const fetchAddressByCep = async (typedCep) => {
+    const onlyNumbers = typedCep.replace("-", "");
+    if (onlyNumbers.length !== 8) return;
+
+    try {
+      const { data } = await axios.get(`https://viacep.com.br/ws/${onlyNumbers}/json/`);
+      if (data?.erro) {
+        if (!cepErrorShownRef.current) {
+          toast.error("❌ CEP não encontrado!", { autoClose: 10000, hideProgressBar: false });
+          cepErrorShownRef.current = true;
+        }
+        cleanAddressFields();
+        setValue("cep", "");
+        return;
+      }
+      if ((data.uf || "").toUpperCase() !== "SP") {
+        if (!cepErrorShownRef.current) {
+          toast.error(
+            "Atendemos apenas regiões do estado de São Paulo. Por favor, digite um CEP do estado de SP para seguir com a entrega.",
+            { autoClose: 10000, hideProgressBar: false }
+          );
+          cepErrorShownRef.current = true;
+        }
+        cleanAddressFields();
+        setValue("cep", "");
+        return;
+      }
+    } catch (_) {
+      if (!cepErrorShownRef.current) {
+        toast.error("❌ Erro ao buscar CEP. Verifique a conexão!", { autoClose: 10000, hideProgressBar: false });
+        cepErrorShownRef.current = true;
+      }
+      cleanAddressFields();
+      setValue("cep", "");
+      return;
+    }
+
+    // CEP válido de SP: reset flag
+    cepErrorShownRef.current = false;
+
     await searchAddressByCep(
-      typedCep.replace("-", ""),
+      onlyNumbers,
       () => {
         setValue("estado", "SP");
       },
@@ -495,6 +538,12 @@ const Step4 = () => {
                   />
                 )}
               />
+            </div>
+            {/* Legenda dourada centralizada abaixo do COMPLEMENTO */}
+            <div className="col-span-12 flex justify-center mt-3 mb-0">
+              <span className="text-center text-gold font-medium text-sm">
+                As entregas são realizadas por parceiros terceirizados
+              </span>
             </div>
           </>
         )}

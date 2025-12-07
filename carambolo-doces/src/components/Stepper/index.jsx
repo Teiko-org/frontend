@@ -9,6 +9,8 @@ const steps = [
 ];
 
 const Stepper = ({ currentStep }) => {
+  const isLastStep = currentStep === steps.length - 1;
+
   return (
     <div className="flex flex-col items-end">
       {steps.map((step, index) => {
@@ -25,10 +27,14 @@ const Stepper = ({ currentStep }) => {
             <div className="flex flex-col items-center gap-2">
               <div
                 className={`flex-shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center ${
-                  isCurrent ? 'bg-pink border-blue' : 'bg-blue border-gold'
+                  isLastStep
+                    ? 'bg-pink border-blue'
+                    : isCurrent
+                      ? 'bg-pink border-blue'
+                      : 'bg-blue border-gold'
                 }`}
               >
-                {isCurrent && (
+                {isCurrent && !isLastStep && (
                   <div className="w-4 h-4 bg-pink rounded-full"></div>
                 )}
               </div>

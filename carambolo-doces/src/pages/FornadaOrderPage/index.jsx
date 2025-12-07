@@ -2,7 +2,7 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Button from "../../components/Button";
 import InputOption from "../../components/InputOption";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import CampoComGradiente from "../../components/gradientField";
 import PhoneInputCustom from "../../components/PhoneInput/PhoneInputCustom";
@@ -63,6 +63,8 @@ function FornadaOrderPage() {
     const [referencia, setReferencia] = useState("");
     const [dataEntrega, setDataEntrega] = useState("");
     const [horario, setHorario] = useState("");
+
+    const cepErrorShownRef = useRef(false);
 
     const getImagemPrincipal = () => {
         const normalizeImageUrl = (url) => {
@@ -165,6 +167,8 @@ function FornadaOrderPage() {
         if (cepWithoutMask.length === 8) {
             searchAddressByCep(formattedValue);
         } else {
+            // reset flag quando não está no comprimento válido
+            cepErrorShownRef.current = false;
             clearAddressFields();
         }
     };
@@ -182,16 +186,39 @@ function FornadaOrderPage() {
             );
 
             if (response.data && !response.data.erro) {
+                // Bloqueio de CEPs fora de SP
+                if ((response.data.uf || "").toUpperCase() !== "SP") {
+                    if (!cepErrorShownRef.current) {
+                        toast.error(
+                            "Atendemos apenas regiões do estado de São Paulo. Por favor, digite um CEP do estado de SP para seguir com a entrega.",
+                            { autoClose: 10000, hideProgressBar: false }
+                        );
+                        cepErrorShownRef.current = true;
+                    }
+                    clearAddressFields();
+                    setCep("");
+                    return;
+                }
+                // CEP válido de SP: reset flag
+                cepErrorShownRef.current = false;
                 setCidade(response.data.localidade || "");
                 setBairro(response.data.bairro || "");
                 setRua(response.data.logradouro || "");
             } else {
-                console.error("CEP não encontrado.");
+                if (!cepErrorShownRef.current) {
+                    toast.error("❌ CEP não encontrado!", { autoClose: 10000, hideProgressBar: false });
+                    cepErrorShownRef.current = true;
+                }
                 clearAddressFields();
+                setCep("");
             }
         } catch (error) {
-            console.error("Erro ao buscar o CEP:", error);
+            if (!cepErrorShownRef.current) {
+                toast.error("❌ Erro ao buscar CEP. Verifique a conexão!", { autoClose: 10000, hideProgressBar: false });
+                cepErrorShownRef.current = true;
+            }
             clearAddressFields();
+            setCep("");
         }
     };
 
@@ -643,6 +670,12 @@ function FornadaOrderPage() {
                                             onChange={e => setComplemento(e.target.value)}
                                             readOnly={selectedAddressId && selectedAddressId !== "novo"}
                                         />
+                                    </div>
+                                    {/* Legenda dourada centralizada abaixo do COMPLEMENTO */}
+                                    <div className="col-span-12 flex justify-center mt-4 mb-0">
+                                        <span className="text-center text-gold font-medium text-sm">
+                                            As entregas são realizadas por parceiros terceirizados
+                                        </span>
                                     </div>
                                 </>
                             )}

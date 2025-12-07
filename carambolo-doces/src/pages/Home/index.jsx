@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 
@@ -27,6 +27,8 @@ function Home() {
   const navigate = useNavigate();
   const location = useLocation();
   const searchQuery = new URLSearchParams(location.search).get('q')?.trim().toLowerCase() || '';
+  const carambolosRef = useRef(null);
+  const maisPedidosRef = useRef(null);
 
   useEffect(() => {
     const fetchDecoracoes = async () => {
@@ -293,13 +295,20 @@ function Home() {
           </div>
         ) : (
           <>
-            <div className="px-6">
-              <Carousel 
-                slides={slides} 
-                autoPlay 
-                interval={3500}
-                onSlideClick={handleTemaClick}
-              />
+            {/* Setas fora do carrossel */}
+            <div className="flex justify-between items-center px-4">
+              <ArrowButton direction="left" onClick={() => carambolosRef.current?.prev()} />
+              <div className="px-6 w-full">
+                <Carousel 
+                  ref={carambolosRef}
+                  slides={slides} 
+                  autoPlay 
+                  interval={3500}
+                  onSlideClick={handleTemaClick}
+                  hideInternalArrows={true}
+                />
+              </div>
+              <ArrowButton direction="right" onClick={() => carambolosRef.current?.next()} />
             </div>
             <div className="h-10"></div>
             <div className="flex justify-center">
@@ -338,13 +347,19 @@ function Home() {
           </div>
         ) : (
           <>
-            <div className="px-6">
-              <Carousel 
-                slides={slidesMaisPedidos} 
-                autoPlay 
-                interval={3500}
-                onSlideClick={handleMaisPedidosClick}
-              />
+            <div className="flex justify-between items-center px-4">
+              <ArrowButton direction="left" onClick={() => maisPedidosRef.current?.prev()} />
+              <div className="px-6 w-full">
+                <Carousel 
+                  ref={maisPedidosRef}
+                  slides={slidesMaisPedidos} 
+                  autoPlay 
+                  interval={3500}
+                  onSlideClick={handleMaisPedidosClick}
+                  hideInternalArrows={true}
+                />
+              </div>
+              <ArrowButton direction="right" onClick={() => maisPedidosRef.current?.next()} />
             </div>
             <div className="h-10"></div>
             <div className="flex justify-center">
@@ -409,6 +424,8 @@ function Home() {
             <p className="text-xl text-gray-600">Nenhum resultado para "{searchQuery}"</p>
           </div>
         </section>
+
+        
       )}
       </main>
       <Footer />
