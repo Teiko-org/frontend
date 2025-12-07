@@ -1,5 +1,5 @@
 import { axiosApi } from "../../provider/AxiosApi";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import orderSummary from "../../services/orderSummary";
 import orderCakeDetails from "../../service/orderCakeDetails";
 
@@ -27,30 +27,6 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
     const match = tamanho.match(/\d+/);
     return match ? parseInt(match[0], 10) : 0;
   };
-
-  useEffect(() => {
-    if (isOpen && pedidosIds && pedidosIds.length > 0) {
-      loadPedidos();
-    } else if (!isOpen) {
-      // Resetar estados quando o modal fecha
-      setPedidosAgrupados({});
-      setModalDetalhesOpen(false);
-      setPedidoSelecionado(null);
-      setDetalhesPedido(null);
-      setPedidoAtivo(null);
-    // Evita carregar múltiplas vezes com os mesmos IDs ou se já está carregando
-    if (carregandoRef.current) {
-      return;
-    }
-    
-    if (pedidosIdsString === pedidosIdsRef.current && carregouRef.current) {
-      return;
-    }
-
-    if (isOpen && pedidosIds && pedidosIds.length > 0) {
-      pedidosIdsRef.current = pedidosIdsString;
-      carregouRef.current = true;
-      carregandoRef.current = true;
 
   const loadPedidos = async () => {
     try {
@@ -169,7 +145,21 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
       carregandoRef.current = false;
     }
   };
-      
+
+  useEffect(() => {
+    // Evita carregar múltiplas vezes com os mesmos IDs ou se já está carregando
+    if (carregandoRef.current) {
+      return;
+    }
+    
+    if (pedidosIdsString === pedidosIdsRef.current && carregouRef.current) {
+      return;
+    }
+
+    if (isOpen && pedidosIds && pedidosIds.length > 0) {
+      pedidosIdsRef.current = pedidosIdsString;
+      carregouRef.current = true;
+      carregandoRef.current = true;
       loadPedidos();
     } else if (!isOpen) {
       // Reset quando o modal fecha
@@ -177,6 +167,10 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
       pedidosIdsRef.current = null;
       carregandoRef.current = false;
       setPedidosAgrupados({});
+      setModalDetalhesOpen(false);
+      setPedidoSelecionado(null);
+      setDetalhesPedido(null);
+      setPedidoAtivo(null);
       setLoading(false);
     }
   }, [isOpen, pedidosIdsString]);
