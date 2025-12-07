@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { IoLogoWhatsapp } from "react-icons/io";
 import { FaInstagram, FaTiktok, FaMapMarkerAlt } from "react-icons/fa";
+import logoFooter from "../../assets/logo_footer.png";
 
 function Footer() {
   return (
@@ -9,7 +10,7 @@ function Footer() {
       <div className="container mx-auto flex justify-between items-start px-6 space-x-12">
         <div className="flex items-start">
           <img
-            src="src/assets/logo_footer.png"
+            src={logoFooter}
             alt="Logo do Footer"
             className=""
           />
