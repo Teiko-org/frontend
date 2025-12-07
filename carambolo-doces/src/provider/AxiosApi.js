@@ -69,9 +69,15 @@ axiosApi.interceptors.request.use(
     }
 )
 
-// Interceptor para lidar com erros de autenticação
+// Interceptor para capturar Server ID e lidar com erros de autenticação
 axiosApi.interceptors.response.use(
     (response) => {
+        // Captura o header X-Server-Id se presente
+        const serverId = response.headers['x-server-id'];
+        if (serverId) {
+            // Dispara evento customizado para o contexto capturar
+            window.dispatchEvent(new CustomEvent('serverIdUpdate', { detail: serverId }));
+        }
         return response;
     },
     (error) => {

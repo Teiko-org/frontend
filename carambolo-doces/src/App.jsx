@@ -6,6 +6,8 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ScrollToTop from "./components/ScrollToTop";
 import { CartProvider } from "./contexts/CartContext";
+import { ServerIdProvider } from "./contexts/ServerIdContext";
+import ServerIndicator from "./components/ServerIndicator";
 
 // CSS para garantir que os toasts apareçam acima de modais
 const toastStyles = `
@@ -41,10 +43,13 @@ if (typeof document !== 'undefined') {
 function App() {
   return (
     <BrowserRouter>
-      <CartProvider>
-        <ScrollToTop />
-        <AppRoutes />
-      </CartProvider>
+      <ServerIdProvider>
+        <CartProvider>
+          <ScrollToTop />
+          <ServerIndicator />
+          <AppRoutes />
+        </CartProvider>
+      </ServerIdProvider>
       <ToastContainer
         position="top-right"
         autoClose={5000}
