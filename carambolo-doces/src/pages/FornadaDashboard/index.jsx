@@ -116,10 +116,10 @@ function FornadaDashboard() {
     try {
       const produtosFornada = await getProdutosPorFornadaId(fornadaParaEditar.id);
       const produtosSelecionados = (produtosFornada || [])
-        .filter(produto => produto.id && produto.fornadaDaVezId)
+        .filter(produto => produto.id && produto.fornadaDaVezId && (produto.quantidade || produto.quantidadeTotal || 0) > 0)
         .map(produto => ({
           id: produto.id,
-          quantidade: produto.quantidade || 1
+          quantidade: produto.quantidadeTotal || produto.quantidade || 1
         }));
       localStorage.setItem("selectedProducts", JSON.stringify(produtosSelecionados));
 
@@ -287,7 +287,12 @@ function FornadaDashboard() {
         localStorage.getItem("selectedProducts") || "[]"
       );
 
-      if (!selectedProductsJson.length) {
+      // Filtrar apenas produtos com quantidade > 0 e com ID válido
+      const produtosValidos = selectedProductsJson.filter(
+        (produto) => produto.id && produto.quantidade > 0
+      );
+
+      if (!produtosValidos.length) {
         toast.error("Nenhum produto selecionado!");
         return;
       }
@@ -295,7 +300,7 @@ function FornadaDashboard() {
       toast.info("Adicionando produtos à fornada...");
 
       const responses = await Promise.all(
-        selectedProductsJson.map((produto) =>
+        produtosValidos.map((produto) =>
           fornadaDaVezService({
             fornadaId: idFornada,
             produtoFornadaId: produto.id,
