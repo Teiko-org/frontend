@@ -127,7 +127,7 @@ const BannerFornada = ({ fornada }) => {
       className="relative h-[150px] w-full bg-cover bg-center m-auto items-end"
       style={{ backgroundImage: `url(${bannerFornada})` }}
     >
-      <div className="flex justify-between h-full w-full items-center justify-end pl-[350px] pr-[70px]">
+      <div className="flex justify-between h-full w-full items-center pl-[350px] pr-[70px]">
         <div className="text-white flex flex-col w-1/2 mx-auto justify-center">
           <h2 className="text-xl font-bold mb-3 text-pink">Fornada</h2>
           {(() => {
@@ -135,7 +135,9 @@ const BannerFornada = ({ fornada }) => {
               return (
                 <>
                   <p className="mb-2">Nova fornada chegando em breve!</p>
-                  <p className="mb-2">Inicia em {formatStartDate()} até {formatEndDate()}</p>
+                  <p className="mb-2">
+                    Inicia em {formatStartDate()} e vai até {formatEndDate()} (fim da sessão de fornadas)
+                  </p>
                 </>
               );
             }
@@ -143,7 +145,9 @@ const BannerFornada = ({ fornada }) => {
               return (
                 <>
                   <p className="mb-2">Aproveite a nossa Fornada com doces exclusivos!</p>
-                  <p>Disponível por tempo limitado até {formatEndDate()}</p>
+                  <p>
+                    Disponível por tempo limitado até {formatEndDate()} (fim da sessão de fornadas)
+                  </p>
                 </>
               );
             }

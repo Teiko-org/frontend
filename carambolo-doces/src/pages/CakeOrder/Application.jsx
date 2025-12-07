@@ -56,6 +56,17 @@ const Application = () => {
   return (
     <div>
       <Header />
+      {/* Estilos para pintar as bolinhas do Stepper de rosa */}
+      <style>
+        {`
+          .stepper-pink .step-dot,
+          .stepper-pink .step-dot--active,
+          .stepper-pink .step-dot--completed {
+            background-color: #FF69B4 !important;
+            border-color: #FF69B4 !important;
+          }
+        `}
+      </style>
       <div className="max-w-screen mx-auto px-6 py-8 bg-bgNativeHome">
         <div className="flex items-center gap-12">
           <h1 className="text-blue font-bold text-4xl mb-6">{selectedBoloName.toUpperCase()}</h1>
@@ -70,7 +81,7 @@ const Application = () => {
           <div className="col-span-4 ml-8 mr-8 min-h-[32.625rem]">
             <StepComponent />
           </div>
-          <div className="col-span-1">
+          <div className="col-span-1 stepper-pink">
             <Stepper currentStep={currentStep - 1} />
           </div>
         </div>

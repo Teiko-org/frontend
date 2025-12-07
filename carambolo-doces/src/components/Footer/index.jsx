@@ -5,7 +5,7 @@ import { FaInstagram, FaTiktok, FaMapMarkerAlt } from "react-icons/fa";
 
 function Footer() {
   return (
-    <footer className="bg-gradient-to-b from-blue to-darkBlue text-white py-12 border-t-2 border-gold m-0 w-full flex-shrink-0">
+    <footer className="bg-gradient-to-b from-blue to-darkBlue text-white py-7 border-t-2 border-gold m-0 w-full flex-shrink-0">
       <div className="container mx-auto flex justify-between items-start px-6 space-x-12">
         <div className="flex items-start">
           <img
@@ -56,6 +56,12 @@ function Footer() {
             @carambolodoces
           </p>
         </div>
+      </div>
+      {/* Legenda dourada centralizada com espaçamento ajustado */}
+      <div className="flex justify-center mt-8 mb-0">
+        <span className="text-center text-gold font-medium text-sm">
+          As entregas são realizadas por parceiros terceirizados
+        </span>
       </div>
     </footer>
   );
