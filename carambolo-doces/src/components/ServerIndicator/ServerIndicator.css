@@ -1,3 +1,25 @@
+/* Borda colorida no topo da página */
+.server-top-indicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  z-index: 10001;
+  transition: background-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+/* Mudança de cor de fundo global */
+body.server-1 {
+  background: linear-gradient(to bottom, rgba(102, 126, 234, 0.03) 0%, transparent 100%);
+  transition: background 0.5s ease;
+}
+
+body.server-2 {
+  background: linear-gradient(to bottom, rgba(245, 87, 108, 0.03) 0%, transparent 100%);
+  transition: background 0.5s ease;
+}
+
 .server-indicator {
   position: fixed;
   top: 20px;
@@ -8,9 +30,9 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 10000;
   transition: all 0.3s ease;
-  opacity: 0;
-  transform: translateY(-20px);
-  pointer-events: none;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
@@ -21,7 +43,11 @@
 .server-indicator.visible {
   opacity: 1;
   transform: translateY(0);
-  pointer-events: auto;
+}
+
+.server-indicator.just-changed {
+  animation: serverChange 0.6s ease;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
 .server-indicator-content {
@@ -47,12 +73,41 @@
   font-family: 'Courier New', monospace;
 }
 
+.server-indicator-pulse {
+  animation: sparkle 0.8s ease;
+  font-size: 16px;
+  margin-left: 4px;
+}
+
 @keyframes pulse {
   0%, 100% {
     transform: scale(1);
   }
   50% {
     transform: scale(1.1);
+  }
+}
+
+@keyframes serverChange {
+  0% {
+    transform: scale(1) translateY(0);
+  }
+  50% {
+    transform: scale(1.15) translateY(-5px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.3) rotate(180deg);
   }
 }
 
@@ -66,6 +121,10 @@
   }
 
   .server-indicator-id {
+    display: none;
+  }
+  
+  .server-indicator-pulse {
     display: none;
   }
 }

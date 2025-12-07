@@ -44,11 +44,11 @@ function App() {
   return (
     <BrowserRouter>
       <ServerIdProvider>
-        <CartProvider>
-          <ScrollToTop />
+      <CartProvider>
+        <ScrollToTop />
           <ServerIndicator />
-          <AppRoutes />
-        </CartProvider>
+        <AppRoutes />
+      </CartProvider>
       </ServerIdProvider>
       <ToastContainer
         position="top-right"
