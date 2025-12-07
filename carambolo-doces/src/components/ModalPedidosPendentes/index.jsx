@@ -54,13 +54,13 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
       // Limitar a 50 pedidos para evitar sobrecarga
       const idsLimitados = idsValidos.slice(0, 50);
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout')), 3000)
+        setTimeout(() => reject(new Error('Timeout')), 5000)
       );
       
       const promessasPedidos = idsLimitados.map(async (id) => {
         try {
           const response = await Promise.race([
-            axiosApi.get(`/resumo-pedido/${id}`, { ...config, timeout: 3000 }),
+            axiosApi.get(`/resumo-pedido/${id}`, { ...config, timeout: 5000 }),
             timeoutPromise
           ]);
           return response.data;
@@ -88,7 +88,7 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
       // Limitar a 30 pedidos para processar detalhes (evitar sobrecarga)
       const pedidosParaProcessar = pedidosValidos.slice(0, 30);
       const timeoutDetalhes = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout')), 3000)
+        setTimeout(() => reject(new Error('Timeout')), 5000)
       );
       
       const promessasDetalhes = pedidosParaProcessar.map(async (pedido) => {
