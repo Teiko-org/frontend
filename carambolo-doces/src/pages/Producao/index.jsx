@@ -45,22 +45,45 @@ export default function Producao() {
     const load = async () => {
       try {
         setLoading(true);
-        const [massas, recheios, pedidos, grafico] = await Promise.all([
-          getPedidosPendentesPorMassa().catch(() => []),
-          getPedidosPendentesPorRecheio().catch(() => []),
-          getPedidosProximosEntrega(7).catch(() => []),
-          getMassasMaisPedidasPorMes(anoSelecionado, tipoGrafico).catch(() => ({
-            labels: [],
-            serie: [],
-            massaSelecionada: tipoGrafico === "Massas" ? "Cacau Expresso" : tipoGrafico === "Recheios" ? "Brigadeiro" : "Decoração"
-          })),
-        ]);
+        
+        // Timeout de segurança de 15 segundos
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout ao carregar dados')), 15000)
+        );
+        
+        const [massas, recheios, pedidos, grafico] = await Promise.race([
+          Promise.all([
+            getPedidosPendentesPorMassa().catch(() => []),
+            getPedidosPendentesPorRecheio().catch(() => []),
+            getPedidosProximosEntrega(7).catch(() => []),
+            getMassasMaisPedidasPorMes(anoSelecionado, tipoGrafico).catch(() => ({
+              labels: [],
+              serie: [],
+              massaSelecionada: tipoGrafico === "Massas" ? "Cacau Expresso" : tipoGrafico === "Recheios" ? "Brigadeiro" : "Decoração"
+            })),
+          ]),
+          timeoutPromise
+        ]).catch(() => [[], [], [], {
+          labels: [],
+          serie: [],
+          massaSelecionada: tipoGrafico === "Massas" ? "Cacau Expresso" : tipoGrafico === "Recheios" ? "Brigadeiro" : "Decoração"
+        }]);
+        
         setMassasPendentes(massas);
         setRecheiosPendentes(recheios);
         setPedidosProximos(pedidos);
         setDadosGrafico(grafico);
       } catch (error) {
         console.warn("Erro ao carregar dados de produção:", error);
+        // Garantir que os estados sejam definidos mesmo em caso de erro
+        setMassasPendentes([]);
+        setRecheiosPendentes([]);
+        setPedidosProximos([]);
+        setDadosGrafico({
+          labels: [],
+          serie: [],
+          massaSelecionada: tipoGrafico === "Massas" ? "Cacau Expresso" : tipoGrafico === "Recheios" ? "Brigadeiro" : "Decoração"
+        });
       } finally {
         setLoading(false);
       }
