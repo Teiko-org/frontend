@@ -1,6 +1,7 @@
 import React from "react";
 import UnavailableOverlay from "../UnavailableOverlay";
 import defaultImageCard from "../../assets/image_card.png";
+import defaultImageFornada from "../../assets/image_fornada.png";
 
 function StatusPill({ label = "Pendente", color = "bg-yellow-500" }) {
   return (
@@ -59,6 +60,10 @@ export default function CartItemCard({
           src={image ?? defaultImageCard}
           alt={title}
           className="w-28 h-28 md:w-36 md:h-36 object-cover rounded-lg border border-gold"
+          onError={(e) => {
+            // Se a imagem falhar ao carregar, usa a mockada baseada no tipo
+            e.target.src = subtitle === "Fornada" ? defaultImageFornada : defaultImageCard;
+          }}
         />
 
         <div className="flex-1 min-w-0">

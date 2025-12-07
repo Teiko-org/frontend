@@ -170,7 +170,7 @@ export default function TableProductsThisFornada(props) {
                                         hover
                                         role="checkbox"
                                         tabIndex={-1}
-                                        key={row.id}
+                                        key={row.fornadaDaVezId || `${row.id}-${index}`}
                                         className={`${index % 2 === 0 ? "bg-[#FFEEE7]" : "bg-none"}`}
                                         sx={{
                                             boxShadow: "none",
