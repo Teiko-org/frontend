@@ -12,7 +12,18 @@ html, body, #root {
 #root { min-height: 100vh; display: flex; flex-direction: column; }
 
 /* Evitar qualquer margem global no final da página */
-body { padding-bottom: 0 !important; }
+body { 
+  padding-bottom: 0 !important; 
+  overflow-x: hidden !important;
+}
+
+html {
+  overflow-x: hidden !important;
+}
+
+#root {
+  overflow-x: hidden !important;
+}
 
 .gradient-border {
   position: relative;
@@ -225,4 +236,29 @@ html::after {
 [style*="bottom"][style*="progress"],
 [style*="bottom"][style*="loading"] {
   display: none !important;
+}
+
+/* Esconder scrollbar horizontal */
+::-webkit-scrollbar:horizontal {
+  display: none !important;
+  height: 0 !important;
+}
+
+html::-webkit-scrollbar:horizontal,
+body::-webkit-scrollbar:horizontal {
+  display: none !important;
+  height: 0 !important;
+}
+
+/* Esconder qualquer barra na parte inferior do viewport */
+body::before,
+html::before,
+body::after,
+html::after {
+  content: none !important;
+}
+
+/* Garantir que não há scroll horizontal */
+* {
+  max-width: 100vw;
 }
