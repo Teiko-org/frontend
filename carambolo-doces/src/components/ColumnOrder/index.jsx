@@ -47,7 +47,7 @@ function ColumnOrder(props) {
         {props.title}
       </div>
       <div 
-        className={`bg-bgHome p-1 w-fit flex-1 border border-gold rounded-md rounded-tl-none transition-all duration-200 column-container ${
+        className={`bg-bgHome p-1 w-fit max-h-[calc(97vh-220px)] flex-1 border border-gold rounded-md rounded-tl-none transition-all duration-200 column-container ${
           isDragOver ? 'border-2 border-gold shadow-lg scale-105 drop-zone-active' : ''
         }`}
         onDragOver={handleDragOver}
