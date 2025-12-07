@@ -391,7 +391,7 @@ export default function Dashboard() {
                 <div>Imagem</div>
                 <div>Nome</div>
                 <div className="text-center">Quantidade</div>
-                <div className="text-right">Valor</div>
+                <div className="text-center pr-6">Valor</div>
               </div>
               <div className="flex-1 overflow-auto custom-scrollbar pr-3">
                 {produtosFiltrados.map((p) => (
@@ -406,7 +406,7 @@ export default function Dashboard() {
                     </div>
                     <div className="pr-2 truncate">{p.nome}</div>
                     <div className="text-center">{p.quantidade}</div>
-                    <div className="text-right">R${Number(p.valorTotal || 0).toFixed(2)}</div>
+                    <div className="text-right pr-6">R${Number(p.valorTotal || 0).toFixed(2)}</div>
                   </div>
                 ))}
               </div>

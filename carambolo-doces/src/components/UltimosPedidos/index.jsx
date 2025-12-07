@@ -120,11 +120,11 @@ function UltimosPedidos() {
         <div className="text-xl font-bold tracking-wide">Últimos Pedidos</div>
         <div className="text-[11px] opacity-90">Pedidos mais recentes registrados no sistema.</div>
       </div>
-      <div className="p-4 h-80 flex flex-col">
+      <div className="py-4 px-2 h-80 flex flex-col">
         {pedidos.length > 0 ? (
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             {pedidos.map((pedido, index) => (
-              <div key={pedido.id || index} className="bg-bgHome border border-gold/40 rounded-lg p-3 mb-2 last:mb-0">
+              <div key={pedido.id || index} className="bg-bgHome border border-gold/40 rounded-lg p-3 mx-1 mb-2 last:mb-0">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="font-bold text-gray-900 mb-1 text-sm">{pedido.nomeDoCliente}</div>
