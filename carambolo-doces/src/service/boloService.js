@@ -45,22 +45,22 @@ export const getBolosComImagens = async () => {
       try {
         if (bolo.decoracaoId && decoracoesMap.has(bolo.decoracaoId)) {
           const decoracao = decoracoesMap.get(bolo.decoracaoId);
+            return {
+              ...bolo,
+            imagens: decoracao.imagens || []
+            };
+          }
           return {
             ...bolo,
-            imagens: decoracao.imagens || []
+            imagens: []
+          };
+        } catch (error) {
+        console.warn(`Erro ao processar bolo ${bolo.id}:`, error);
+          return {
+            ...bolo,
+            imagens: []
           };
         }
-        return {
-          ...bolo,
-          imagens: []
-        };
-      } catch (error) {
-        console.warn(`Erro ao processar bolo ${bolo.id}:`, error);
-        return {
-          ...bolo,
-          imagens: []
-        };
-      }
     });
     
     return bolosComImagens;

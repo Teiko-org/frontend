@@ -35,12 +35,21 @@ export function CartProvider({ children }) {
       
       if (userId && isUserLoggedIn()) {
         try {
-          const backendItems = await buscarCarrinhoBackend(parseInt(userId));
+          // Timeout de 5 segundos para evitar travamento
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout ao buscar carrinho')), 5000)
+          );
+          
+          const backendItems = await Promise.race([
+            buscarCarrinhoBackend(parseInt(userId)),
+            timeoutPromise
+          ]);
+          
           setItems(backendItems);
           const cartKey = getCartKey();
           localStorage.setItem(cartKey, JSON.stringify(backendItems));
         } catch (error) {
-          console.warn("Erro ao buscar carrinho do backend, usando localStorage:", error);
+          console.warn("Erro ao buscar carrinho do backend, usando localStorage:", error.message || error);
           const cartKey = getCartKey();
           const saved = localStorage.getItem(cartKey);
           const cartItems = saved ? JSON.parse(saved) : [];

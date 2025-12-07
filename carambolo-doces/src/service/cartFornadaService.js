@@ -5,27 +5,52 @@ export async function listResumoFornadaDoUsuario() {
   const userId = localStorage.getItem("userId");
   if (!userId) return [];
 
-  // Busca resumos apenas de fornada
-  const resumosResp = await axiosApi.get("/resumo-pedido/pedido-fornada");
-  const resumos = Array.isArray(resumosResp.data) ? resumosResp.data : [];
+  try {
+    // Busca resumos apenas de fornada
+    const resumosResp = await axiosApi.get("/resumo-pedido/pedido-fornada", {
+      timeout: 5000 // Timeout de 5 segundos
+    });
+    
+    // Se retornar 204 (No Content), não há resumos
+    if (resumosResp.status === 204 || !resumosResp.data) {
+      return [];
+    }
+    
+    const resumos = Array.isArray(resumosResp.data) ? resumosResp.data : [];
+    
+    if (resumos.length === 0) {
+      return [];
+    }
 
-  // Para cada resumo, valida se o pedido pertence ao usuário
-  const pedidos = await Promise.all(
-    resumos.map(async (r) => {
-      try {
-        const pedidoResp = await axiosApi.get(`/fornadas/pedidos/${r.pedidoFornadaId}`);
-        const p = pedidoResp.data;
-        if (p?.usuario === Number(userId)) {
-          return { resumo: r, pedido: p };
+    // Para cada resumo, valida se o pedido pertence ao usuário
+    // Limita a 20 pedidos para evitar muitas chamadas
+    const resumosLimitados = resumos.slice(0, 20);
+    
+    const pedidos = await Promise.allSettled(
+      resumosLimitados.map(async (r) => {
+        try {
+          const pedidoResp = await axiosApi.get(`/fornadas/pedidos/${r.pedidoFornadaId}`, {
+            timeout: 3000 // Timeout de 3 segundos por pedido
+          });
+          const p = pedidoResp.data;
+          if (p?.usuario === Number(userId)) {
+            return { resumo: r, pedido: p };
+          }
+        } catch (error) {
+          console.warn(`Erro ao buscar pedido ${r.pedidoFornadaId}:`, error.message);
         }
-      } catch (_) {
-        // ignora erros individuais
-      }
-      return null;
-    })
-  );
+        return null;
+      })
+    );
 
-  return pedidos.filter(Boolean);
+    // Filtra apenas os que foram resolvidos com sucesso e não são null
+    return pedidos
+      .filter(result => result.status === 'fulfilled' && result.value !== null)
+      .map(result => result.value);
+  } catch (error) {
+    console.error("Erro ao buscar resumos de pedidos de fornada:", error.message);
+    return [];
+  }
 }
 
 export async function aumentarQuantidadePedido(pedidoFornadaId) {

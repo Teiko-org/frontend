@@ -128,19 +128,19 @@ function Home() {
           
           // Enriquecer os bolos usando o mapa de decorações
           const enriquecidos = apenasBolos.map((p) => {
-            try {
-              const detalheBolo = todosDetalhes.find((d) => d.boloId === p.id);
-              const categoria = detalheBolo?.categoria;
-              const decoracaoId = detalheBolo?.decoracaoId;
+              try {
+                const detalheBolo = todosDetalhes.find((d) => d.boloId === p.id);
+                const categoria = detalheBolo?.categoria;
+                const decoracaoId = detalheBolo?.decoracaoId;
               if (decoracaoId && decoracoesMap.has(decoracaoId)) {
                 const decoracao = decoracoesMap.get(decoracaoId);
-                const imagemUrl = decoracao?.imagens?.[0];
-                return { ...p, imagens: [imagemUrl || p.imagens?.[0]], categoria };
-              }
-              return { ...p, categoria };
-            } catch {
+                  const imagemUrl = decoracao?.imagens?.[0];
+                  return { ...p, imagens: [imagemUrl || p.imagens?.[0]], categoria };
+                }
+                return { ...p, categoria };
+              } catch {
               return p;
-            }
+              }
           });
           setCarambolosMaisPedidos(enriquecidos.filter(Boolean));
         } catch {
@@ -194,19 +194,19 @@ function Home() {
         
         // Enriquecer os bolos usando o mapa de decorações
         const enriquecidos = apenasBolos.map((p) => {
-          try {
-            const detalheBolo = todosDetalhes.find((d) => d.boloId === p.id);
-            const categoria = detalheBolo?.categoria;
-            const decoracaoId = detalheBolo?.decoracaoId;
+            try {
+              const detalheBolo = todosDetalhes.find((d) => d.boloId === p.id);
+              const categoria = detalheBolo?.categoria;
+              const decoracaoId = detalheBolo?.decoracaoId;
             if (decoracaoId && decoracoesMap.has(decoracaoId)) {
               const decoracao = decoracoesMap.get(decoracaoId);
-              const imagemUrl = decoracao?.imagens?.[0];
-              return { ...p, imagens: [imagemUrl || p.imagens?.[0]], categoria };
-            }
-            return { ...p, categoria };
-          } catch {
+                const imagemUrl = decoracao?.imagens?.[0];
+                return { ...p, imagens: [imagemUrl || p.imagens?.[0]], categoria };
+              }
+              return { ...p, categoria };
+            } catch {
             return p;
-          }
+            }
         });
         setCarambolosMaisPedidos(enriquecidos.filter(Boolean));
       } catch {}
