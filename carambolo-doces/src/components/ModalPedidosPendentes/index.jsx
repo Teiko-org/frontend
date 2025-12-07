@@ -34,8 +34,8 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
       pedidosIdsRef.current = pedidosIdsString;
       carregouRef.current = true;
       carregandoRef.current = true;
-      
-      const loadPedidos = async () => {
+
+  const loadPedidos = async () => {
     try {
       setLoading(true);
       const todosPedidos = await orderSummary();
@@ -104,7 +104,7 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
       setLoading(false);
       carregandoRef.current = false;
     }
-      };
+  };
       
       loadPedidos();
     } else if (!isOpen) {
