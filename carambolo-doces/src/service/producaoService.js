@@ -1,34 +1,9 @@
 import { axiosApi } from "../provider/AxiosApi";
-import orderSummary from "../services/orderSummary";
-import orderCakeDetails from "./orderCakeDetails";
 
 export async function getPedidosPendentesPorMassa() {
   try {
-    const pedidos = await orderSummary();
-    const pedidosPendentes = pedidos.filter((p) => p.status === "PENDENTE" && p.pedidoBoloId);
-    
-    const massasMap = {};
-    
-    for (const pedido of pedidosPendentes) {
-      try {
-        const detalhes = await orderCakeDetails(pedido.pedidoBoloId);
-        const massaNome = detalhes.massa || "Não especificada";
-        
-        if (!massasMap[massaNome]) {
-          massasMap[massaNome] = {
-            nome: massaNome,
-            quantidade: 0,
-            pedidos: []
-          };
-        }
-        massasMap[massaNome].quantidade += 1;
-        massasMap[massaNome].pedidos.push(pedido.id);
-      } catch (error) {
-        console.warn("Erro ao buscar detalhes do pedido:", error);
-      }
-    }
-    
-    return Object.values(massasMap);
+    const response = await axiosApi.get("/producao/pedidos-pendentes-por-massa");
+    return response.data || [];
   } catch (error) {
     console.warn("Erro ao buscar pedidos pendentes por massa:", error.response?.status || error.message);
     return [];
@@ -37,31 +12,8 @@ export async function getPedidosPendentesPorMassa() {
 
 export async function getPedidosPendentesPorRecheio() {
   try {
-    const pedidos = await orderSummary();
-    const pedidosPendentes = pedidos.filter((p) => p.status === "PENDENTE" && p.pedidoBoloId);
-    
-    const recheiosMap = {};
-    
-    for (const pedido of pedidosPendentes) {
-      try {
-        const detalhes = await orderCakeDetails(pedido.pedidoBoloId);
-        const recheioNome = detalhes.recheio || "Não especificado";
-        
-        if (!recheiosMap[recheioNome]) {
-          recheiosMap[recheioNome] = {
-            nome: recheioNome,
-            quantidade: 0,
-            pedidos: []
-          };
-        }
-        recheiosMap[recheioNome].quantidade += 1;
-        recheiosMap[recheioNome].pedidos.push(pedido.id);
-      } catch (error) {
-        console.warn("Erro ao buscar detalhes do pedido:", error);
-      }
-    }
-    
-    return Object.values(recheiosMap);
+    const response = await axiosApi.get("/producao/pedidos-pendentes-por-recheio");
+    return response.data || [];
   } catch (error) {
     console.warn("Erro ao buscar pedidos pendentes por recheio:", error.response?.status || error.message);
     return [];
@@ -96,54 +48,17 @@ export async function getPedidosProximosEntrega() {
 
 export async function getMassasMaisPedidasPorMes(ano = 2025) {
   try {
-    const pedidos = await orderSummary();
-    const pedidosBolo = pedidos.filter((p) => p.pedidoBoloId && p.status !== "CANCELADO");
+    const response = await axiosApi.get(`/producao/massas-mais-pedidas-por-mes?ano=${ano}`);
+    const data = response.data;
     
-    const dadosPorMes = {};
-    const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-    
-    for (let mes = 0; mes < 12; mes++) {
-      dadosPorMes[meses[mes]] = {};
-    }
-    
-    for (const pedido of pedidosBolo) {
-      try {
-        const dataPedido = new Date(pedido.dataPedido);
-        if (dataPedido.getFullYear() === ano) {
-          const mesNome = meses[dataPedido.getMonth()];
-          const detalhes = await orderCakeDetails(pedido.pedidoBoloId);
-          const massaNome = detalhes.massa || "Não especificada";
-          
-          if (!dadosPorMes[mesNome][massaNome]) {
-            dadosPorMes[mesNome][massaNome] = 0;
-          }
-          dadosPorMes[mesNome][massaNome] += 1;
-        }
-      } catch (error) {
-        console.warn("Erro ao processar pedido para gráfico:", error);
-      }
-    }
-    
-    const massasUnicas = new Set();
-    Object.values(dadosPorMes).forEach((mes) => {
-      Object.keys(mes).forEach((massa) => massasUnicas.add(massa));
-    });
-    
-    const massaMaisPedida = Array.from(massasUnicas).reduce((maior, massa) => {
-      const total = Object.values(dadosPorMes).reduce((sum, mes) => sum + (mes[massa] || 0), 0);
-      const totalMaior = Object.values(dadosPorMes).reduce((sum, mes) => sum + (mes[maior] || 0), 0);
-      return total > totalMaior ? massa : maior;
-    }, Array.from(massasUnicas)[0] || "Cacau Expresso");
-    
-    const serie = meses.slice(0, 11).map((mes) => dadosPorMes[mes][massaMaisPedida] || 0);
-    
+    // Converter o formato do backend para o formato esperado pelo frontend
     return {
-      labels: meses.slice(0, 11),
-      serie: [{
-        name: massaMaisPedida,
-        data: serie
-      }],
-      massaSelecionada: massaMaisPedida
+      labels: data.labels || [],
+      serie: data.serie?.map(s => ({
+        name: s.name,
+        data: s.data
+      })) || [],
+      massaSelecionada: data.massaSelecionada || "Cacau Expresso"
     };
   } catch (error) {
     console.warn("Erro ao buscar massas mais pedidas por mês:", error.response?.status || error.message);
