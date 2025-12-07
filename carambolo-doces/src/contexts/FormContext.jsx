@@ -2,6 +2,7 @@ import React, { createContext, useState } from 'react';
 import { useForm, FormProvider as RHFProvider } from 'react-hook-form';
 import { axiosApi } from '../provider/AxiosApi';
 import { toast } from 'react-toastify';
+import { validateBrazilianPhone } from '../utils/phoneValidation';
 
 export const FormContext = createContext();
 
