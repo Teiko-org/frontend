@@ -5,6 +5,7 @@ import HeaderDashboard from "../../components/headerDashboard";
 import PrincipaisClientes from "../../components/PrincipaisClientes";
 import UltimosPedidos from "../../components/UltimosPedidos";
 import { axiosApi } from "../../provider/AxiosApi";
+import defaultImageCard from "../../assets/image_card.png";
 import {
   getQtdClientesUnicos,
   getQtdPedidosTotal,
@@ -391,22 +392,22 @@ export default function Dashboard() {
                 <div>Imagem</div>
                 <div>Nome</div>
                 <div className="text-center">Quantidade</div>
-                <div className="text-right">Valor</div>
+                <div className="text-center pr-6">Valor</div>
               </div>
               <div className="flex-1 overflow-auto custom-scrollbar pr-3">
                 {produtosFiltrados.map((p) => (
                   <div key={`${p.tipo}-${p.id}`} className="grid grid-cols-4 items-center py-2 border-b border-gold/40 text-sm">
                     <div>
                       <img
-                        src={p.imagemUrl || "src/assets/image_card.png"}
+                        src={p.imagemUrl || defaultImageCard}
                         alt={p.nome}
                         className="w-12 h-12 object-cover rounded"
-                        onError={(e) => { e.currentTarget.src = "src/assets/image_card.png"; }}
+                        onError={(e) => { e.currentTarget.src = defaultImageCard; }}
                       />
                     </div>
                     <div className="pr-2 truncate">{p.nome}</div>
                     <div className="text-center">{p.quantidade}</div>
-                    <div className="text-right">R${Number(p.valorTotal || 0).toFixed(2)}</div>
+                    <div className="text-right pr-6">R${Number(p.valorTotal || 0).toFixed(2)}</div>
                   </div>
                 ))}
               </div>

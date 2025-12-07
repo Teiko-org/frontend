@@ -10,6 +10,8 @@ import { axiosApi } from "../../provider/AxiosApi";
 import { toast } from "react-toastify";
 import CartItemCard from "../../components/CartItemCard";
 import ModalBaseForm from "../../components/ModalBaseForm";
+import defaultImageCard from "../../assets/image_card.png";
+import defaultImageFornada from "../../assets/image_fornada.png";
 
 export default function CartPage() {
   const { items: localItems, clearCart, updateQuantity, removeItem } = useCart();
@@ -23,11 +25,19 @@ export default function CartPage() {
   const carregarPedidos = async () => {
     try {
       setLoading(true);
-      const data = await listResumoFornadaDoUsuario();
+      // Timeout de 10 segundos para evitar loading infinito
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout ao carregar pedidos')), 10000)
+      );
+      const data = await Promise.race([
+        listResumoFornadaDoUsuario(),
+        timeoutPromise
+      ]);
       setPedidos(data);
     } catch (e) {
-      console.error(e);
-      toast.error("Erro ao carregar carrinho");
+      console.error("Erro ao carregar pedidos:", e);
+      // Não mostra toast para não incomodar o usuário, apenas loga o erro
+      setPedidos([]);
     } finally {
       setLoading(false);
     }
@@ -35,117 +45,175 @@ export default function CartPage() {
 
   const verificarStatusProdutos = async () => {
     const status = {};
+    const itensFornada = localItems.filter(item => item.type === 'Fornada' && item.fornadaDaVezId);
+    
+    if (itensFornada.length === 0) {
+      setProdutosStatus({});
+      return;
+    }
+
+    // Coletar todas as fornadas únicas primeiro
+    const fornadaIdsSet = new Set();
+    const itensPorFornadaDaVezId = {};
+    
+    // Buscar produtos em paralelo com timeout
+    const produtosPromises = itensFornada.map(item => 
+      Promise.race([
+        getProdutoFornadaById(item.fornadaDaVezId),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
+      ]).then(produto => ({ item, produto })).catch(error => {
+        console.warn(`Erro ao buscar produto ${item.fornadaDaVezId}:`, error.message);
+        return null;
+      })
+    );
+    
+    const produtosResults = await Promise.all(produtosPromises);
+    
+    // Agrupar por fornada
     const itensPorFornada = {};
-    for (const item of localItems) {
-      if (item.type === 'Fornada' && item.fornadaDaVezId) {
-        try {
-          const produto = await getProdutoFornadaById(item.fornadaDaVezId);
-          if (produto.fornada) {
-            if (!itensPorFornada[produto.fornada]) {
-              itensPorFornada[produto.fornada] = [];
-            }
-            itensPorFornada[produto.fornada].push({ item, produto });
-          }
-        } catch (error) {
-          console.error(`Erro ao buscar FornadaDaVez ${item.fornadaDaVezId}:`, error);
+    produtosResults.forEach(result => {
+      if (result && result.produto && result.produto.fornada) {
+        const fornadaId = result.produto.fornada;
+        fornadaIdsSet.add(fornadaId);
+        if (!itensPorFornada[fornadaId]) {
+          itensPorFornada[fornadaId] = [];
         }
+        itensPorFornada[fornadaId].push(result);
+        itensPorFornadaDaVezId[result.item.fornadaDaVezId] = result.produto;
       }
-    }
+    });
     
+    // Buscar produtos de todas as fornadas em paralelo
     const produtosPorFornada = {};
-    for (const [fornadaId, itens] of Object.entries(itensPorFornada)) {
-      try {
-        const produtosProjecao = await axiosApi.get(`/fornadas/da-vez/produtos/${fornadaId}`);
-        produtosPorFornada[fornadaId] = {};
-        if (Array.isArray(produtosProjecao.data)) {
-          produtosProjecao.data.forEach(prod => {
-            if (prod.fornadaDaVezId) {
-              produtosPorFornada[fornadaId][prod.fornadaDaVezId] = prod.isAtivo === true;
-            }
-          });
-        }
-      } catch (error) {
-        console.warn(`Erro ao buscar produtos da fornada ${fornadaId}:`, error.response?.status || error.message);
-        produtosPorFornada[fornadaId] = {};
+    const fornadaPromises = Array.from(fornadaIdsSet).map(fornadaId =>
+      Promise.race([
+        axiosApi.get(`/fornadas/da-vez/produtos/${fornadaId}`, { timeout: 3000 }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
+      ]).then(resp => ({ fornadaId, data: resp.data })).catch(error => {
+        console.warn(`Erro ao buscar produtos da fornada ${fornadaId}:`, error.message);
+        return { fornadaId, data: [] };
+      })
+    );
+    
+    const fornadaResults = await Promise.all(fornadaPromises);
+    fornadaResults.forEach(({ fornadaId, data }) => {
+      produtosPorFornada[fornadaId] = {};
+      if (Array.isArray(data)) {
+        data.forEach(prod => {
+          if (prod.fornadaDaVezId) {
+            produtosPorFornada[fornadaId][prod.fornadaDaVezId] = prod.isAtivo === true;
+          }
+        });
       }
+    });
+    
+    // Buscar fornadas em paralelo
+    const fornadasMap = {};
+    const fornadaInfoPromises = Array.from(fornadaIdsSet).map(fornadaId =>
+      Promise.race([
+        getFornada(fornadaId),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
+      ]).then(fornada => ({ fornadaId, fornada })).catch(error => {
+        console.warn(`Erro ao buscar fornada ${fornadaId}:`, error.message);
+        return null;
+      })
+    );
+    
+    const fornadaInfoResults = await Promise.all(fornadaInfoPromises);
+    fornadaInfoResults.forEach(result => {
+      if (result) {
+        fornadasMap[result.fornadaId] = result.fornada;
+      }
+    });
+    
+    // Processar status de cada item
+    for (const item of itensFornada) {
+      const produto = itensPorFornadaDaVezId[item.fornadaDaVezId];
+      
+      if (!produto) {
+        status[item.fornadaDaVezId] = {
+          disponivel: false,
+          quantidade: 0,
+          isAtivo: false,
+          fornadaEncerrada: false
+        };
+        continue;
+      }
+      
+      let isAtivoProdutoFornada = true;
+      if (produto.fornada && produtosPorFornada[produto.fornada]) {
+        const isAtivoDaProjecao = produtosPorFornada[produto.fornada][item.fornadaDaVezId];
+        if (isAtivoDaProjecao !== undefined) {
+          isAtivoProdutoFornada = isAtivoDaProjecao;
+        } else {
+          isAtivoProdutoFornada = false;
+        }
+      } else {
+        isAtivoProdutoFornada = produto.isAtivo !== false;
+      }
+      
+      const quantidade = produto.quantidade || 0;
+      
+      let fornadaEncerrada = false;
+      if (produto.fornada && fornadasMap[produto.fornada]) {
+        const fornada = fornadasMap[produto.fornada];
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        const dataFim = new Date(fornada.dataFim);
+        dataFim.setHours(23, 59, 59, 999);
+        fornadaEncerrada = dataFim < hoje;
+      }
+      
+      const disponivel = quantidade > 0 && isAtivoProdutoFornada && !fornadaEncerrada;
+      
+      status[item.fornadaDaVezId] = {
+        disponivel: disponivel,
+        quantidade: quantidade,
+        isAtivo: isAtivoProdutoFornada,
+        fornadaEncerrada: fornadaEncerrada
+      };
     }
     
-    for (const item of localItems) {
-      if (item.type === 'Fornada' && item.fornadaDaVezId) {
-        try {
-          const produto = await getProdutoFornadaById(item.fornadaDaVezId);
-          
-          let isAtivoProdutoFornada = true;
-          if (produto.fornada && produtosPorFornada[produto.fornada]) {
-            const isAtivoDaProjecao = produtosPorFornada[produto.fornada][item.fornadaDaVezId];
-            if (isAtivoDaProjecao !== undefined) {
-              isAtivoProdutoFornada = isAtivoDaProjecao;
-            } else {
-              isAtivoProdutoFornada = false;
-            }
-          } else {
-            if (produto.produtoFornada) {
-              try {
-                const produtoFornadaResponse = await axiosApi.get(`/fornadas/produto-fornada/${produto.produtoFornada}`);
-                isAtivoProdutoFornada = produtoFornadaResponse.data.isAtivo === true;
-              } catch (error) {
-                console.warn(`Erro ao buscar ProdutoFornada ${produto.produtoFornada}:`, error.response?.status || error.message);
-                isAtivoProdutoFornada = produto.isAtivo !== false;
-              }
-            } else {
-              isAtivoProdutoFornada = produto.isAtivo !== false;
-            }
-          }
-          
-          const isAtivo = isAtivoProdutoFornada;
-          const quantidade = produto.quantidade || 0;
-          
-          let fornadaEncerrada = false;
-          if (produto.fornada) {
-            try {
-              const fornada = await getFornada(produto.fornada);
-              const hoje = new Date();
-              hoje.setHours(0, 0, 0, 0);
-              const dataFim = new Date(fornada.dataFim);
-              dataFim.setHours(23, 59, 59, 999);
-              
-              if (dataFim < hoje) {
-                fornadaEncerrada = true;
-              }
-            } catch (error) {
-              console.error(`Erro ao buscar fornada ${produto.fornada}:`, error);
-            }
-          }
-          
-          const disponivel = quantidade > 0 && isAtivo && !fornadaEncerrada;
-          
-          status[item.fornadaDaVezId] = {
-            disponivel: disponivel,
-            quantidade: quantidade,
-            isAtivo: isAtivo,
-            fornadaEncerrada: fornadaEncerrada
-          };
-        } catch (error) {
-          console.error(`Erro ao verificar produto ${item.fornadaDaVezId}:`, error);
-          status[item.fornadaDaVezId] = {
-            disponivel: false,
-            quantidade: 0,
-            isAtivo: null,
-            fornadaEncerrada: null
-          };
-        }
-      }
-    }
     setProdutosStatus(status);
   };
 
   useEffect(() => {
-    carregarPedidos();
+    // Garantir que o loading seja definido como false após um tempo máximo
+    const loadingTimeout = setTimeout(() => {
+      setLoading(false);
+    }, 15000); // 15 segundos máximo
+    
+    carregarPedidos().finally(() => {
+      clearTimeout(loadingTimeout);
+    });
+    
+    return () => {
+      clearTimeout(loadingTimeout);
+    };
   }, []);
 
   useEffect(() => {
     if (localItems.length > 0) {
-      verificarStatusProdutos();
+      // Executa verificação de status de forma assíncrona sem bloquear a UI
+      verificarStatusProdutos().catch(error => {
+        console.error("Erro ao verificar status dos produtos:", error);
+        // Define status padrão para todos os itens
+        const defaultStatus = {};
+        localItems.forEach(item => {
+          if (item.type === 'Fornada' && item.fornadaDaVezId) {
+            defaultStatus[item.fornadaDaVezId] = {
+              disponivel: true, // Assume disponível por padrão
+              quantidade: 0,
+              isAtivo: true,
+              fornadaEncerrada: false
+            };
+          }
+        });
+        setProdutosStatus(defaultStatus);
+      });
+    } else {
+      // Se não há itens, limpa o status
+      setProdutosStatus({});
     }
   }, [localItems.length]);
 
@@ -172,7 +240,7 @@ export default function CartPage() {
 
       <main className="flex-1 container mx-auto py-10 px-4">
         <h1 className="text-3xl font-semibold text-blue mb-6">Seu carrinho</h1>
-        {loading ? (
+        {loading && localItems.length === 0 && pedidos.length === 0 ? (
           <div className="bg-white border-2 border-gold rounded-lg p-8 text-center">
             <p className="text-blue text-lg">Carregando...</p>
           </div>
@@ -243,7 +311,7 @@ export default function CartPage() {
                   </div>
                   <div className="flex-1">
                     <CartItemCard
-                      image={"src/assets/image_fornada.png"}
+                      image={defaultImageFornada}
                       title={`Pedido #${resumo.id}`}
                       subtitle={`Status: ${resumo.status}`}
                       unitPrice={Number(resumo.valor || 0) / Math.max(1, Number(pedido.quantidade || 1))}
@@ -282,13 +350,17 @@ export default function CartPage() {
                   fontSize="text-xs"
                   className="py-1 px-2.5"
                   onClick={() => {
-                    const selecionadosMarcados = localItems.filter((it) => selectedIds[`${it.type}-${it.id}`]);
-                    let itensParaPagar = selecionadosMarcados.length > 0 ? selecionadosMarcados : localItems;
-
-                    itensParaPagar = itensParaPagar.filter(item => {
+                    // "Confirmar todos" ignora checkboxes e pega todos os itens disponíveis
+                    let itensParaPagar = localItems.filter(item => {
+                      // Filtrar apenas itens de fornada disponíveis
                       if (item.type === 'Fornada' && item.fornadaDaVezId) {
                         const status = produtosStatus[item.fornadaDaVezId];
+                        // Se o status foi verificado e não está disponível, remover
                         if (status !== undefined && !status.disponivel) {
+                          return false;
+                        }
+                        // Se não tem fornadaDaVezId válido, remover
+                        if (!item.fornadaDaVezId) {
                           return false;
                         }
                       }
@@ -402,7 +474,7 @@ export default function CartPage() {
             <div className="grid grid-cols-2 gap-4">
               {localItems.filter((it) => selectedIds[`${it.type}-${it.id}`]).map((it) => (
                 <div key={`modal-${it.type}-${it.id}`} className="flex items-center gap-3 bg-white border-2 border-gold rounded-xl p-3">
-                  <img src={it.image ?? 'src/assets/image_card.png'} className="w-16 h-16 rounded object-cover border border-gold" />
+                  <img src={it.image ?? defaultImageCard} className="w-16 h-16 rounded object-cover border border-gold" />
                   <div className="flex-1">
                     <div className="text-black font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>{it.name}</div>
                     <div className="text-black/70 text-sm">Qtd: {it.quantity} • R$ {Number(it.price).toFixed(2).replace('.', ',')}</div>

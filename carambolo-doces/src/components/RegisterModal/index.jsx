@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import { register as registerUser } from "../../service/userService";
 import userIcon from '../../assets/user_icon.png'; // added import
+import { validateBrazilianPhone } from "../../utils/phoneValidation";
 
 function RegisterModal({ onClose, switchToLogin }) {
   const {
@@ -65,7 +66,13 @@ function RegisterModal({ onClose, switchToLogin }) {
 
           <label htmlFor="phone" className="text-white">Telefone Celular</label>
           <PhoneInputCustom
-            {...register("phone", { required: "Telefone é obrigatório" })}
+            {...register("phone", { 
+              required: "Telefone é obrigatório",
+              validate: (value) => {
+                const validation = validateBrazilianPhone(value, { allowCountryCode: true, requireMobile: true });
+                return validation.valid || validation.error || "Telefone inválido";
+              }
+            })}
             onChange={(phone) => {
               setValue('phone', phone, { shouldValidate: true });
               trigger('phone');

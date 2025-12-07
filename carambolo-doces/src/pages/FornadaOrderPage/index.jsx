@@ -16,6 +16,7 @@ import { getProdutoFornadaById } from "../../service/fornadaService";
 import { toast } from "react-toastify";
 import { useCart } from "../../contexts/CartContext";
 import defaultFornadaImg from "../../assets/image_fornada.png";
+import { validateBrazilianPhone } from "../../utils/phoneValidation";
 
 function FornadaOrderPage() {
     const { removeByFornadaId } = useCart();
@@ -203,7 +204,6 @@ function FornadaOrderPage() {
                 setCidade(response.data.localidade || "");
                 setBairro(response.data.bairro || "");
                 setRua(response.data.logradouro || "");
-                toast.success("✅ CEP encontrado!");
             } else {
                 if (!cepErrorShownRef.current) {
                     toast.error("❌ CEP não encontrado!", { autoClose: 10000, hideProgressBar: false });
@@ -284,6 +284,13 @@ function FornadaOrderPage() {
             toast.warn("Por favor, preencha o telefone!");
             return;
         }
+        
+        // Validação melhorada de telefone
+        const phoneValidation = validateBrazilianPhone(telefone, { allowCountryCode: true, requireMobile: false });
+        if (!phoneValidation.valid) {
+            toast.warn(phoneValidation.error || "Telefone inválido!");
+            return;
+        }
         if (deliveryOption === "Entrega" && !cep) {
             toast.warn("Por favor, preencha o CEP para entrega!");
             return;
@@ -315,7 +322,24 @@ function FornadaOrderPage() {
         toast.info("Processando seu pedido...");
         
         try {
+            // Validar se o fornadaDaVezId está presente
+            if (!produtoSelecionado?.fornadaDaVezId) {
+                toast.error("Produto inválido! Por favor, selecione o produto novamente.");
+                setIsSubmitting(false);
+                navigate('/carrinho');
+                return;
+            }
+            
             const produtoAtualizado = await getProdutoFornadaById(produtoSelecionado.fornadaDaVezId);
+            
+            // Verificar se o produto ainda existe e está ativo
+            if (!produtoAtualizado || !produtoAtualizado.fornada) {
+                toast.error("Este produto não está mais disponível na fornada atual!");
+                setIsSubmitting(false);
+                navigate('/carrinho');
+                return;
+            }
+            
             if (produtoAtualizado.quantidade < amount) {
                 toast.error(`Estoque insuficiente! Disponível agora: ${produtoAtualizado.quantidade} unidades`);
                 setQuantidadeDisponivel(produtoAtualizado.quantidade);
@@ -390,14 +414,23 @@ function FornadaOrderPage() {
 
         } catch (error) {
             console.error("Erro ao realizar pedido:", error);
+            setIsSubmitting(false);
             
             // Verifica o tipo de erro para dar feedback adequado
-            if (error.response?.status === 422 && error.response?.data?.message?.includes("Estoque insuficiente")) {
-                toast.error(error.response.data.message);
-            } else if (error.response?.status === 422) {
-                toast.error(error.response.data.message);
+            if (error.response?.status === 422) {
+                const mensagem = error.response.data?.message || "Erro ao processar pedido. Verifique se o produto ainda está disponível.";
+                toast.error(mensagem);
+                // Se a fornada não está mais ativa, redirecionar para o carrinho
+                if (mensagem.includes("não está mais ativa") || mensagem.includes("encerrou")) {
+                    setTimeout(() => {
+                        navigate('/carrinho');
+                    }, 2000);
+                }
             } else if (error.response?.status === 404) {
-                toast.error("Produto não encontrado!");
+                toast.error("Produto não encontrado! Por favor, atualize o carrinho.");
+                setTimeout(() => {
+                    navigate('/carrinho');
+                }, 2000);
             } else if (error.response?.data?.message) {
                 toast.error(error.response.data.message);
             } else if (error.message) {

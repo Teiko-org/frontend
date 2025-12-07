@@ -5,6 +5,7 @@ import { BiLogOut } from "react-icons/bi";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FaHome } from "react-icons/fa";
 import { MdSpaceDashboard, MdFactory } from "react-icons/md";
+import logoComFundoDash from "../../assets/LogoComFundoDash.png";
 
 const BarraLateralDashboard = () => {
     const navigate = useNavigate();
@@ -35,7 +36,7 @@ const BarraLateralDashboard = () => {
         <>
             <aside className='bg-gradient-blue w-52 h-screen flex flex-col fixed top-0 left-0 z-50'>
                 <header>
-                    <img src="src/assets/LogoComFundoDash.png" alt="" />
+                    <img src={logoComFundoDash} alt="" />
                 </header>
 
                 <nav className="flex-1">

@@ -19,16 +19,35 @@ export const getBolosComImagens = async () => {
       return flag === true;
     });
 
-    // Para cada bolo, busca as imagens da decoração
-    const bolosComImagens = await Promise.all(
-      bolosAtivos.map(async (bolo) => {
-        try {
-          // Se tem decoração, busca as imagens
-          if (bolo.decoracaoId) {
-            const decoracaoResponse = await axiosApi.get(`/decoracoes/${bolo.decoracaoId}`);
+    // Coletar todos os IDs de decoração únicos
+    const decoracaoIds = [...new Set(
+      bolosAtivos
+        .map(b => b.decoracaoId)
+        .filter(Boolean)
+    )];
+    
+    // Buscar todas as decorações de uma vez em paralelo
+    const decoracoesMap = new Map();
+    if (decoracaoIds.length > 0) {
+      const decoracoesPromises = decoracaoIds.map(id => 
+        axiosApi.get(`/decoracoes/${id}`)
+          .then(r => [id, r.data])
+          .catch(() => [id, null])
+      );
+      const decoracoesResults = await Promise.all(decoracoesPromises);
+      decoracoesResults.forEach(([id, data]) => {
+        if (data) decoracoesMap.set(id, data);
+      });
+    }
+    
+    // Mapear os bolos usando o mapa de decorações (sem requisições individuais)
+    const bolosComImagens = bolosAtivos.map((bolo) => {
+      try {
+        if (bolo.decoracaoId && decoracoesMap.has(bolo.decoracaoId)) {
+          const decoracao = decoracoesMap.get(bolo.decoracaoId);
             return {
               ...bolo,
-              imagens: decoracaoResponse.data.imagens || []
+            imagens: decoracao.imagens || []
             };
           }
           return {
@@ -36,14 +55,13 @@ export const getBolosComImagens = async () => {
             imagens: []
           };
         } catch (error) {
-          console.warn(`Erro ao buscar imagens do bolo ${bolo.id}:`, error);
+        console.warn(`Erro ao processar bolo ${bolo.id}:`, error);
           return {
             ...bolo,
             imagens: []
           };
         }
-      })
-    );
+    });
     
     return bolosComImagens;
   } catch (error) {

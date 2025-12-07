@@ -1,5 +1,6 @@
 import React from "react";
 import UnavailableOverlay from "../UnavailableOverlay";
+import defaultImageCard from "../../assets/image_card.png";
 
 function StatusPill({ label = "Pendente", color = "bg-yellow-500" }) {
   return (
@@ -55,7 +56,7 @@ export default function CartItemCard({
       {isUnavailable && <UnavailableOverlay motivo={unavailableReason} />}
       <div className="flex gap-4 md:gap-6 items-start">
         <img
-          src={image ?? "src/assets/image_card.png"}
+          src={image ?? defaultImageCard}
           alt={title}
           className="w-28 h-28 md:w-36 md:h-36 object-cover rounded-lg border border-gold"
         />
