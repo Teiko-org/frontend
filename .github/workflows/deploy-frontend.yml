@@ -1,0 +1,57 @@
+name: Deploy Frontend to EC2
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Ambiente de destino (ex: lab, prod)"
+        required: false
+        default: "lab"
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout (somente para referência)
+        uses: actions/checkout@v4
+
+      - name: Deploy frontend em EC2 públicas
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          # Lista de backends (privados) para o proxy /api em cada pública.
+          # Ex.: "10.0.2.34:8080,10.0.3.9:8080"
+          API_UPSTREAMS: ${{ secrets.API_UPSTREAMS }}
+          # Imagem do frontend publicada pelo CI no registry.
+          FRONTEND_IMAGE: ${{ secrets.FRONTEND_IMAGE }}
+        with:
+          host: ${{ secrets.FRONTEND_EC2_HOSTS }}
+          username: ${{ secrets.FRONTEND_EC2_USER }}
+          key: ${{ secrets.FRONTEND_EC2_SSH_KEY }}
+          # Expõe variáveis para o shell remoto.
+          envs: API_UPSTREAMS,FRONTEND_IMAGE
+          script: |
+            set -euo pipefail
+
+            echo "[ci-frontend] Preparando /opt/teiko..."
+            sudo mkdir -p /opt/teiko
+            sudo chown -R "$USER":"$USER" /opt/teiko
+            cd /opt/teiko
+
+            # Atualiza/clona infra
+            if [ -d infra ]; then
+              sudo git -C infra fetch --all --prune || true
+              sudo git -C infra reset --hard origin/main || true
+            else
+              sudo git clone https://github.com/Teiko-org/infra.git infra
+            fi
+
+            cd /opt/teiko
+
+            echo "[ci-frontend] Rodando setup-aws-public.sh (frontend + proxy /api)..."
+            FORCE_INFRA_UPDATE=1 \
+            FORCE_FRONT_UPDATE=1 \
+            sudo -E bash /opt/teiko/infra/aws-ec2/setup-aws-public.sh
+
+
+

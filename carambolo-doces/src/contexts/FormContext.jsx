@@ -70,7 +70,12 @@ export const FormProvider = ({ children }) => {
 
   const registerAddress = async (endereco) => {
     try {
-      const response = await axiosApi.post("/enderecos", endereco);
+      const payload = {
+        ...endereco,
+        cep: (endereco.cep || "").replace(/\D/g, ""),
+        numero: endereco.numero != null ? String(endereco.numero).trim() : "",
+      };
+      const response = await axiosApi.post("/enderecos", payload);
       return response.data.id;
     } catch (error) {
       console.error('Erro ao registrar endereço:', error);
@@ -217,43 +222,23 @@ export const FormProvider = ({ children }) => {
         return;
       }
       
-      // Buscar ou criar recheio pedido baseado no recheio selecionado
+      // Criar sempre um registro de recheio-pedido para o recheio selecionado
       let recheioPedidoId = null;
       try {
-        // Primeiro, tentar buscar um recheio-pedido existente que contenha este recheio unitário
-        const response = await axiosApi.get("/bolos/recheio-pedido");
-        if (response.data && response.data.length > 0) {
-          const recheioExistente = response.data.find(r => 
-            r.sabor1 === dadosMontagem.recheioId || r.sabor2 === dadosMontagem.recheioId
-          );
-          if (recheioExistente) {
-            recheioPedidoId = recheioExistente.id;
-          } else {
-            // Se não encontrar, criar um novo recheio-pedido com o recheio selecionado
-            const recheioPedidoData = {
-              recheioUnitarioId1: dadosMontagem.recheioId,
-              recheioUnitarioId2: null,
-              recheioExclusivo: null
-            };
-            const novoRecheioPedido = await registerRecheioPedido(recheioPedidoData);
-            recheioPedidoId = novoRecheioPedido;
-          }
-        } else {
-          // Se não houver nenhum recheio-pedido, criar um novo
-          const recheioPedidoData = {
-            recheioUnitarioId1: dadosMontagem.recheioId,
-            recheioUnitarioId2: null,
-            recheioExclusivo: null
-          };
-          const novoRecheioPedido = await registerRecheioPedido(recheioPedidoData);
-          recheioPedidoId = novoRecheioPedido;
-        }
+        const recheioPedidoData = {
+          idExclusivo: null,
+          // Regra do backend: ou 1 exclusivo OU 2 unitários preenchidos.
+          // Como aqui o usuário escolhe 1 recheio unitário, enviamos o mesmo ID nos dois campos.
+          idUnitario1: dadosMontagem.recheioId,
+          idUnitario2: dadosMontagem.recheioId,
+        };
+        recheioPedidoId = await registerRecheioPedido(recheioPedidoData);
       } catch (error) {
         console.error('Erro ao processar recheio:', error);
-        toast.error("Erro ao processar o recheio selecionado. Por favor, tente novamente.");
+        toast.error("Não foi possível processar o recheio selecionado. Por favor, selecione outro recheio.");
         return;
       }
-      
+
       if (!recheioPedidoId) {
         toast.error("Não foi possível processar o recheio selecionado. Por favor, selecione outro recheio.");
         return;
@@ -276,11 +261,15 @@ export const FormProvider = ({ children }) => {
           });
           decoracaoCriadaId = resp?.data?.id ?? null;
           console.log("✅ Decoração criada com sucesso:", decoracaoCriadaId);
+
+          if (!decoracaoCriadaId) {
+            throw new Error("Decoração criada sem ID válido");
+          }
         }
       } catch (e) {
         console.error("❌ Erro ao enviar imagens de referência:", e);
-        console.log("⚠️ Continuando sem decoração...");
-        // Continua o processo mesmo se a decoração falhar
+        toast.error("Não foi possível salvar a decoração/imagens de referência. Tente novamente.");
+        return;
       }
 
       const tamanhoMapeado = mapTamanhoToEnum(dadosMontagem.tamanho);

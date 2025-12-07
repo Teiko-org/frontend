@@ -163,7 +163,8 @@ export default function TableProductsThisFornada(props) {
                                                         {(() => {
                                                             const vendidos = row.quantidadeVendida || 0;
                                                             const restante = row.quantidade || 0;
-                                                            const planejado = vendidos + restante;
+                                                            // Use o campo fixo quantidadeTotal do backend
+                                                            const planejado = row.quantidadeTotal ?? (vendidos + restante);
                                                             if (compact) {
                                                                 return (
                                                                     <div className="pr-2">{vendidos}/{planejado}</div>

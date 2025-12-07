@@ -20,9 +20,10 @@ const parseLocalDate = (dateStr) => {
 };
 import KPILastFornada from "../../components/KPILastFornada";
 import KPIThisMonthFornadas from "../../components/KPIThisMonthFornadas";
-import { getFornadaAtiva, getProdutosFornadaComImagens, getProximaFornada, encerrarFornada, getProdutosPorFornadaId } from "../../service/fornadaService";
+import { listFornadas, encerrarFornada, getProdutosPorFornadaId, getFornadaAtiva } from "../../service/fornadaService";
 import { atualizarFornadaDaVez, excluirFornadaDaVez } from "../../service/fornadaDaVezService";
 import { FaRegEdit, FaPlus, FaSave, FaTimes } from "react-icons/fa";
+import { LuSearch } from "react-icons/lu";
 import ModalConfirmarEdicao from "../../components/ModalConfirmarEdicao";
 import { useRef } from "react";
 import TableProductsThisFornada from "../../components/TableProductsThisFornada/TableProductsThisFornada";
@@ -115,10 +116,10 @@ function FornadaDashboard() {
     try {
       const produtosFornada = await getProdutosPorFornadaId(fornadaParaEditar.id);
       const produtosSelecionados = (produtosFornada || [])
-        .filter(produto => produto.id && produto.fornadaDaVezId)
+        .filter(produto => produto.id && produto.fornadaDaVezId && (produto.quantidade || produto.quantidadeTotal || 0) > 0)
         .map(produto => ({
           id: produto.id,
-          quantidade: produto.quantidade || 1
+          quantidade: produto.quantidadeTotal || produto.quantidade || 1
         }));
       localStorage.setItem("selectedProducts", JSON.stringify(produtosSelecionados));
 
@@ -286,7 +287,12 @@ function FornadaDashboard() {
         localStorage.getItem("selectedProducts") || "[]"
       );
 
-      if (!selectedProductsJson.length) {
+      // Filtrar apenas produtos com quantidade > 0 e com ID válido
+      const produtosValidos = selectedProductsJson.filter(
+        (produto) => produto.id && produto.quantidade > 0
+      );
+
+      if (!produtosValidos.length) {
         toast.error("Nenhum produto selecionado!");
         return;
       }
@@ -294,7 +300,7 @@ function FornadaDashboard() {
       toast.info("Adicionando produtos à fornada...");
 
       const responses = await Promise.all(
-        selectedProductsJson.map((produto) =>
+        produtosValidos.map((produto) =>
           fornadaDaVezService({
             fornadaId: idFornada,
             produtoFornadaId: produto.id,
@@ -319,33 +325,42 @@ function FornadaDashboard() {
 
   const carregarDadosFornada = async () => {
     try {
-      try {
-        const fornadaAtiva = await getFornadaAtiva();
-        if (fornadaAtiva) {
-          setFornadaAtual(fornadaAtiva);
-        } else {
-          setFornadaAtual(null);
+      const fornadas = await listFornadas();
+      const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+
+      const ativas = (fornadas || []).filter(f => (f.isAtivo ?? f.ativo) === true);
+
+      let atual = null;
+      let proxima = null;
+
+      if (ativas.length > 0) {
+        const ordenadas = [...ativas].sort(
+          (a, b) => new Date(a.dataInicio) - new Date(b.dataInicio)
+        );
+
+        for (const f of ordenadas) {
+          const ini = parseLocalDate(f.dataInicio); ini.setHours(0, 0, 0, 0);
+          const fim = parseLocalDate(f.dataFim); fim.setHours(23, 59, 59, 999);
+
+          if (!atual && hoje >= ini && hoje <= fim) {
+            atual = f;
+          } else if (!proxima && ini > hoje) {
+            proxima = f;
+          }
         }
-      } catch (error) {
-        console.error("Erro ao buscar fornada ativa:", error);
-        setFornadaAtual(null);
       }
 
-      try {
-        const proximaFornada = await getProximaFornada();
-        if (proximaFornada) {
-          setFornadaProxima(proximaFornada);
-        } else {
-          setFornadaProxima(null);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar próxima fornada:", error);
-        setFornadaProxima(null);
-      }
-      
+      setFornadaAtual(atual);
+      setFornadaProxima(proxima);
+      setFornadaData(atual || null);
+
+      // força KPIs a recarregarem seus dados da API
       setKpiRefreshKey((v) => v + 1);
     } catch (error) {
       console.error("Erro geral ao carregar dados da fornada:", error);
+      setFornadaAtual(null);
+      setFornadaProxima(null);
+      setFornadaData(null);
     }
   };
 
@@ -362,21 +377,7 @@ function FornadaDashboard() {
   });
 
   useEffect(() => {
-    if (!fornadaAtual) {
-      const fetchFornadaAtiva = async () => {
-        try {
-          const fornadaAtiva = await getFornadaAtiva();
-          if (fornadaAtiva && fornadaAtiva.dataFim) {
-            setFornadaData(fornadaAtiva);
-          }
-        } catch (error) {
-          console.error('Erro ao buscar fornada ativa:', error);
-        }
-      };
-      fetchFornadaAtiva();
-    } else {
-      setFornadaData(fornadaAtual);
-    }
+    setFornadaData(fornadaAtual || null);
   }, [fornadaAtual]);
 
   useEffect(() => {
@@ -465,7 +466,16 @@ function FornadaDashboard() {
       
       if (sucesso) {
         toast.success("Fornada encerrada com sucesso!");
-        await carregarDadosFornada();
+
+        // Limpa seleção de produtos da fornada encerrada
+        localStorage.removeItem("selectedProducts");
+
+        // Garante que o estado local reflita o encerramento imediatamente
+        setFornadaAtual(null);
+        setFornadaProxima(null);
+        setFornadaData(null);
+
+        // As KPIs se baseiam em chamadas próprias à API e usam essa chave para refetch
         setKpiRefreshKey((v) => v + 1);
       } else {
         toast.error("Erro ao encerrar fornada!");
@@ -612,17 +622,15 @@ function FornadaDashboard() {
           <div className="w-full">
             <header className="flex flex-row justify-between rounded-t-2xl px-6 py-4 items-center bg-gradient-blue h-[3.6875rem] w-full flex-shrink-0">
               <h1 className="text-gold text-[1.5rem]">Produtos da Fornada</h1>
-              <div className="flex items-center gap-4">
+              <div className="relative flex items-center w-[250px]">
                 <input
                   type="text"
                   placeholder="Procurar produto"
-                  className="px-4 py-2 border border-gold rounded-lg focus:outline-none focus:border-blue transition-all duration-300 ease-in-out focus:scale-105 focus:shadow-md"
+                  className="h-[38px] w-full pl-2 pr-10 rounded-lg border border-gold focus:outline-none focus:border-blue transition-all duration-300 ease-in-out"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
-                <div className="w-6 h-6 text-gold opacity-50">
-                  🔍
-                </div>
+                <LuSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-[1.625rem] text-[#A47032] pointer-events-none" />
               </div>
             </header>
             <div className="p-6">
