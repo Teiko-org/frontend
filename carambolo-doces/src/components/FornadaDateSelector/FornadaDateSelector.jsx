@@ -82,7 +82,12 @@ function FornadaDateSelector() {
         localStorage.getItem("selectedProducts") || "[]"
       );
 
-      if (!selectedProductsJson.length) {
+      // Filtrar apenas produtos com quantidade > 0 e com ID válido
+      const produtosValidos = selectedProductsJson.filter(
+        (produto) => produto.id && produto.quantidade > 0
+      );
+
+      if (!produtosValidos.length) {
         toast.error("Nenhum produto selecionado!");
         return;
       }
@@ -90,7 +95,7 @@ function FornadaDateSelector() {
       toast.info("Adicionando produtos à fornada...");
 
       const responses = await Promise.all(
-        selectedProductsJson.map((produto) =>
+        produtosValidos.map((produto) =>
           fornadaDaVezService({
             fornadaId: idFornada,
             produtoFornadaId: produto.id,
