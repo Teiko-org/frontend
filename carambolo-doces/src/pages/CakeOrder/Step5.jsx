@@ -3,14 +3,13 @@ import { FormContext } from "../../contexts/FormContext";
 import Button from "../../components/Button";
 import ModalMontagem from "../../components/ModalMontagem";
 import ModalDecoracao from "../../components/ModalDecoracao";
-import ModalAdicionais from "../../components/ModalAdicionais";
 import ModalEntregaRetirada from "../../components/ModalEntregaRetirada";
 import ModalFinalizar from "../../components/ModalFinalizar";
 import ModalImagensReferencia from "../../components/ModalImagensReferencia";
 import { FaEdit } from "react-icons/fa";
 
 const Step5 = () => {
-  const { prevStep, submitForm, formData, valorEstimado, appendFormData, setFormData } = useContext(FormContext);
+  const { prevStep, submitForm, formData, valorEstimado, appendFormData, setFormData, dadosMontagem } = useContext(FormContext);
   const [localFormData, setLocalFormData] = useState(formData);
   const [imageUrls, setImageUrls] = useState([]);
   
@@ -60,7 +59,6 @@ const Step5 = () => {
 
   const [isModalMontagemOpen, setIsModalMontagemOpen] = useState(false);
   const [isModalDecoracaoOpen, setIsModalDecoracaoOpen] = useState(false);
-  const [isModalAdicionaisOpen, setIsModalAdicionaisOpen] = useState(false);
   const [isModalEntregaRetiradaOpen, setIsModalEntregaRetiradaOpen] = useState(false);
   const [isModalFinalizarOpen, setIsModalFinalizarOpen] = useState(false);
   const [isModalImagensReferenciaOpen, setIsModalImagensReferenciaOpen] = useState(false);
@@ -272,79 +270,6 @@ const handleConfirmFinalizar = async () => {
           )}
         </div>
       </div>
-
-      {/* ADICIONAIS */}
-      <div className="mb-5 pb-4 border-b border-gray-300">
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="font-bold text-lg text-blue">ADICIONAIS</h3>
-          <FaEdit
-            className="text-gold cursor-pointer"
-            onClick={() => setIsModalAdicionaisOpen(true)}
-          />
-        </div>
-        <div className="flex flex-wrap gap-6">
-          {[
-            { label: "CEREJA", name: "cereja", checked: formDataEntries.adicionais?.cereja || false },
-            { label: "GLITTER", name: "glitter", checked: formDataEntries.adicionais?.glitter || false },
-            { label: "PEROLADO", name: "perolado", checked: formDataEntries.adicionais?.perolado || false },
-            { label: "LACINHOS", name: "lacinhos", checked: formDataEntries.adicionais?.lacinhos || false },
-          ].map((item) => (
-            <div key={item.name} className="flex items-center gap-2 text-blue text-sm font-semibold">
-              <span
-                className="w-5 h-5 rounded-sm p-[1px]"
-                style={{
-                  background: "linear-gradient(180deg, #A47032 0%, #D4B076 100%)",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <span
-                  className="w-full h-full rounded-[1px] flex items-center justify-center"
-                  style={{
-                    background: item.checked
-                      ? "linear-gradient(180deg, #A47032 0%, #D4B076 100%)"
-                      : "#fff",
-                    transition: "all 0.2s ease",
-                  }}
-                >
-                  {item.checked && (
-                    <svg
-                      className="w-3 h-3 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                </span>
-              </span>
-              {item.label}
-            </div>
-          ))}
-        </div>
-        
-        {isModalAdicionaisOpen && (
-          <ModalAdicionais
-            isOpen={isModalAdicionaisOpen}
-            onClose={() => setIsModalAdicionaisOpen(false)}
-            initialAddons={{
-              cereja: formDataEntries.adicionais?.cereja || false,
-              glitter: formDataEntries.adicionais?.glitter || false,
-              perolado: formDataEntries.adicionais?.perolado || false,
-              lacinhos: formDataEntries.adicionais?.lacinhos || false,
-            }}
-            onSave={(newData) => {
-              // Atualizar os adicionais no FormContext
-              appendFormData({ adicionais: newData }, 'dadosMontagem');
-              setIsModalAdicionaisOpen(false);
-            }}
-          />
-        )}
-      </div>
-
 
       {/* ENTREGA/RETIRADA */}
       <div className="mb-5 pb-4 border-b border-gray-300">
