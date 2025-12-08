@@ -259,6 +259,16 @@ export const FormProvider = ({ children }) => {
           formData.append("nome", "Referência do Cliente");
           formData.append("observacao", dadosMontagem.observacoes || "");
           formData.append("categoria", "REFERENCIA_CLIENTE");
+          
+          // Add adicionais IDs if selected
+          if (Array.isArray(dadosMontagem.adicionais) && dadosMontagem.adicionais.length > 0) {
+            // Extract just the IDs from the adicional objects
+            const adicionaisIds = dadosMontagem.adicionais.map(a => a.id);
+            const adicionaisString = adicionaisIds.join(", ");
+            console.log("Sending adicionais IDs to backend:", adicionaisString);
+            formData.append("adicionais", adicionaisString);
+          }
+          
           imagens.forEach((arquivo) => {
             // `imagens` armazena objetos File (vindos do Step2)
             formData.append("imagens", arquivo);
