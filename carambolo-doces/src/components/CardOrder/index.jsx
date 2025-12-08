@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useModal } from "../../hooks/useModal";
 import orderCakeDetails from "../../service/orderCakeDetails";
 import orderFornadaDetails from "../../service/orderFornadaDetails";
+import { axiosApi } from "../../provider/AxiosApi";
 
 function CardOrder(props) {
   const { isOpen, openModal, closeModal } = useModal();
@@ -35,6 +36,37 @@ function CardOrder(props) {
 
       console.log("📋 Detalhes do pedido carregados:", resposta);
       console.log("🎁 Adicionais encontrados:", resposta?.adicionais);
+      console.log("🎨 DecoraigoId:", resposta?.decoracaoId);
+      
+      // Se tem decoracaoId, buscar os adicionais da decoração
+      if (resposta?.decoracaoId) {
+        try {
+          const token = typeof window !== 'undefined' ? localStorage.getItem('JWT_TOKEN') : null;
+          const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+          const response = await axiosApi.get(`/decoracoes/${resposta.decoracaoId}/adicionais`, config);
+          
+          console.log("✨ Resposta da decoração:", response.data);
+          
+          // Extrair adicionaisPossiveis da resposta
+          const adicionaisDaDecoracao = response.data?.adicionaisPossiveis || [];
+          console.log("📍 Adicionais possíveis da decoração:", adicionaisDaDecoracao);
+          
+          // Remover duplicatas usando um Map por ID
+          const adicionaisUnicos = Array.from(
+            new Map(adicionaisDaDecoracao.map(a => [a.id, a])).values()
+          );
+          console.log("✅ Adicionais únicos:", adicionaisUnicos);
+          
+          resposta.adicionaisExibicao = adicionaisUnicos;
+        } catch (error) {
+          console.warn("Erro ao buscar adicionais da decoração:", error);
+          resposta.adicionaisExibicao = [];
+        }
+      } else {
+        // Se não tem decoracaoId, não há adicionais
+        resposta.adicionaisExibicao = [];
+      }
+      
       setDetalhesPedido(resposta || {});
     } catch (error) {
       console.error("❌ Erro ao carregar detalhes:", error);
