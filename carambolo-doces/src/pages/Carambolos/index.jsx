@@ -91,13 +91,15 @@ function Carambolos() {
             </p>
           </div>
         ) : (
-          Object.keys(decoracoesPorCategoria).map((categoria) =>
-            renderSection(
-              categoria,
-              decoracoesPorCategoria[categoria],
-              navigate
+          Object.keys(decoracoesPorCategoria)
+            .filter(categoria => categoria !== 'REFERENCIA_CLIENTE')
+            .map((categoria) =>
+              renderSection(
+                categoria,
+                decoracoesPorCategoria[categoria],
+                navigate
+              )
             )
-          )
         )}
       </section>
       <Footer />
