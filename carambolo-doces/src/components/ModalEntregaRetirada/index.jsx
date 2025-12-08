@@ -455,7 +455,7 @@ export default function ModalEntregaRetirada({
       ) : (
         <>
           {/* CAMPOS RETIRADA */}
-          <div className="flex flex-col mb-6">
+          <div className="flex flex-col mb-6 w-full">
             <Select
               label="Horário da Retirada"
               options={[

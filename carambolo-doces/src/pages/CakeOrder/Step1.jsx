@@ -4,7 +4,7 @@ import { useFormContext, Controller } from "react-hook-form";
 import Button from "../../components/Button";
 import Select from "../../components/Select";
 import { axiosApi } from "../../provider/AxiosApi";
-import { toast } from 'react-toastify';
+import { toast } from "../../utils/toast";
 
 const formatLabel = (text) => {
   return text
@@ -80,7 +80,7 @@ const Step1 = () => {
 
   const handleNextStep = async () => {
     if (camposPreenchidosAutomaticamente) {
-      toast.error("Por favor, preencha todos os campos obrigatórios (tamanho, formato, massa e recheio) antes de continuar.");
+      toast.error('Por favor, preencha todos os campos obrigatórios (tamanho, formato, massa e recheio) antes de continuar.');
       return;
     }
     
@@ -88,25 +88,25 @@ const Step1 = () => {
     const isValid = await trigger(['tamanho', 'formato', 'massa', 'recheio']);
     
     if (!isValid) {
-      toast.error("Por favor, preencha todos os campos obrigatórios");
+      toast.error('Por favor, preencha todos os campos obrigatórios');
       return;
     }
 
     // Validação adicional para garantir que todos os campos obrigatórios estejam preenchidos
     if (!data.tamanho) {
-      toast.error("Por favor, selecione um tamanho");
+      toast.error('Por favor, selecione um tamanho');
       return;
     }
     if (!data.formato) {
-      toast.error("Por favor, selecione um formato");
+      toast.error('Por favor, selecione um formato');
       return;
     }
     if (!data.massa) {
-      toast.error("Por favor, selecione uma massa");
+      toast.error('Por favor, selecione uma massa');
       return;
     }
     if (!data.recheio || data.recheio.trim() === "") {
-      toast.error("Por favor, selecione um recheio");
+      toast.error('Por favor, selecione um recheio');
       await trigger('recheio'); // Forçar validação do campo
       return;
     }
@@ -114,21 +114,21 @@ const Step1 = () => {
     // Validação adicional: verificar se o recheio selecionado está na lista de recheios disponíveis para a massa
     const recheioValido = filteredRecheios.find(r => r.value === data.recheio);
     if (!recheioValido) {
-      toast.error("O recheio selecionado não é compatível com a massa escolhida. Por favor, selecione outro recheio.");
+      toast.error('O recheio selecionado não é compatível com a massa escolhida. Por favor, selecione outro recheio.');
       return;
     }
     
     // Buscar o ID do recheio selecionado
     const recheioSelecionado = recheioOptions.find((r) => r.value === data.recheio);
     if (!recheioSelecionado || !recheioSelecionado.id) {
-      toast.error("Erro ao processar o recheio selecionado. Por favor, selecione novamente.");
+      toast.error('Erro ao processar o recheio selecionado. Por favor, selecione novamente.');
       return;
     }
     
     // Buscar o ID da massa selecionada
     const massaSelecionada = massaOptions.find((m) => m.value === data.massa);
     if (!massaSelecionada || !massaSelecionada.id) {
-      toast.error("Erro ao processar a massa selecionada. Por favor, selecione novamente.");
+      toast.error('Erro ao processar a massa selecionada. Por favor, selecione novamente.');
       return;
     }
     

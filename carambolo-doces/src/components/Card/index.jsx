@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AvailableBox from "../AvailableBox";
 // import SoldOutBox from "../SoldOutBox";
-import { toast } from "react-toastify";
 import { useCart } from "../../contexts/CartContext";
 import defaultBoloImg from "../../assets/image_card.png";
 import defaultFornadaImg from "../../assets/image_fornada.png";
 import soldOutImg from "../../assets/card_esgotado.png"; // alterado para a nova imagem
+import { toast } from "../../utils/toast";
 
 function Card({ available, type, produto, nome, preco, imagem, boloData, onClick }) {
   const navigate = useNavigate();
@@ -24,7 +24,7 @@ function Card({ available, type, produto, nome, preco, imagem, boloData, onClick
     } else if (type === "Fornada" && available) {
       navigate('/pedido-fornada', { state: { produto } });
     } else if(type === "Fornada" && !available) {
-      toast.error("Fornada esgotada");
+      toast.error('Fornada esgotada');
     }
   };
 
@@ -170,7 +170,7 @@ function Card({ available, type, produto, nome, preco, imagem, boloData, onClick
                     onClick={(e) => {
                       e.stopPropagation();
                       if (!produto || produto.quantidade <= 0) {
-                        toast.warn("Produto esgotado");
+                        toast.warn('Produto esgotado');
                         return;
                       }
                       addItem({
@@ -182,7 +182,7 @@ function Card({ available, type, produto, nome, preco, imagem, boloData, onClick
                         fornadaDaVezId: produto.fornadaDaVezId,
                         maxQuantity: produto.quantidade
                       }, qty);
-                      toast.success("Adicionado ao carrinho");
+                      toast.success('Adicionado ao carrinho');
                       setQty(1);
                     }}
                   >

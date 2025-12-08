@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { axiosApi } from '../provider/AxiosApi.js';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/toast';
 
 export const login = async (phone, password) => {
   const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
@@ -24,7 +24,7 @@ export const logOff = () => {
     
     clearAuthData();
   } catch (e) {
-    toast.error("Falha ao deslogar");
+    toast.error('Falha ao deslogar');
     console.log("Erro ao deslogar: " + e);
   }
 };
@@ -57,44 +57,16 @@ export const register = async (name, password, phone) => {
   }
 };
 
-const LOGIN_ERROR_TOAST_ID = 'login-invalid-credentials';
 
 const handleAuthError = (error, phone) => {
   if (error.response && error.response.status === 409) {
-    toast.error(
-      'Este telefone já está cadastrado. Tente fazer login ou use outro número.',
-      {
-        autoClose: 15000,
-        closeOnClick: true,
-        pauseOnHover: false,
-        hideProgressBar: false,
-      }
-    );
+    toast.error('Este telefone já está cadastrado. Tente fazer login ou use outro número.');
   } else if (error.response && error.response.status === 500) {
     toast.error('Tivemos problemas para processar seu cadastro. Tente novamente mais tarde!');
   } else if (error.response && error.response.status === 401) {
-    if (toast.isActive(LOGIN_ERROR_TOAST_ID)) {
-      toast.dismiss(LOGIN_ERROR_TOAST_ID);
-      setTimeout(() => {
-        toast.error('Telefone ou Senha incorretos.', {
-          toastId: LOGIN_ERROR_TOAST_ID,
-          autoClose: 15000,
-          closeOnClick: true,
-          pauseOnHover: false,
-          hideProgressBar: false,
-        });
-      }, 10);
-    } else {
-      toast.error('Telefone ou Senha incorretos.', {
-        toastId: LOGIN_ERROR_TOAST_ID,
-        autoClose: 15000,
-        closeOnClick: true,
-        pauseOnHover: false,
-        hideProgressBar: false,
-      });
-    }
+    toast.error('Telefone ou Senha incorretos.');
   } else if (error.response && error.response.status === 404) {
-    toast.error(`Usuário com contato ${phone} não encontrado`);
+    console.error(`[ERROR] Usuário com contato ${phone} não encontrado`);
   } else {
     toast.error('Erro de autenticação. Tente novamente.');
     console.error('Erro de autenticação', error);
@@ -108,7 +80,7 @@ export const changePassword = async (userId, senhaAtual, novaSenha) => {
       novaSenha
     });
 
-    toast.success("Senha alterada com sucesso! Faça login novamente.");
+    toast.success('Senha alterada com sucesso! Faça login novamente.');
     clearAuthData();
     return true;
   } catch (error) {
@@ -157,11 +129,11 @@ export const deleteUser = async (userId) => {
   try {
     await axiosApi.delete(`/usuarios/${userId}`);
 
-    toast.success("Conta excluída com sucesso!");
+    toast.success('Conta excluída com sucesso!');
     clearAuthData();
     return true;
   } catch (error) {
-    toast.error("Erro ao excluir conta. Tente novamente.");
+    toast.error('Erro ao excluir conta. Tente novamente.');
     throw error;
   }
 };
@@ -193,10 +165,10 @@ export const updateUserData = async (userId, userData, shouldLogout = true) => {
     const response = await axiosApi.patch(`/usuarios/${userId}/dados-pessoais`, userData);
 
     if (shouldLogout) {
-      toast.success("Telefone alterado com sucesso! Faça login novamente.");
+      toast.success('Telefone alterado com sucesso! Faça login novamente.');
       clearAuthData();
     } else {
-      toast.success("Dados atualizados com sucesso!");
+      toast.success('Dados atualizados com sucesso!');
     }
 
     return response.data;
@@ -265,7 +237,7 @@ export const uploadProfileImage = async (userId, file) => {
       }
     });
 
-    toast.success("Imagem de perfil atualizada com sucesso!");
+    toast.success('Imagem de perfil atualizada com sucesso!');
 
     window.dispatchEvent(new CustomEvent("userImageUpdated", {
       detail: { imagemUrl: response.data.imagemUrl }
@@ -279,13 +251,13 @@ export const uploadProfileImage = async (userId, file) => {
     if (error.message.includes('imagem') || error.message.includes('grande')) {
       toast.error(error.message);
     } else if (error.response?.status === 401) {
-      toast.error("Sessão expirada. Faça login novamente.");
+      toast.error('Sessão expirada. Faça login novamente.');
     } else if (error.response?.status === 404) {
-      toast.error("Usuário não encontrado.");
+      toast.error('Usuário não encontrado.');
     } else if (error.response?.status === 400) {
-      toast.error("Arquivo inválido. Selecione uma imagem válida.");
+      toast.error('Arquivo inválido. Selecione uma imagem válida.');
     } else {
-      toast.error("Erro ao fazer upload da imagem. Tente novamente.");
+      toast.error('Erro ao fazer upload da imagem. Tente novamente.');
     }
 
     throw error;

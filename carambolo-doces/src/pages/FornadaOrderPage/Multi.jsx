@@ -10,7 +10,6 @@ import Button from "../../components/Button";
 import { axiosApi } from "../../provider/AxiosApi";
 import { useCart } from "../../contexts/CartContext";
 import axios from "axios";
-import { toast } from "react-toastify";
 import { IoIosInformationCircle } from "react-icons/io";
 import { listUserAddresses } from "../../service/addressService";
 import { getProdutoFornadaById } from "../../service/fornadaService";
@@ -18,6 +17,7 @@ import Carousel from "../../components/Carousel";
 import defaultImageCard from "../../assets/image_card.png";
 import defaultImageFornada from "../../assets/image_fornada.png";
 import { validateBrazilianPhone } from "../../utils/phoneValidation";
+import { toast } from "../../utils/toast";
 
 export default function FornadaMultiOrderPage() {
   const { removeByFornadaId, removeItem } = useCart();
@@ -185,7 +185,7 @@ export default function FornadaMultiOrderPage() {
     if (!dataEntrega) { setErrors((p)=>({ ...p, dataEntrega:true })); t.warn("Selecione a data de entrega!"); return false; }
     const d = new Date(dataEntrega); const today = new Date(); today.setHours(0,0,0,0);
     if (d < today) { setErrors((p)=>({ ...p, dataEntrega:true })); t.warn("A data não pode ser no passado!"); return false; }
-    if (deliveryOption === 'Retirada' && !horario) { setErrors((p)=>({ ...p, horario:true })); t.warn("Selecione o horário da retirada!"); return false; }
+    if (deliveryOption === 'Retirada' && (!horario || horario.trim() === "" || horario === "Selecione um horário")) { setErrors((p)=>({ ...p, horario:true })); t.warn("Selecione o horário da retirada!"); return false; }
     if (deliveryOption === 'Entrega' && !(selectedAddressId && selectedAddressId !== 'novo')) {
       const cepDigits = String(cep || '').replace(/\D/g, '');
       if (cepDigits.length !== 8) { setErrors((p)=>({ ...p, cep:true })); t.warn("CEP inválido!"); return false; }
@@ -338,14 +338,14 @@ export default function FornadaMultiOrderPage() {
         <div className="flex flex-col items-center px-20">
           <h1 className="font-bold text-blue text-3xl py-6">Itens Selecionados</h1>
           {itens.length > 0 && (
-            <div className="w-[360px]">
+            <div className="w-[480px] mb-2 flex justify-center items-center relative">
               <Carousel
                 slides={itens.map((i, k) => ({ 
                   id: k + 1, 
                   image: i.image ?? defaultImageFornada, 
                   title: i.name 
                 }))}
-                imageHeightClass="h-[360px]"
+                imageHeightClass="h-[320px]"
                 itemsPerView={1}
                 showTitles={false}
                 autoPlay
@@ -439,8 +439,24 @@ export default function FornadaMultiOrderPage() {
                 </>
               )}
               {deliveryOption === "Retirada" && (
-                <div className="col-span-2">
-                  <Select label="Horário" options={[{ value: "17:00", label: "17:00" }, { value: "17:30", label: "17:30" }, { value: "18:00", label: "18:00" }, { value: "18:30", label: "18:30" }, { value: "19:00", label: "19:00" }]} value={horario} onChange={(e) => setHorario(e.target.value)} className={errors.horario ? 'border-red-500' : ''} />
+                <div className="col-span-3">
+                  <Select 
+                    label="Horário" 
+                    options={[
+                      { value: "", label: "Selecione um horário" },
+                      { value: "17:00", label: "17:00" }, 
+                      { value: "17:30", label: "17:30" }, 
+                      { value: "18:00", label: "18:00" }, 
+                      { value: "18:30", label: "18:30" }, 
+                      { value: "19:00", label: "19:00" }
+                    ]} 
+                    value={horario === undefined || horario === null ? "" : horario} 
+                    onChange={(e) => {
+                      const valor = e.target.value;
+                      setHorario(valor);
+                    }} 
+                    className={errors.horario ? 'border-red-500' : ''} 
+                  />
                 </div>
               )}
             </div>

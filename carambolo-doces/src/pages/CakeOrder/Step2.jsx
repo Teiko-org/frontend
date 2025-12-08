@@ -1,9 +1,9 @@
 import React, { useContext } from "react";
 import { FormContext } from "../../contexts/FormContext";
 import { useFormContext, Controller } from "react-hook-form";
-import { toast } from 'react-toastify';
 import Button from "../../components/Button";
 import InputImage from "../../components/InputImage";
+import { toast } from "../../utils/toast";
 
 const Step2 = () => {
   const { nextStep, prevStep, appendFormData, setFormData, valorEstimado } = useContext(FormContext);

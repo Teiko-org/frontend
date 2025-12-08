@@ -4,13 +4,13 @@ import { RiFileTextLine } from "react-icons/ri";
 import Button from "../Button";
 import InputOption from "../InputOption";
 import { axiosApi } from "../../provider/AxiosApi";
-import { toast } from "react-toastify";
 import { fetchAllAdicionais } from "../../service/adicionalService";
+import { toast } from "../../utils/toast";
 
 export default function ModalCadastroProduto() {
     const [isModalOpen, setIsOpen] = useState(false);
-    const [file, setFile] = useState(null);
-    const [filePreview, setFilePreview] = useState(null);
+    const [files, setFiles] = useState([]);
+    const [filePreviews, setFilePreviews] = useState([]);
     const imagemRef = useRef(null);
 
     const [produto, setProduto] = useState("");
@@ -26,11 +26,26 @@ export default function ModalCadastroProduto() {
     const [descricao, setDescricao] = useState("");
 
     const anexarImagem = (e) => {
-        const img = e.target.files[0];
-        if (img) {
-            setFile(img);
-            setFilePreview(URL.createObjectURL(img));
+        const selectedFiles = Array.from(e.target.files || []);
+        if (selectedFiles.length > 0) {
+            // Criar previews apenas para os novos arquivos
+            const newPreviews = selectedFiles.map(file => URL.createObjectURL(file));
+            setFiles(prev => [...prev, ...selectedFiles]);
+            setFilePreviews(prev => [...prev, ...newPreviews]);
         }
+        // Limpar o input para permitir selecionar o mesmo arquivo novamente
+        if (imagemRef.current) {
+            imagemRef.current.value = '';
+        }
+    };
+
+    const removerImagem = (index) => {
+        const newFiles = files.filter((_, i) => i !== index);
+        const newPreviews = filePreviews.filter((_, i) => i !== index);
+        // Revogar URL do objeto removido para liberar memória
+        URL.revokeObjectURL(filePreviews[index]);
+        setFiles(newFiles);
+        setFilePreviews(newPreviews);
     };
 
     const exibirImagem = () => {
@@ -56,11 +71,23 @@ export default function ModalCadastroProduto() {
         getAllAdicionais()
     }, [])
 
+    // Limpar estado quando o modal fechar
+    useEffect(() => {
+        if (!isModalOpen) {
+            // Limpar previews e revogar URLs
+            setFilePreviews(prev => {
+                prev.forEach(preview => URL.revokeObjectURL(preview));
+                return [];
+            });
+            setFiles([]);
+        }
+    }, [isModalOpen]);
+
     const cadastrarDecoracao = async (e, naoFecharModal = false) => {
         e?.preventDefault?.();
 
         if (!nomeDecoracao) {
-            toast.warn("Preencha o nome da decoração!");
+            toast.warn('Preencha o nome da decoração!');
             return;
         }
 
@@ -71,7 +98,12 @@ export default function ModalCadastroProduto() {
             formData.append("observacao", "");
         }
         formData.append("nome", nomeDecoracao);
-        if (file) formData.append("imagens", file);
+        // Adicionar múltiplas imagens
+        if (files && files.length > 0) {
+            files.forEach((file) => {
+                formData.append("imagens", file);
+            });
+        }
         if (categoriaDecoracao && categoria === "Decoracao") {
             formData.append("categoria", categoriaDecoracao);
         }
@@ -82,12 +114,14 @@ export default function ModalCadastroProduto() {
             const response = await axiosApi.post("/decoracoes", formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            toast.success("Decoração cadastrada com sucesso!");
+            toast.success('Decoração cadastrada com sucesso!');
 
             setNomeDecoracao("");
             setObservacao([]);
-            setFile(null);
-            setFilePreview(null);
+            // Limpar previews e revogar URLs
+            filePreviews.forEach(preview => URL.revokeObjectURL(preview));
+            setFiles([]);
+            setFilePreviews([]);
 
             setCategoriaDecoracao("");
 
@@ -97,7 +131,7 @@ export default function ModalCadastroProduto() {
 
             return response.data.id;
         } catch (error) {
-            toast.error("Erro ao cadastrar decoração!");
+            toast.error('Erro ao cadastrar decoração!');
             console.error("Erro completo:", error);
             throw error;
         }
@@ -112,15 +146,18 @@ export default function ModalCadastroProduto() {
         formData.append("valor", valor);
         formData.append("categoria", categoriaFornada);
 
-        if (file) {
-            formData.append("imagens", file);
+        // Adicionar múltiplas imagens
+        if (files && files.length > 0) {
+            files.forEach((file) => {
+                formData.append("imagens", file);
+            });
         }
 
         try {
             await axiosApi.post("/fornadas/produto-fornada", formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            toast.success("Produto cadastrado com sucesso!");
+            toast.success('Produto cadastrado com sucesso!');
 
             // Disparar evento para recarregar a lista de produtos
             window.dispatchEvent(new CustomEvent('productCreated'));
@@ -128,12 +165,14 @@ export default function ModalCadastroProduto() {
             setProduto("");
             setValor("");
             setCategoriaFornada("");
-            setFile(null);
-            setFilePreview(null);
+            // Limpar previews e revogar URLs
+            filePreviews.forEach(preview => URL.revokeObjectURL(preview));
+            setFiles([]);
+            setFilePreviews([]);
 
             setIsOpen(false);
         } catch (error) {
-            toast.error("Erro ao cadastrar produto!");
+            toast.error('Erro ao cadastrar produto!');
             console.error("Erro completo:", error);
         }
     };
@@ -182,35 +221,62 @@ export default function ModalCadastroProduto() {
                         </header>
 
                         <section className="flex px-8 gap-8 py-4 h-[557px] overflow-y-auto">
-                            {/* Imagem */}
+                            {/* Imagens */}
                             <div className="w-1/2 flex flex-col items-center justify-center gap-4">
-                                <div className="flex flex-col gap-4 items-center border-[3px] border-[#d6a87c] rounded-md p-2 px-1 w-72 h-80">
-                                    <div className="border-2 border-dashed border-[#d6a87c] rounded-md p-4 flex flex-col items-center justify-center gap-3 bg-white w-64 h-64 overflow-hidden">
-                                        {filePreview ? (
-                                            <img
-                                                src={filePreview}
-                                                alt="Prévia"
-                                                className="w-full h-full object-contain rounded-md"
-                                            />
-                                        ) : (
+                                <div className="flex flex-col gap-4 items-center border-[3px] border-[#d6a87c] rounded-md p-2 px-1 w-72 max-h-[500px] overflow-y-auto">
+                                    {/* Preview das imagens */}
+                                    {filePreviews.length > 0 ? (
+                                        <div className="flex flex-col gap-3 w-full">
+                                            {filePreviews.map((preview, index) => (
+                                                <div key={index} className="relative border-2 border-[#d6a87c] rounded-md p-2 bg-white">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removerImagem(index)}
+                                                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors z-10"
+                                                        title="Remover imagem"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
+                                                    <img
+                                                        src={preview}
+                                                        alt={`Prévia ${index + 1}`}
+                                                        className="w-full h-48 object-contain rounded-md"
+                                                    />
+                                                    <p className="text-xs text-center mt-1 text-gray-600">
+                                                        Imagem {index + 1}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="border-2 border-dashed border-[#d6a87c] rounded-md p-4 flex flex-col items-center justify-center gap-3 bg-white w-64 h-64">
                                             <RiFileTextLine size={100} className="text-goldCard" />
-                                        )}
-                                    </div>
+                                            <p className="text-sm text-gray-500 text-center">
+                                                Nenhuma imagem adicionada
+                                            </p>
+                                        </div>
+                                    )}
 
                                     <Button
                                         type="button"
                                         className="text-sm flex flex-row gap-2 items-center"
                                         onClick={exibirImagem}
                                     >
-                                        <Upload size={16} /> Adicionar Imagem
+                                        <Upload size={16} /> {filePreviews.length > 0 ? 'Adicionar Mais Imagens' : 'Adicionar Imagens'}
                                     </Button>
                                     <input
                                         type="file"
                                         ref={imagemRef}
                                         accept="image/*"
+                                        multiple
                                         className="hidden"
                                         onChange={anexarImagem}
                                     />
+                                    {filePreviews.length > 0 && (
+                                        <p className="text-xs text-gray-500 text-center">
+                                            {filePreviews.length} {filePreviews.length === 1 ? 'imagem' : 'imagens'} adicionada{filePreviews.length > 1 ? 's' : ''}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
@@ -316,15 +382,6 @@ export default function ModalCadastroProduto() {
                                                 </div>
                                         </div>
 
-                                        <div className="flex flex-col gap-1">
-                                            <input
-                                                type="file"
-                                                ref={imagemRef}
-                                                accept="image/*"
-                                                className="hidden"
-                                                onChange={anexarImagem}
-                                            />
-                                        </div>
 
                                         <Button type="submit" className="w-fit self-end">
                                             Cadastrar

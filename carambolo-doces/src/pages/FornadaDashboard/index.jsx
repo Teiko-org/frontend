@@ -6,11 +6,10 @@ import HeaderDashboard from "../../components/headerDashboard";
 import { fornadaService } from "../../service/fornadaService";
 import fornadaDaVezService from "../../service/fornadaDaVezService";
 import { useEffect, useState } from "react";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import { insertNewFornada, updateFornada } from "../../service/fornadaService";
 import { validateAndCleanAuth } from "../../service/userService";
+import { toast } from "../../utils/toast";
 
 const parseLocalDate = (dateStr) => {
   if (!dateStr) return null;
@@ -71,7 +70,7 @@ function FornadaDashboard() {
 
   const registerFornada = async () => {
     if (!fornada.dataInicio || !fornada.dataFim) {
-      toast("Preencha as duas datas!", { type: "error" });
+      toast.error('Preencha as duas datas!');
       return;
     }
 
@@ -79,20 +78,18 @@ function FornadaDashboard() {
     const dataFim = new Date(fornada.dataFim + 'T00:00:00');
 
     if (dataInicio > dataFim) {
-      toast("A data de início deve ser menor que a data final!", {
-        type: "error",
-      });
+      toast.error('A data de início deve ser menor que a data final!');
       return;
     }
 
     const selectedProducts = JSON.parse(localStorage.getItem("selectedProducts") || "[]");
     if (!selectedProducts.length) {
-      toast("Selecione pelo menos um produto!", { type: "error" });
+      toast.error('Selecione pelo menos um produto!');
       return;
     }
 
     try {
-      toast.info("Cadastrando fornada...");
+      toast.info('Cadastrando fornada...');
       const response = await insertNewFornada(fornada);
 
       if (response && response.id) {
@@ -101,11 +98,11 @@ function FornadaDashboard() {
         localStorage.removeItem("selectedProducts");
         await carregarDadosFornada();
       } else {
-        toast.error("Erro ao cadastrar fornada!");
+        toast.error('Erro ao cadastrar fornada!');
       }
     } catch (error) {
       console.error("Erro ao cadastrar fornada:", error);
-      toast.error("Erro ao cadastrar fornada! Tente novamente.");
+      toast.error('Erro ao cadastrar fornada! Tente novamente.');
     }
   };
 
@@ -141,19 +138,19 @@ function FornadaDashboard() {
       }, 100);
     } catch (error) {
       console.error("Erro ao carregar produtos da fornada:", error);
-      toast.error("Erro ao carregar produtos da fornada. Tente novamente.");
+      toast.error('Erro ao carregar produtos da fornada. Tente novamente.');
     }
   };
 
   const handleSaveEdit = async () => {
     if (!validateAndCleanAuth()) {
-      toast.error("Você precisa estar logado para atualizar uma fornada!");
+      toast.error('Você precisa estar logado para atualizar uma fornada!');
       navigate('/login');
       return;
     }
 
     if (!editingFornada || !editingFornada.dataInicio || !editingFornada.dataFim) {
-      toast("Preencha as duas datas!", { type: "error" });
+      toast.error('Preencha as duas datas!');
       return;
     }
 
@@ -161,34 +158,32 @@ function FornadaDashboard() {
     const dataFim = new Date(editingFornada.dataFim + 'T00:00:00');
 
     if (dataInicio > dataFim) {
-      toast("A data de início deve ser menor que a data final!", {
-        type: "error",
-      });
+      toast.error('A data de início deve ser menor que a data final!');
       return;
     }
 
     try {
-      toast.info("Salvando alterações...");
+      toast.info('Salvando alterações...');
       const sucesso = await updateFornada(editingFornada.id, {
         dataInicio: editingFornada.dataInicio,
         dataFim: editingFornada.dataFim
       });
 
       if (sucesso) {
-        toast.info("Sincronizando produtos da fornada...");
+        toast.info('Sincronizando produtos da fornada...');
         await sincronizarProdutosFornada(editingFornada.id);
         localStorage.removeItem("selectedProducts");
         
-        toast.success("Fornada atualizada com sucesso!");
+        toast.success('Fornada atualizada com sucesso!');
         setIsEditing(false);
         setEditingFornada(null);
         await carregarDadosFornada();
       } else {
-        toast.error("Erro ao atualizar fornada!");
+        toast.error('Erro ao atualizar fornada!');
       }
     } catch (error) {
       console.error("Erro ao atualizar fornada:", error);
-      toast.error("Erro ao atualizar fornada! Tente novamente.");
+      toast.error('Erro ao atualizar fornada! Tente novamente.');
     }
   };
 
@@ -223,9 +218,7 @@ function FornadaDashboard() {
   };
 
   const notify = () => {
-    toast("Fornada cadastrada com sucesso!", {
-      type: "success",
-    });
+    toast.success('Fornada cadastrada com sucesso!');
   };
 
   const sincronizarProdutosFornada = async (idFornada) => {
@@ -299,11 +292,11 @@ function FornadaDashboard() {
       );
 
       if (!produtosValidos.length) {
-        toast.error("Nenhum produto selecionado!");
+        toast.error('Nenhum produto selecionado!');
         return;
       }
 
-      toast.info("Adicionando produtos à fornada...");
+      toast.info('Adicionando produtos à fornada...');
 
       const responses = await Promise.all(
         produtosValidos.map((produto) =>
@@ -318,11 +311,11 @@ function FornadaDashboard() {
       if (responses.every(response => response)) {
         notify();
       } else {
-        toast.error("Erro ao adicionar alguns produtos!");
+        toast.error('Erro ao adicionar alguns produtos!');
       }
     } catch (error) {
       console.error("Erro ao registrar produtos da fornada:", error);
-      toast.error("Erro ao adicionar produtos à fornada!");
+      toast.error('Erro ao adicionar produtos à fornada!');
     }
   };
 
@@ -443,7 +436,7 @@ function FornadaDashboard() {
   const pendingFornadaIdRef = useRef(null);
   const handleEncerrarFornada = async () => {
     if (!validateAndCleanAuth()) {
-      toast.error("Você precisa estar logado para encerrar uma fornada!");
+      toast.error('Você precisa estar logado para encerrar uma fornada!');
       navigate('/login');
       return;
     }
@@ -451,7 +444,7 @@ function FornadaDashboard() {
     try {
       const fornadaId = fornadaAtual?.id || fornadaProxima?.id;
       if (!fornadaId) {
-        toast.error("Nenhuma fornada encontrada para encerrar!");
+        toast.error('Nenhuma fornada encontrada para encerrar!');
         return;
       }
 
@@ -459,19 +452,19 @@ function FornadaDashboard() {
       setConfirmOpen(true);
     } catch (error) {
       console.error("Erro ao encerrar fornada:", error);
-      toast.error("Erro ao encerrar fornada! Tente novamente.");
+      toast.error('Erro ao encerrar fornada! Tente novamente.');
     }
   };
 
   const confirmEncerrar = async () => {
     try {
       if (!pendingFornadaIdRef.current) { setConfirmOpen(false); return; }
-      toast.info("Encerrando fornada...");
+      toast.info('Encerrando fornada...');
       const sucesso = await encerrarFornada(pendingFornadaIdRef.current);
       console.log('[ENCERRAR][FRONT] id=', pendingFornadaIdRef.current, ' sucesso=', sucesso);
       
       if (sucesso) {
-        toast.success("Fornada encerrada com sucesso!");
+        toast.success('Fornada encerrada com sucesso!');
 
         // Limpa seleção de produtos da fornada encerrada
         localStorage.removeItem("selectedProducts");
@@ -484,11 +477,11 @@ function FornadaDashboard() {
         // As KPIs se baseiam em chamadas próprias à API e usam essa chave para refetch
         setKpiRefreshKey((v) => v + 1);
       } else {
-        toast.error("Erro ao encerrar fornada!");
+        toast.error('Erro ao encerrar fornada!');
       }
     } catch (error) {
       console.error("[ENCERRAR][FRONT] Erro ao encerrar fornada:", error);
-      toast.error("Erro ao encerrar fornada! Tente novamente.");
+      toast.error('Erro ao encerrar fornada! Tente novamente.');
     } finally {
       setConfirmOpen(false);
       pendingFornadaIdRef.current = null;

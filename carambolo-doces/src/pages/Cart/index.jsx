@@ -7,11 +7,11 @@ import { useCart } from "../../contexts/CartContext";
 import { listResumoFornadaDoUsuario, aumentarQuantidadePedido, diminuirQuantidadePedido } from "../../service/cartFornadaService";
 import { getProdutoFornadaById, getFornada } from "../../service/fornadaService";
 import { axiosApi } from "../../provider/AxiosApi";
-import { toast } from "react-toastify";
 import CartItemCard from "../../components/CartItemCard";
 import ModalBaseForm from "../../components/ModalBaseForm";
 import defaultImageCard from "../../assets/image_card.png";
 import defaultImageFornada from "../../assets/image_fornada.png";
+import { toast } from "../../utils/toast";
 
 export default function CartPage() {
   const { items: localItems, clearCart, updateQuantity, removeItem } = useCart();
@@ -317,7 +317,7 @@ export default function CartPage() {
                       unitPrice={Number(resumo.valor || 0) / Math.max(1, Number(pedido.quantidade || 1))}
                       quantity={pedido.quantidade}
                       onDecrease={async () => { await diminuirQuantidadePedido(resumo.pedidoFornadaId); carregarPedidos(); }}
-                      onIncrease={async () => { const r = await aumentarQuantidadePedido(resumo.pedidoFornadaId); if (!r.ok) toast.warn("Quantidade indisponível no estoque"); carregarPedidos(); }}
+                      onIncrease={async () => { const r = await aumentarQuantidadePedido(resumo.pedidoFornadaId); if (!r.ok) toast.warn('Quantidade indisponível no estoque'); carregarPedidos(); }}
                       disableIncrease={["PAGO","CONCLUIDO","CANCELADO"].includes(resumo.status)}
                       statusLabel={resumo.status}
                       statusColor={resumo.status === 'PAGO' ? 'bg-green-600' : resumo.status === 'CONCLUIDO' ? 'bg-blue' : resumo.status === 'CANCELADO' ? 'bg-red-600' : 'bg-yellow-500'}

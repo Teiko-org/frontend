@@ -6,13 +6,12 @@ import HeaderDashboard from "../../components/headerDashboard";
 import { fornadaService } from "../../service/fornadaService";
 import fornadaDaVezService from "../../service/fornadaDaVezService";
 import { useEffect, useState } from "react";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import { insertNewFornada } from "../../service/fornadaService"
 import KPILastFornada from "../../components/KPILastFornada";
 import KPIThisMonthFornadas from "../../components/KPIThisMonthFornadas";
 import { getFornadaAtiva } from "../../service/fornadaService";
+import { toast } from "../../utils/toast";
 
 function FornadaDateSelector() {
   const navigate = useNavigate();
@@ -32,7 +31,7 @@ function FornadaDateSelector() {
 
   const registerFornada = async () => {
     if (!fornada.dataInicio || !fornada.dataFim) {
-      toast("Preencha as duas datas!", { type: "error" });
+      toast.error('Preencha as duas datas!');
       return;
     }
 
@@ -48,29 +47,27 @@ function FornadaDateSelector() {
 
     const selectedProducts = JSON.parse(localStorage.getItem("selectedProducts") || "[]");
     if (!selectedProducts.length) {
-      toast("Selecione pelo menos um produto!", { type: "error" });
+      toast.error('Selecione pelo menos um produto!');
       return;
     }
 
     try {
-      toast.info("Cadastrando fornada...");
+      toast.info('Cadastrando fornada...');
       const response = await insertNewFornada(fornada);
 
       if (response && response.id) {
         await registerFornadaDaVez(response.id);
       } else {
-        toast.error("Erro ao cadastrar fornada!");
+        toast.error('Erro ao cadastrar fornada!');
       }
     } catch (error) {
       console.error("Erro ao cadastrar fornada:", error);
-      toast.error("Erro ao cadastrar fornada! Tente novamente.");
+      toast.error('Erro ao cadastrar fornada! Tente novamente.');
     }
   };
 
   const notify = () => {
-    toast("Fornada cadastrada com sucesso! Redirecionando...", {
-      type: "success",
-    });
+    toast.success('Fornada cadastrada com sucesso! Redirecionando...');
     setTimeout(() => {
       navigate("/dashboard-kanban-pedidos");
     }, 3000);
@@ -88,11 +85,11 @@ function FornadaDateSelector() {
       );
 
       if (!produtosValidos.length) {
-        toast.error("Nenhum produto selecionado!");
+        toast.error('Nenhum produto selecionado!');
         return;
       }
 
-      toast.info("Adicionando produtos à fornada...");
+      toast.info('Adicionando produtos à fornada...');
 
       const responses = await Promise.all(
         produtosValidos.map((produto) =>
@@ -107,11 +104,11 @@ function FornadaDateSelector() {
       if (responses.every(response => response)) {
         notify();
       } else {
-        toast.error("Erro ao adicionar alguns produtos!");
+        toast.error('Erro ao adicionar alguns produtos!');
       }
     } catch (error) {
       console.error("Erro ao registrar produtos da fornada:", error);
-      toast.error("Erro ao adicionar produtos à fornada!");
+      toast.error('Erro ao adicionar produtos à fornada!');
     }
   };
 

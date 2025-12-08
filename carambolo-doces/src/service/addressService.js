@@ -1,5 +1,5 @@
 import { axiosApi } from '../provider/AxiosApi.js';
-import { toast } from 'react-toastify';
+import { toast } from '../utils/toast';
 
 export const createAddress = async (addressData) => {
   try {
