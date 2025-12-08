@@ -2,10 +2,9 @@ import React, { useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import Card from "../../components/Card";
-import ArrowButton from "../../components/ButtonArrow";
-import Button from "../../components/Button";
+import Carousel from "../../components/Carousel";
 import { getAllDecoracoes } from "../../service/decoracaoService";
+import defaultImageCard from "../../assets/image_card.png";
 
 function Carambolos() {
   const location = useLocation();
@@ -13,10 +12,8 @@ function Carambolos() {
   const categoriaSelecionada = location.state?.categoriaSelecionada;
   
   const [decoracoesPorCategoria, setDecoraceoesPorCategoria] = React.useState({});
-  const [pageByCategory, setPageByCategory] = React.useState({});
   const [loading, setLoading] = React.useState(true);
   const [scrollToCategory, setScrollToCategory] = React.useState(null);
-  const CARDS_PER_PAGE = 4;
   
   // Refs para as seções de categoria
   const categoryRefs = useRef({});
@@ -36,10 +33,6 @@ function Carambolos() {
         }, {});
         
         setDecoraceoesPorCategoria(agrupadas);
-        
-        const initialPages = {};
-        Object.keys(agrupadas).forEach(cat => { initialPages[cat] = 0; });
-        setPageByCategory(initialPages);
         
         // Se uma categoria foi selecionada, marca para scroll
         if (categoriaSelecionada) {
@@ -75,23 +68,6 @@ function Carambolos() {
     }
   }, [scrollToCategory, decoracoesPorCategoria]);
 
-  const handlePrev = (categoria) => {
-    setPageByCategory(prev => ({
-      ...prev,
-      [categoria]: Math.max(0, prev[categoria] - 1)
-    }));
-  };
-
-  const handleNext = (categoria, bolosLength) => {
-    setPageByCategory(prev => ({
-      ...prev,
-      [categoria]: Math.min(
-        prev[categoria] + 1,
-        Math.floor((bolosLength - 1) / CARDS_PER_PAGE)
-      )
-    }));
-  };
-
   if (loading) {
     return (
       <div className="bg-bgNativeHome min-h-screen flex items-center justify-center">
@@ -104,7 +80,7 @@ function Carambolos() {
     <div className="bg-bgNativeHome">
       <Header />
       <section className="pt-8 bg-bgNativeHome border-t border-b border-gold">
-        <h2 className="text-start text-4xl font-bold mb-6 ml-24">
+        <h2 className="text-center text-4xl font-medium mb-6">
           CARAMBOLOS PRÉ-DECORADOS
         </h2>
         
@@ -115,17 +91,15 @@ function Carambolos() {
             </p>
           </div>
         ) : (
-          Object.keys(decoracoesPorCategoria).map((categoria) =>
-            renderSection(
-              categoria,
-              decoracoesPorCategoria[categoria],
-              pageByCategory[categoria] || 0,
-              (dir) => dir === 'left' ? handlePrev(categoria) : handleNext(categoria, decoracoesPorCategoria[categoria].length),
-              categoriaSelecionada === categoria,
-              categoryRefs,
-              navigate
+          Object.keys(decoracoesPorCategoria)
+            .filter(categoria => categoria !== 'REFERENCIA_CLIENTE')
+            .map((categoria) =>
+              renderSection(
+                categoria,
+                decoracoesPorCategoria[categoria],
+                navigate
+              )
             )
-          )
         )}
       </section>
       <Footer />
@@ -133,76 +107,33 @@ function Carambolos() {
   );
 }
 
-const renderSection = (title, decoracoes, page, onArrowClick, isSelected, categoryRefs, navigate) => {
-  const CARDS_PER_PAGE = 4;
-  const startIdx = page * CARDS_PER_PAGE;
-  const endIdx = startIdx + CARDS_PER_PAGE;
-  const paginatedDecoracoes = decoracoes.slice(startIdx, endIdx);
-  
-  const handleCardClick = (decoracao) => {
-    navigate('/pedido-bolo', { state: { decoracao } });
+const renderSection = (title, decoracoes, navigate) => {
+  const slides = decoracoes.map(decoracao => ({
+    id: decoracao.id,
+    title: decoracao.nome,
+    image: decoracao.imagens?.[0] || defaultImageCard,
+    decoracao: decoracao
+  }));
+
+  const handleSlideClick = (slide) => {
+    navigate('/pedido-bolo', { state: { decoracao: slide.decoracao } });
   };
-  
+
   return (
     <React.Fragment key={title}>
-      <section 
-        ref={el => categoryRefs.current[title] = el}
-        className={`pb-16 bg-bgHome border-t border-b border-gold ${isSelected ? 'ring-4 ring-gold ring-opacity-50' : ''}`}
-      >
-        <h2 className="text-center text-3xl font-medium mb-6 mt-6">
+      <section className="pt-8 pb-8 bg-bgHome border-t border-b border-gold">
+        <h2 className="text-center text-3xl font-medium mb-6">
           {title}
         </h2>
-        <div className="flex justify-between items-center px-4">
-          <ArrowButton 
-            direction="left" 
-            onClick={() => onArrowClick('left')} 
-            disabled={page === 0} 
-          />
-          <div className="flex space-x-12">
-            {paginatedDecoracoes && paginatedDecoracoes.length > 0 ? (
-              paginatedDecoracoes.map((decoracao, idx) => {
-                const isFirst = idx === 0;
-                return (
-                <div
-                  key={decoracao.id}
-                  className={`relative rounded-lg overflow-hidden bg-white cursor-pointer transition-all duration-500 hover:scale-105 shadow-lg flex-none ${
-                    isFirst 
-                      ? 'border-2 border-gold shadow-[0_12px_24px_rgba(0,0,0,0.2)] scale-105' 
-                      : 'border border-gold shadow-[0_6px_14px_rgba(0,0,0,0.12)]'
-                  }`}
-                  style={{ width: '400px' }}
-                  onClick={() => handleCardClick(decoracao)}
-                >
-                  <img
-                    src={decoracao.imagens?.[0] || 'https://via.placeholder.com/256'}
-                    alt={decoracao.nome}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="absolute left-1/2 -translate-x-1/2 bottom-3 w-full flex justify-center px-2">
-                    <span
-                      title={decoracao.nome}
-                      className="inline-block rounded-[12px] border border-[#D4B076] shadow-[0_4px_12px_rgba(0,0,0,0.16)] backdrop-blur-sm font-montserrat font-normal whitespace-nowrap overflow-hidden text-ellipsis leading-tight px-5 py-2 text-[clamp(12px,1.1vw,16px)] max-w-[88%]"
-                      style={{
-                        background: 'rgba(255, 232, 196, 0.8)',
-                        color: '#8A541C',
-                      }}
-                    >
-                      {decoracao.nome}
-                    </span>
-                  </div>
-                </div>
-                );
-              })
-            ) : (
-              <div className="text-center py-8 text-gray-500">
-                Nenhuma decoração disponível nesta categoria.
-              </div>
-            )}
-          </div>
-          <ArrowButton 
-            direction="right" 
-            onClick={() => onArrowClick('right')} 
-            disabled={endIdx >= decoracoes.length} 
+        <div className="px-6">
+          <Carousel 
+            slides={slides}
+            autoPlay={true}
+            interval={3500}
+            showIndicators={false}
+            itemsPerView={3}
+            showTitles={true}
+            onSlideClick={handleSlideClick}
           />
         </div>
       </section>

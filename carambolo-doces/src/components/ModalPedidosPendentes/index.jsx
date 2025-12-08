@@ -264,21 +264,33 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
           console.log("🎁 Adicionais do pedido (do order):", detalhes?.adicionais);
           console.log("🎨 DecoraigoId:", detalhes?.decoracaoId);
           
-          // Se tem decoracaoId, buscar os adicionais disponíveis para essa decoração
+          // Se tem decoracaoId, buscar os adicionais da decoração
           if (detalhes?.decoracaoId) {
             try {
               const token = typeof window !== 'undefined' ? localStorage.getItem('JWT_TOKEN') : null;
               const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
               const response = await axiosApi.get(`/decoracoes/${detalhes.decoracaoId}/adicionais`, config);
               
-              console.log("✨ Adicionais disponíveis da decoração:", response.data);
+              console.log("✨ Resposta da decoração:", response.data);
               
-              // Armazenar os adicionais disponíveis junto com os detalhes
-              detalhes.adicionaisDisponiveis = response.data?.adicionaisPossiveis || response.data || [];
+              // Extrair adicionaisPossiveis da resposta
+              const adicionaisDaDecoracao = response.data?.adicionaisPossiveis || [];
+              console.log("📍 Adicionais possíveis da decoração:", adicionaisDaDecoracao);
+              
+              // Remover duplicatas usando um Map por ID
+              const adicionaisUnicos = Array.from(
+                new Map(adicionaisDaDecoracao.map(a => [a.id, a])).values()
+              );
+              console.log("✅ Adicionais únicos:", adicionaisUnicos);
+              
+              detalhes.adicionaisExibicao = adicionaisUnicos;
             } catch (error) {
               console.warn("Erro ao buscar adicionais da decoração:", error);
-              detalhes.adicionaisDisponiveis = [];
+              detalhes.adicionaisExibicao = [];
             }
+          } else {
+            // Se não tem decoracaoId, não há adicionais
+            detalhes.adicionaisExibicao = [];
           }
           
           setDetalhesPedido(detalhes);
@@ -301,21 +313,33 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
           console.log("🎁 Adicionais do pedido (do order):", detalhes?.adicionais);
           console.log("🎨 DecoraigoId:", detalhes?.decoracaoId);
           
-          // Se tem decoracaoId, buscar os adicionais disponíveis para essa decoração
+          // Se tem decoracaoId, buscar os adicionais da decoração
           if (detalhes?.decoracaoId) {
             try {
               const token = typeof window !== 'undefined' ? localStorage.getItem('JWT_TOKEN') : null;
               const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
               const response = await axiosApi.get(`/decoracoes/${detalhes.decoracaoId}/adicionais`, config);
               
-              console.log("✨ Adicionais disponíveis da decoração:", response.data);
+              console.log("✨ Resposta da decoração:", response.data);
               
-              // Armazenar os adicionais disponíveis junto com os detalhes
-              detalhes.adicionaisDisponiveis = response.data?.adicionaisPossiveis || response.data || [];
+              // Extrair adicionaisPossiveis da resposta
+              const adicionaisDaDecoracao = response.data?.adicionaisPossiveis || [];
+              console.log("📍 Adicionais possíveis da decoração:", adicionaisDaDecoracao);
+              
+              // Remover duplicatas usando um Map por ID
+              const adicionaisUnicos = Array.from(
+                new Map(adicionaisDaDecoracao.map(a => [a.id, a])).values()
+              );
+              console.log("✅ Adicionais únicos:", adicionaisUnicos);
+              
+              detalhes.adicionaisExibicao = adicionaisUnicos;
             } catch (error) {
               console.warn("Erro ao buscar adicionais da decoração:", error);
-              detalhes.adicionaisDisponiveis = [];
+              detalhes.adicionaisExibicao = [];
             }
+          } else {
+            // Se não tem decoracaoId, não há adicionais
+            detalhes.adicionaisExibicao = [];
           }
           
           setDetalhesPedido(detalhes);
@@ -390,7 +414,6 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
       className="fixed inset-0 z-[9999] bg-black bg-opacity-60 flex justify-center items-center p-5 overflow-auto"
       onClick={handleBackdropClick}
     >
-      AAAAAAAAAAAA
       <div className="flex gap-4 items-start flex-shrink-0" onClick={(e) => e.stopPropagation()}>
         <div className="bg-bgHome border-2 border-gold rounded-xl w-[352px] h-[740px] flex flex-col shadow-xl overflow-hidden">
         <header className="bg-gradient-to-b from-[#1C3B57] to-[#0F2A3D] px-4 py-3 flex items-center justify-center rounded-t-xl relative">
@@ -559,22 +582,22 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
                     <h3 className="font-bold text-lg text-gold pb-3">Adicionais</h3>
                     <div className="flex flex-wrap gap-2">
                       {(() => {
-                        // Get all available adicionais from the decoration
-                        const adicionaisDisponiveis = detalhesPedido?.adicionaisDisponiveis || [];
-                        console.log("📦 Adicionais disponíveis da decoração:", adicionaisDisponiveis);
+                        // Get adicionais from the endpoint or order
+                        const adicionais = detalhesPedido?.adicionaisExibicao || [];
+                        console.log("🎁 Adicionais a exibir:", adicionais);
                         
-                        return adicionaisDisponiveis.length > 0 ? (
-                          adicionaisDisponiveis.map((adicional, index) => (
+                        return adicionais.length > 0 ? (
+                          adicionais.map((adicional, index) => (
                           <button
                             key={index}
                             type="button"
                             className="bg-gradient-to-l from-gold to-darkGold text-blue border border-gold rounded-full px-3 py-1.5 text-sm font-semibold hover:shadow-md transition-shadow duration-200"
                           >
-                            {adicional.descricao || adicional}
+                            {adicional.descricao || adicional.nome || adicional}
                           </button>
                         ))
                         ) : (
-                          <span className="text-gray-500 text-sm">Nenhum adicional disponível para esta decoração</span>
+                          <span className="text-gray-500 text-sm">Nenhum adicional para este pedido</span>
                         );
                       })()}
                     </div>
