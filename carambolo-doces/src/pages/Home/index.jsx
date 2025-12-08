@@ -11,9 +11,139 @@ import BannerPrincipal from "../../components/BannerPrincipal";
 import BannerFornada from "../../components/BannerFornada";
 import { getFornadaRealmenteAtiva, getFornadaAtiva, getProdutosFornadaComImagens } from "../../service/fornadaService";
 import { getAllDecoracoes } from "../../service/decoracaoService";
+import { getBolosMaisPedidos } from "../../service/dashboardService";
+import { getBolosComImagens } from "../../service/boloService";
 import Carousel from "../../components/Carousel";
 import defaultImageCard from "../../assets/image_card.png";
 import './cardsTransition.css';
+
+// Componente Carousel customizado para Bolos Mais Pedidos
+function BolosMaisPedidosCarousel({ bolos }) {
+  const [current, setCurrent] = useState(0);
+  const itemsPerView = 4;
+  const cardWidthPercent = 24;
+  const timerRef = useRef(null);
+
+  const previous = () => {
+    setCurrent((prev) => (prev === 0 ? bolos.length - 1 : prev - 1));
+  };
+
+  const next = () => {
+    setCurrent((prev) => (prev === bolos.length - 1 ? 0 : prev + 1));
+  };
+
+  // Auto-play opcional
+  useEffect(() => {
+    if (bolos.length <= 1) return;
+    timerRef.current && clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setCurrent((prev) => (prev === bolos.length - 1 ? 0 : prev + 1));
+    }, 4000);
+    return () => timerRef.current && clearInterval(timerRef.current);
+  }, [bolos.length]);
+
+  const translatePercent = useMemo(() => {
+    if (bolos.length <= itemsPerView) {
+      return 0;
+    }
+    
+    const totalWidth = bolos.length * cardWidthPercent;
+    const maxTranslate = Math.max(0, totalWidth - 100);
+    
+    let desired = current * cardWidthPercent + cardWidthPercent / 2 - 50;
+    
+    const lastVisibleIndex = bolos.length - itemsPerView;
+    if (current >= lastVisibleIndex) {
+      const lastItemsStart = (bolos.length - itemsPerView) * cardWidthPercent;
+      desired = lastItemsStart + (itemsPerView * cardWidthPercent) / 2 - 50;
+    }
+    
+    const clamped = Math.min(Math.max(desired, 0), maxTranslate);
+    return clamped;
+  }, [current, bolos.length, cardWidthPercent, itemsPerView]);
+
+  return (
+    <div className="relative w-full pb-8" style={{ overflow: 'hidden', overflowX: 'hidden', overflowY: 'hidden' }}>
+      <style>{`
+        .bolos-carousel-container::-webkit-scrollbar {
+          display: none;
+        }
+        .bolos-carousel-container {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+      <div
+        className="flex transition-transform ease-out duration-500 gap-x-[54px] px-6 md:px-12 py-4 bolos-carousel-container"
+        style={{ transform: `translateX(-${translatePercent}%)`, overflow: 'visible' }}
+      >
+        {bolos.map((bolo, index) => {
+          const isCenter = index === current;
+          const cardClasses = isCenter
+            ? "scale-[1.02] translate-y-3 z-20 shadow-[0_12px_24px_rgba(0,0,0,0.18)]"
+            : "scale-[0.98] -translate-y-1 z-10 opacity-95 shadow-[0_6px_14px_rgba(0,0,0,0.12)]";
+
+          // Extrair URL da imagem de diferentes formatos possíveis
+          let imagemUrl = defaultImageCard;
+          if (bolo.imagens && bolo.imagens.length > 0) {
+            const primeiraImagem = bolo.imagens[0];
+            imagemUrl = typeof primeiraImagem === 'string' 
+              ? primeiraImagem 
+              : primeiraImagem?.url || primeiraImagem;
+          } else if (bolo.decoracao?.imagens && bolo.decoracao.imagens.length > 0) {
+            const primeiraImagem = bolo.decoracao.imagens[0];
+            imagemUrl = typeof primeiraImagem === 'string' 
+              ? primeiraImagem 
+              : primeiraImagem?.url || primeiraImagem;
+          }
+          
+          const nome = bolo.decoracao?.nome || bolo.nome || 'Carambolo';
+          const preco = bolo.precoTotal || bolo.preco || bolo.valorTotal || 0;
+
+          return (
+            <div
+              key={bolo.id}
+              className="flex-none flex justify-center"
+              style={{ width: `${cardWidthPercent}%`, overflow: 'visible', padding: '8px' }}
+            >
+              <div className={`transition-all duration-500 ${cardClasses}`} style={{ overflow: 'visible' }}>
+                <Card
+                  type="Bolo"
+                  nome={nome}
+                  preco={preco}
+                  imagem={imagemUrl}
+                  boloData={bolo}
+                  available={true}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {bolos.length > itemsPerView && (
+        <>
+          <button
+            aria-label="anterior"
+            onClick={previous}
+            className="absolute top-1/2 -translate-y-1/2 z-40 text-3xl text-gold hover:scale-110 transition-transform"
+            style={{ left: '16px' }}
+          >
+            <BsFillArrowLeftCircleFill />
+          </button>
+          <button
+            aria-label="próximo"
+            onClick={next}
+            className="absolute top-1/2 -translate-y-1/2 z-40 text-3xl text-gold hover:scale-110 transition-transform"
+            style={{ right: '16px' }}
+          >
+            <BsFillArrowRightCircleFill />
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
 
 // Componente Carousel customizado para Fornada da Semana - usando a mesma animação do Carousel original
 function FornadaCarousel({ produtos }) {
@@ -137,6 +267,7 @@ function Home() {
   const [decoracoes, setDecoracoes] = useState([]);
   const [produtosFornada, setProdutosFornada] = useState([]);
   const [fornadaParaBanner, setFornadaParaBanner] = useState(null);
+  const [bolosMaisPedidos, setBolosMaisPedidos] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
   const searchQuery = new URLSearchParams(location.search).get('q')?.trim().toLowerCase() || '';
@@ -203,8 +334,78 @@ function Home() {
       }
     };
 
+    const carregarBolosMaisPedidos = async () => {
+      try {
+        const bolosMaisPedidosData = await getBolosMaisPedidos();
+        console.log("🔍 Bolos mais pedidos recebidos da API:", bolosMaisPedidosData);
+        
+        if (bolosMaisPedidosData && Array.isArray(bolosMaisPedidosData) && bolosMaisPedidosData.length > 0) {
+          // Buscar os detalhes completos dos bolos com imagens
+          const todosBolos = await getBolosComImagens();
+          console.log("📦 Total de bolos disponíveis:", todosBolos.length);
+          
+          const bolosComDetalhes = bolosMaisPedidosData
+            .map(bmp => {
+              // O backend retorna: { boloId, quantidade, nome, valorTotal }
+              const boloId = bmp.boloId || bmp.id;
+              const quantidadePedidos = bmp.quantidade || bmp.quantidadePedidos || 0;
+              
+              if (!boloId) {
+                console.warn("⚠️ Bolo sem ID encontrado:", bmp);
+                return null;
+              }
+              
+              // Tentar encontrar o bolo completo na lista
+              const boloCompleto = todosBolos.find(b => {
+                const matchId = b.id === boloId || b.id === parseInt(boloId);
+                return matchId;
+              });
+              
+              if (boloCompleto) {
+                // Usar dados do bolo completo, mas manter quantidadePedidos e dados da API
+                return {
+                  ...boloCompleto,
+                  quantidadePedidos: quantidadePedidos,
+                  // Usar nome da API se disponível, senão do bolo completo
+                  nome: bmp.nome || boloCompleto.decoracao?.nome || boloCompleto.nome || 'Carambolo',
+                  // Usar valorTotal da API se disponível, senão do bolo completo
+                  precoTotal: bmp.valorTotal || boloCompleto.precoTotal || boloCompleto.preco || 0,
+                  // Garantir que temos imagens do bolo completo
+                  imagens: boloCompleto.imagens || []
+                };
+              } else {
+                // Se não encontrou na lista completa, criar objeto básico com dados da API
+                console.warn(`⚠️ Bolo ID ${boloId} não encontrado na lista completa, criando objeto básico`);
+                return {
+                  id: boloId,
+                  nome: bmp.nome || 'Carambolo',
+                  precoTotal: bmp.valorTotal || 0,
+                  quantidadePedidos: quantidadePedidos,
+                  imagens: [] // Sem imagens se não encontrou o bolo completo
+                };
+              }
+            })
+            .filter(Boolean)
+            .slice(0, 8); // Limitar a 8 bolos mais pedidos
+          
+          console.log("✅ Bolos processados e prontos para exibir:", bolosComDetalhes.length, bolosComDetalhes);
+          setBolosMaisPedidos(bolosComDetalhes);
+        } else {
+          console.log("ℹ️ Nenhum bolo mais pedido encontrado ou array vazio");
+          setBolosMaisPedidos([]);
+        }
+      } catch (error) {
+        console.error("❌ Erro ao carregar bolos mais pedidos:", error);
+        if (error.response?.status !== 401) {
+          console.warn("Erro detalhado:", error.response?.data || error.message);
+        }
+        setBolosMaisPedidos([]);
+      }
+    };
+
     fetchDecoracoes();
     carregarDadosFornada();
+    carregarBolosMaisPedidos();
   }, []);
 
   const slides = useMemo(() => {
@@ -285,6 +486,22 @@ function Home() {
 
       {/* Espaço consistente entre seções */}
       <div className="h-24"></div>
+
+      {/* Carambolos Mais Pedidos */}
+      {bolosMaisPedidos.length > 0 && (
+        <section className="pt-8 pb-16 bg-bgHome border-t border-gold">
+          <h2 className="text-center text-4xl font-medium mb-6">
+            CARAMBOLOS MAIS PEDIDOS
+          </h2>
+          
+          <div className="px-6">
+            <BolosMaisPedidosCarousel bolos={bolosMaisPedidos} />
+          </div>
+        </section>
+      )}
+
+      {/* Espaço consistente entre seções */}
+      {bolosMaisPedidos.length > 0 && <div className="h-24"></div>}
 
       {/* Espaço consistente entre seções (mostra apenas se houver Fornada) */}
       {showFornada && <div className="h-24"></div>}

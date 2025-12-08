@@ -49,3 +49,4 @@ const Toast = ({ message, type = 'info', duration = 5000, onClose }) => {
 };
 
 export default Toast;
+
