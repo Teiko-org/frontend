@@ -43,6 +43,45 @@ export default function TableSelectProductsFornada() {
     if (produtosSalvos.length > 0) {
       setSelectedProducts(produtosSalvos);
     }
+
+    // Listener para recarregar quando um produto for criado/atualizado
+    const handleProductUpdate = () => {
+      console.log('Evento de produto criado/atualizado recebido, recarregando lista...');
+      getData();
+    };
+
+    // Listener para quando o modo de edição é ativado
+    const handleEditModeActivated = () => {
+      console.log('🔄 Modo de edição ativado, recarregando lista de produtos...');
+      getData();
+    };
+
+    // Eventos customizados
+    window.addEventListener('productCreated', handleProductUpdate);
+    window.addEventListener('productUpdated', handleProductUpdate);
+    window.addEventListener('fornadaEditModeActivated', handleEditModeActivated);
+    
+    // Recarregar quando a janela recebe foco (útil quando volta de outra aba)
+    const handleFocus = () => {
+      getData();
+    };
+    window.addEventListener('focus', handleFocus);
+
+    // Recarregar quando o componente é montado novamente (útil ao entrar em modo de edição)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        getData();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('productCreated', handleProductUpdate);
+      window.removeEventListener('productUpdated', handleProductUpdate);
+      window.removeEventListener('fornadaEditModeActivated', handleEditModeActivated);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const getData = async (page = 0) => {

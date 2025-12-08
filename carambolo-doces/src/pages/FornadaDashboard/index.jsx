@@ -133,6 +133,12 @@ function FornadaDashboard() {
       setInitialEditingFornada(JSON.parse(JSON.stringify(fornadaInicial)));
       setInitialSelectedProducts(JSON.parse(JSON.stringify(produtosSelecionados)));
       setIsEditing(true);
+      
+      // Disparar evento para forçar recarregamento da lista de produtos
+      setTimeout(() => {
+        console.log('📢 Disparando evento fornadaEditModeActivated...');
+        window.dispatchEvent(new CustomEvent('fornadaEditModeActivated'));
+      }, 100);
     } catch (error) {
       console.error("Erro ao carregar produtos da fornada:", error);
       toast.error("Erro ao carregar produtos da fornada. Tente novamente.");

@@ -105,7 +105,7 @@ function UltimosPedidos() {
       <div className="border-2 border-gold rounded-xl overflow-hidden bg-bgHome">
         <div className="bg-gradient-to-b from-[#1C3B57] to-[#0F2A3D] text-gold px-5 py-3">
           <div className="text-xl font-bold tracking-wide">Últimos Pedidos</div>
-          <div className="text-[11px] opacity-90">Pedidos mais recentes registrados no sistema.</div>
+          <div className="text-sm opacity-90">Pedidos mais recentes registrados no sistema.</div>
         </div>
         <div className="p-4 h-80 flex items-center justify-center">
           <div className="text-sm text-gray-500">Carregando...</div>
@@ -127,16 +127,16 @@ function UltimosPedidos() {
               <div key={pedido.id || index} className="bg-bgHome border border-gold/40 rounded-lg p-3 mx-1 mb-2 last:mb-0">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <div className="font-bold text-gray-900 mb-1 text-sm">{pedido.nomeDoCliente}</div>
-                    <div className="text-xs text-gray-600 mb-1">{pedido.telefoneDoCliente}</div>
-                    <div className="text-xs text-gray-600 mb-1">
+                    <div className="font-bold text-gray-900 mb-1 text-base">{pedido.nomeDoCliente}</div>
+                    <div className="text-sm text-gray-600 mb-1">{pedido.telefoneDoCliente}</div>
+                    <div className="text-sm text-gray-600 mb-1">
                       {pedido.tipoProduto === "FORNADA" ? "Retirada" : String(pedido.tipoDoPedido || "").toLowerCase()}
                     </div>
-                    <div className="font-bold text-gray-900 text-sm">{formatCurrency(pedido.valorPedido)}</div>
+                    <div className="font-bold text-gray-900 text-base">{formatCurrency(pedido.valorPedido)}</div>
                   </div>
                   <div className="ml-3">
                     <button 
-                      className="bg-bgHome border border-gold/40 text-gray-700 px-2 py-1 rounded text-xs hover:bg-gray-50 transition-colors"
+                      className="bg-bgHome border border-gold/40 text-gray-700 px-2 py-1 rounded text-sm hover:bg-gray-50 transition-colors"
                       onClick={() => handleDetalhesClick(pedido)}
                     >
                       Detalhes

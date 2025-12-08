@@ -1,11 +1,11 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
+import { BsFillArrowRightCircleFill, BsFillArrowLeftCircleFill } from "react-icons/bs";
 
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import Card from "../../components/Card";
-import ArrowButton from "../../components/ButtonArrow";
 import Button from "../../components/Button";
 import BannerPrincipal from "../../components/BannerPrincipal";
 import BannerFornada from "../../components/BannerFornada";
@@ -16,6 +16,124 @@ import { getProdutosMaisPedidos } from "../../service/dashboardService";
 import Carousel from "../../components/Carousel";
 import defaultImageCard from "../../assets/image_card.png";
 import './cardsTransition.css';
+
+// Componente Carousel customizado para Fornada da Semana - usando a mesma animação do Carousel original
+function FornadaCarousel({ produtos }) {
+  const [current, setCurrent] = useState(0);
+  const itemsPerView = 4;
+  const cardWidthPercent = 24; // Mesmo valor usado no Carousel original para 4 itens
+  const timerRef = useRef(null);
+
+  const previous = () => {
+    setCurrent((prev) => (prev === 0 ? produtos.length - 1 : prev - 1));
+  };
+
+  const next = () => {
+    setCurrent((prev) => (prev === produtos.length - 1 ? 0 : prev + 1));
+  };
+
+  // Auto-play opcional (pode ser desabilitado se preferir)
+  useEffect(() => {
+    if (produtos.length <= 1) return;
+    timerRef.current && clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setCurrent((prev) => (prev === produtos.length - 1 ? 0 : prev + 1));
+    }, 4000);
+    return () => timerRef.current && clearInterval(timerRef.current);
+  }, [produtos.length]);
+
+  const translatePercent = useMemo(() => {
+    if (produtos.length <= itemsPerView) {
+      // Se temos menos ou igual itens que o viewport, não precisa fazer scroll
+      return 0;
+    }
+    
+    const totalWidth = produtos.length * cardWidthPercent;
+    // Calcular maxTranslate para garantir que o último item seja totalmente visível
+    // O último item deve estar completamente dentro da viewport (100% da largura)
+    const maxTranslate = Math.max(0, totalWidth - 100);
+    
+    // Calcular a posição desejada para centralizar o item atual
+    let desired = current * cardWidthPercent + cardWidthPercent / 2 - 50;
+    
+    // Se estamos nos últimos itens, garantir que o último item seja totalmente visível
+    const lastVisibleIndex = produtos.length - itemsPerView;
+    if (current >= lastVisibleIndex) {
+      // Quando chegamos nos últimos itens, posicionar para mostrar os últimos itemsPerView itens
+      // Isso garante que o último card seja totalmente visível
+      const lastItemsStart = (produtos.length - itemsPerView) * cardWidthPercent;
+      // Centralizar o último conjunto de itens
+      desired = lastItemsStart + (itemsPerView * cardWidthPercent) / 2 - 50;
+    }
+    
+    // Garantir que não vá além do máximo permitido
+    // Mas usar maxTranslate sem restrição adicional para permitir chegar até o final
+    const clamped = Math.min(Math.max(desired, 0), maxTranslate);
+    return clamped;
+  }, [current, produtos.length, cardWidthPercent, itemsPerView]);
+
+  return (
+    <div className="relative w-full pb-8" style={{ overflow: 'hidden', overflowX: 'hidden', overflowY: 'hidden' }}>
+      <style>{`
+        .fornada-carousel-container::-webkit-scrollbar {
+          display: none;
+        }
+        .fornada-carousel-container {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+      <div
+        className="flex transition-transform ease-out duration-500 gap-x-[54px] px-6 md:px-12 py-4 fornada-carousel-container"
+        style={{ transform: `translateX(-${translatePercent}%)`, overflow: 'visible' }}
+      >
+        {produtos.map((produto, index) => {
+          const isCenter = index === current;
+          const cardClasses = isCenter
+            ? "scale-[1.02] translate-y-3 z-20 shadow-[0_12px_24px_rgba(0,0,0,0.18)]"
+            : "scale-[0.98] -translate-y-1 z-10 opacity-95 shadow-[0_6px_14px_rgba(0,0,0,0.12)]";
+
+          return (
+            <div
+              key={produto.fornadaDaVezId || produto.id}
+              className="flex-none flex justify-center"
+              style={{ width: `${cardWidthPercent}%`, overflow: 'visible', padding: '8px' }}
+            >
+              <div className={`transition-all duration-500 ${cardClasses}`} style={{ overflow: 'visible' }}>
+                <Card
+                  type="Fornada"
+                  available={produto.quantidade > 0 && produto.isAtivo}
+                  produto={produto}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {produtos.length > itemsPerView && (
+        <>
+          <button
+            aria-label="anterior"
+            onClick={previous}
+            className="absolute top-1/2 -translate-y-1/2 z-40 text-3xl text-gold hover:scale-110 transition-transform"
+            style={{ left: '16px' }}
+          >
+            <BsFillArrowLeftCircleFill />
+          </button>
+          <button
+            aria-label="próximo"
+            onClick={next}
+            className="absolute top-1/2 -translate-y-1/2 z-40 text-3xl text-gold hover:scale-110 transition-transform"
+            style={{ right: '16px' }}
+          >
+            <BsFillArrowRightCircleFill />
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
 
 function Home() {
   const [decoracoes, setDecoracoes] = useState([]);
@@ -52,7 +170,8 @@ function Home() {
           setFornada(fornadaAtual);
           const produtos = await getProdutosFornadaComImagens(fornadaAtual.id);
           const visiveis = (produtos || []).filter(p => (p.quantidade ?? 0) > 0 && (p.isAtivo ?? true));
-          setProdutosFornada(visiveis.slice(0, 4));
+          // Mostrar TODOS os produtos, não apenas 4
+          setProdutosFornada(visiveis);
         } else {
           setFornada(null);
           setProdutosFornada([]);
@@ -385,19 +504,8 @@ function Home() {
             </p>
           </div>
         ) : (
-          <div className="flex justify-between items-center px-4">
-            <ArrowButton direction="left" />
-            <div className="flex space-x-14">
-              {produtosFornada.map((produto) => (
-                <Card
-                  key={produto.fornadaDaVezId}
-                  type="Fornada"
-                  available={produto.quantidade > 0 && produto.isAtivo}
-                  produto={produto}
-                />
-              ))}
-            </div>
-            <ArrowButton direction="right" />
+          <div className="px-6">
+            <FornadaCarousel produtos={produtosFornada} />
           </div>
         )}
       </section>
