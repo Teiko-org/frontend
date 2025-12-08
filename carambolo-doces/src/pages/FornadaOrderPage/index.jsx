@@ -17,6 +17,7 @@ import { useCart } from "../../contexts/CartContext";
 import defaultFornadaImg from "../../assets/image_fornada.png";
 import { validateBrazilianPhone } from "../../utils/phoneValidation";
 import { toast } from "../../utils/toast";
+import Carousel from "../../components/Carousel";
 
 function FornadaOrderPage() {
     const { removeByFornadaId } = useCart();
@@ -33,15 +34,23 @@ function FornadaOrderPage() {
         if (!produtoSelecionado) {
             toast.error('Nenhum produto selecionado!');
             navigate("/fornada");
+        } else {
+            // Inicializar doceFornada com as imagens do produto selecionado
+            setDoceFornada({
+                nome: produtoSelecionado?.produto || "Brownie Recheado",
+                valorUnitario: produtoSelecionado?.valor || 12.00,
+                fornadaDaVezId: produtoSelecionado?.fornadaDaVezId,
+                imagens: produtoSelecionado?.imagens || []
+            });
         }
     }, [produtoSelecionado, navigate]);
 
-    const doceFornada = {
+    const [doceFornada, setDoceFornada] = useState({
         nome: produtoSelecionado?.produto || "Brownie Recheado",
         valorUnitario: produtoSelecionado?.valor || 12.00,
         fornadaDaVezId: produtoSelecionado?.fornadaDaVezId,
         imagens: produtoSelecionado?.imagens || []
-    };
+    });
 
     const [amount, setAmount] = useState(location.state?.quantidade || 1);
 
@@ -64,33 +73,64 @@ function FornadaOrderPage() {
     const [dataEntrega, setDataEntrega] = useState("");
     const [horario, setHorario] = useState("");
 
-    const getImagemPrincipal = () => {
-        const normalizeImageUrl = (url) => {
-            if (!url) return url;
-            try {
-                const parsed = new URL(url, window.location.origin);
-                const isLocalhost = parsed.hostname === 'localhost' && (parsed.port === '8080' || parsed.port === '');
-                const isPrivate10 = /^10\.\d+\.\d+\.\d+$/.test(parsed.hostname) && (parsed.port === '8080' || parsed.port === '');
-                if (isLocalhost || isPrivate10) {
-                    return `/api${parsed.pathname}${parsed.search}`;
-                }
-                if (parsed.origin === window.location.origin && parsed.pathname.startsWith('/files')) {
-                    return `/api${parsed.pathname}${parsed.search}`;
-                }
-                return url;
-            } catch (_e) {
-                if (url.startsWith('/files')) return `/api${url}`;
-                if (url.startsWith('files/')) return `/api/${url}`;
-                return url;
+    const normalizeImageUrl = (url) => {
+        if (!url) return url;
+        try {
+            const parsed = new URL(url, window.location.origin);
+            const isLocalhost = parsed.hostname === 'localhost' && (parsed.port === '8080' || parsed.port === '');
+            const isPrivate10 = /^10\.\d+\.\d+\.\d+$/.test(parsed.hostname) && (parsed.port === '8080' || parsed.port === '');
+            if (isLocalhost || isPrivate10) {
+                return `/api${parsed.pathname}${parsed.search}`;
             }
-        };
-
-        if (doceFornada.imagens && doceFornada.imagens.length > 0) {
-            const primeira = doceFornada.imagens[0];
-            const url = typeof primeira === "object" && primeira.url ? primeira.url : primeira;
-            return normalizeImageUrl(url);
+            if (parsed.origin === window.location.origin && parsed.pathname.startsWith('/files')) {
+                return `/api${parsed.pathname}${parsed.search}`;
+            }
+            return url;
+        } catch (_e) {
+            if (url.startsWith('/files')) return `/api${url}`;
+            if (url.startsWith('files/')) return `/api/${url}`;
+            return url;
         }
-        return defaultFornadaImg;
+    };
+
+    const getImagensFormatadas = () => {
+        if (doceFornada.imagens && doceFornada.imagens.length > 0) {
+            // Remover duplicatas baseado na URL normalizada
+            const imagensUnicas = [];
+            const urlsVistos = new Set();
+            
+            doceFornada.imagens.forEach((img) => {
+                const url = typeof img === "object" && img.url ? img.url : img;
+                const urlNormalizada = normalizeImageUrl(url) || defaultFornadaImg;
+                
+                // Usar a URL normalizada como chave para evitar duplicatas
+                if (!urlsVistos.has(urlNormalizada)) {
+                    urlsVistos.add(urlNormalizada);
+                    imagensUnicas.push({
+                        id: imagensUnicas.length + 1,
+                        image: urlNormalizada,
+                        title: doceFornada.nome
+                    });
+                }
+            });
+            
+            return imagensUnicas.length > 0 ? imagensUnicas : [{
+                id: 1,
+                image: defaultFornadaImg,
+                title: doceFornada.nome
+            }];
+        }
+        // Se não há imagens, retorna uma imagem padrão
+        return [{
+            id: 1,
+            image: defaultFornadaImg,
+            title: doceFornada.nome
+        }];
+    };
+
+    const getImagemPrincipal = () => {
+        const imagens = getImagensFormatadas();
+        return imagens[0]?.image || defaultFornadaImg;
     };
 
     useEffect(() => {
@@ -116,6 +156,20 @@ function FornadaOrderPage() {
                     const produtoAtualizado = await getProdutoFornadaById(produtoSelecionado.fornadaDaVezId);
                     const quantidadeDisp = produtoAtualizado.quantidade || 0;
                     setQuantidadeDisponivel(quantidadeDisp);
+                    
+                    // Atualizar imagens do produto se disponíveis
+                    if (produtoAtualizado.imagens && produtoAtualizado.imagens.length > 0) {
+                        setDoceFornada(prev => ({
+                            ...prev,
+                            imagens: produtoAtualizado.imagens
+                        }));
+                    } else if (produtoSelecionado?.imagens && produtoSelecionado.imagens.length > 0) {
+                        // Se o produto atualizado não tem imagens, usar as do produto selecionado
+                        setDoceFornada(prev => ({
+                            ...prev,
+                            imagens: produtoSelecionado.imagens
+                        }));
+                    }
                     
                     // Se a quantidade inicial for maior que a disponível, ajusta
                     if (amount > quantidadeDisp && quantidadeDisp > 0) {
@@ -272,7 +326,7 @@ function FornadaOrderPage() {
             toast.warn('Por favor, preencha todos os campos obrigatórios do endereço!');
             return;
         }
-        if (deliveryOption === "Retirada" && !horario) {
+        if (deliveryOption === "Retirada" && (!horario || horario.trim() === "" || horario === "Selecione um horário")) {
             toast.warn('Por favor, selecione o horário da retirada!');
             return;
         }
@@ -424,14 +478,30 @@ function FornadaOrderPage() {
 
                 <div className="flex flex-col items-center px-20">
                     <h1 className="font-bold text-blue text-3xl py-6">{doceFornada.nome}</h1>
-                    <img
-                        src={getImagemPrincipal()}
-                        alt={doceFornada.nome}
-                        className="w-[320px] h-[320px] object-cover rounded-lg border-2 border-goldCard mb-2"
-                        onError={(e) => {
-                            e.target.src = defaultFornadaImg;
-                        }}
-                    />
+                    {doceFornada.imagens && doceFornada.imagens.length > 1 ? (
+                        <div className="w-[480px] mb-2 flex justify-center items-center relative">
+                            <Carousel
+                                slides={getImagensFormatadas()}
+                                imageHeightClass="h-[320px]"
+                                itemsPerView={1}
+                                showTitles={false}
+                                autoPlay={true}
+                                interval={4000}
+                                showIndicators={true}
+                            />
+                        </div>
+                    ) : (
+                        <div className="w-[320px] mb-2 flex justify-center">
+                            <img
+                                src={getImagemPrincipal()}
+                                alt={doceFornada.nome}
+                                className="w-[320px] h-[320px] object-cover rounded-lg border-2 border-goldCard"
+                                onError={(e) => {
+                                    e.target.src = defaultFornadaImg;
+                                }}
+                            />
+                        </div>
+                    )}
                     <span><span className="text-gradient font-bold text-lg">VALOR UNITÁRIO:</span> R$ {doceFornada.valorUnitario.toFixed(2)}</span>
                 </div>
 
@@ -647,19 +717,22 @@ function FornadaOrderPage() {
                                 </>
                             )}
                             {deliveryOption === "Retirada" && (
-                                <div className="col-span-2">
+                                <div className="col-span-3">
                                     <Select
                                         label="Horário"
                                         options={[
+                                            { value: "", label: "Selecione um horário" },
                                             { value: "17:00", label: "17:00" },
                                             { value: "17:30", label: "17:30" },
                                             { value: "18:00", label: "18:00" },
                                             { value: "18:30", label: "18:30" },
                                             { value: "19:00", label: "19:00" },
                                         ]}
-                                        placeholder={""}
-                                        value={horario}
-                                        onChange={e => setHorario(e.target.value)}
+                                        value={horario === undefined || horario === null ? "" : horario}
+                                        onChange={e => {
+                                            const valor = e.target.value;
+                                            setHorario(valor);
+                                        }}
                                     />
                                 </div>
                             )}

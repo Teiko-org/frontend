@@ -8,6 +8,8 @@ import { changePassword, deleteUser, getUserData, updateUserData } from "../../s
 import { useNavigate } from "react-router-dom";
 import PhoneInputCustom from "../../components/PhoneInput/PhoneInputCustom";
 import CampoComGradiente from "../../components/gradientField";
+import { validateBrazilianPhone } from "../../utils/phoneValidation";
+import { toast } from "../../utils/toast";
 
 function UserPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -63,6 +65,22 @@ function UserPage() {
 
   const handleEditSave = async () => {
     if (isEditing) {
+      // Validar telefone antes de salvar
+      if (!tempTelefone || tempTelefone.trim() === "") {
+        toast.warn('Por favor, preencha o telefone!');
+        return;
+      }
+
+      const phoneValidation = validateBrazilianPhone(tempTelefone, { 
+        allowCountryCode: true, 
+        requireMobile: true 
+      });
+
+      if (!phoneValidation.valid) {
+        toast.warn(phoneValidation.error || 'Telefone inválido!');
+        return;
+      }
+
       const userId = localStorage.getItem("userId");
       
       try {

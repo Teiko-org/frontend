@@ -3,7 +3,7 @@ import { BsFillArrowRightCircleFill, BsFillArrowLeftCircleFill } from "react-ico
 
 export default function Carousel({ slides, autoPlay = true, interval = 4000, showIndicators = false, imageHeightClass = 'h-[270px]', itemsPerView = 3, showTitles = true, onSlideClick }) {
   const [current, setCurrent] = useState(0);
-  const cardWidthPercent = itemsPerView === 1 ? 85 : 24;
+  const cardWidthPercent = itemsPerView === 1 ? 100 : 24;
   const timerRef = useRef(null);
   const containerRef = useRef(null);
   const slidesContainerRef = useRef(null);
@@ -34,7 +34,7 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
 
   // Calcular translateX em pixels quando current mudar
   useEffect(() => {
-    if (!containerRef.current || !slidesContainerRef.current || slides.length <= itemsPerView) {
+    if (!containerRef.current || !slidesContainerRef.current) {
       return;
     }
 
@@ -46,7 +46,40 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
 
       const containerRect = container.getBoundingClientRect();
       const containerWidth = containerRect.width;
+      
+      // Se itemsPerView === 1, mostrar apenas o slide atual centralizado
+      if (itemsPerView === 1) {
+        if (slides.length <= 1) {
+          slidesContainer.style.transform = 'translateX(0px)';
+          return;
+        }
+        
+        // Medir a largura real do primeiro slide para calcular o translateX corretamente
+        let slideWidth = containerWidth;
+        if (itemRefs.current[0]) {
+          const firstSlideRect = itemRefs.current[0].getBoundingClientRect();
+          slideWidth = firstSlideRect.width;
+        }
+        
+        // Se não conseguimos medir, calcular baseado no container menos padding
+        if (!slideWidth || slideWidth === 0 || isNaN(slideWidth)) {
+          const containerPadding = 160; // 80px de cada lado
+          slideWidth = containerWidth - containerPadding;
+        }
+        
+        // O translateX deve mover cada slide pela sua largura real medida
+        const translateX = -current * slideWidth;
+        
+        slidesContainer.style.transform = `translateX(${translateX}px)`;
+        return;
+      }
+      
       const slidesContainerWidth = slidesContainer.scrollWidth;
+      
+      if (slidesContainerWidth <= containerWidth) {
+        slidesContainer.style.transform = 'translateX(0px)';
+        return;
+      }
       
       if (slidesContainerWidth <= containerWidth) {
         slidesContainer.style.transform = 'translateX(0px)';
@@ -54,9 +87,10 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
       }
 
       // Calcular gap e largura do card em pixels
-      const gapPx = itemsPerView === 1 ? 8 : 54;
+      const gapPx = 54;
       const cardPaddingPx = 8;
-      const cardWidthPx = (containerWidth * cardWidthPercent) / 100;
+      // Usar largura fixa do card (280px) igual ao card de CARAMBOLOS MAIS PEDIDOS
+      const cardWidthPx = itemsPerView > 1 ? 280 : (containerWidth * cardWidthPercent) / 100;
       const itemTotalWidth = cardWidthPx + (cardPaddingPx * 2) + gapPx;
 
       // Calcular posição desejada para centralizar o item atual
@@ -116,17 +150,24 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
   }, [current, slides.length, cardWidthPercent, itemsPerView]);
 
   return (
-    <div ref={containerRef} className="relative w-full overflow-x-hidden overflow-y-visible pb-8" style={{ overflow: 'hidden' }}>
+    <div ref={containerRef} className="relative w-full overflow-hidden pb-8" style={{ paddingLeft: itemsPerView === 1 ? '80px' : '0', paddingRight: itemsPerView === 1 ? '80px' : '0' }}>
       <div
         ref={slidesContainerRef}
-        className={`flex transition-transform ease-out duration-500 ${itemsPerView === 1 ? 'gap-x-8 px-4' : 'gap-x-[54px] px-6 md:px-12'}`}
-        style={{ overflow: 'visible' }}
+        className={`flex transition-transform ease-out duration-500 ${itemsPerView === 1 ? '' : 'gap-x-[54px] px-6 md:px-12'}`}
+        style={{ 
+          overflow: 'visible'
+        }}
       >
         {slides.map((slide, index) => {
           const isCenter = index === current;
-          const cardClasses = isCenter
-            ? "scale-[1.02] translate-y-3 z-20 shadow-[0_12px_24px_rgba(0,0,0,0.18)]"
-            : "scale-[0.98] -translate-y-1 z-10 opacity-95 shadow-[0_6px_14px_rgba(0,0,0,0.12)]";
+          // Destaque visual para o item ativo quando itemsPerView > 1
+          const cardClasses = itemsPerView === 1
+            ? (isCenter 
+                ? "z-20"
+                : "opacity-0 pointer-events-none absolute")
+            : (isCenter
+                ? "z-20 scale-[1.05] shadow-[0_12px_24px_rgba(0,0,0,0.2)] border-2"
+                : "z-10 scale-[0.95] opacity-80");
 
           return (
             <div
@@ -134,73 +175,115 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
               ref={(el) => {
                 if (el) itemRefs.current[index] = el;
               }}
-              className="flex-none flex justify-center"
-              style={{ width: `${cardWidthPercent}%`, overflow: 'visible', padding: '8px' }}
+              className="flex-none flex justify-center items-center"
+              style={{ 
+                width: itemsPerView === 1 ? '100%' : `${cardWidthPercent}%`, 
+                overflow: 'visible', 
+                padding: itemsPerView === 1 ? '0' : '8px',
+                flexShrink: 0,
+                minWidth: itemsPerView === 1 ? '100%' : '0',
+                maxWidth: itemsPerView === 1 ? '100%' : 'none',
+                alignItems: 'center',
+                position: itemsPerView === 1 && !isCenter ? 'absolute' : 'relative'
+              }}
             >
               <div
                 className={`relative rounded-lg overflow-hidden border border-gold bg-white transition-all duration-500 ${cardClasses} ${onSlideClick ? 'cursor-pointer' : ''}`}
-                style={{ overflow: 'visible' }}
+                style={{ 
+                  overflow: 'hidden',
+                  width: '280px',
+                  maxWidth: '280px',
+                  height: showTitles ? '320px' : '300px',
+                  alignSelf: 'center',
+                  boxShadow: isCenter && itemsPerView > 1 ? '0 12px 24px rgba(0, 0, 0, 0.2)' : '0 6px 14px rgba(0, 0, 0, 0.12)',
+                  borderWidth: isCenter && itemsPerView > 1 ? '2px' : '1px'
+                }}
                 onClick={() => handleSlideClick(slide)}
               >
-                <img
-                  src={slide.image}
-                  alt={slide.title || `Slide ${index + 1}`}
-                  className={`w-full object-cover ${imageHeightClass}`}
-                  onError={(e) => {
-                    console.warn(`Erro ao carregar imagem do slide ${index + 1}`);
-                  }}
-                />
-                {showTitles && slide.title && (
-                  <div className={`absolute left-1/2 -translate-x-1/2 ${
-                    isCenter ? 'bottom-3' : 'bottom-4'
-                  } w-full flex justify-center px-2`}>
-                    <span
-                      title={slide.title}
-                      className={`inline-block rounded-[12px] border border-[#D4B076] shadow-[0_4px_12px_rgba(0,0,0,0.16)] backdrop-blur-sm font-montserrat font-normal whitespace-nowrap overflow-hidden text-ellipsis leading-tight ${
-                        isCenter
-                          ? 'px-5 py-2 text-[clamp(12px,1.1vw,16px)] max-w-[88%]'
-                          : 'px-4 py-1.5 text-[clamp(10px,0.95vw,14px)] max-w-[80%]'
-                      }`}
-                      style={{
-                        background: 'rgba(255, 232, 196, 0.8)',
-                        color: '#8A541C',
-                      }}
-                    >
-                      {slide.title}
-                    </span>
-                  </div>
-                )}
+                <div className="relative w-full" style={{ height: '100%' }}>
+                  <img
+                    src={slide.image}
+                    alt={slide.title || `Slide ${index + 1}`}
+                    className="w-full h-full object-cover"
+                    style={{
+                      display: 'block',
+                      objectFit: 'cover',
+                      objectPosition: 'center',
+                      width: '100%',
+                      height: '100%'
+                    }}
+                    onError={(e) => {
+                      console.warn(`Erro ao carregar imagem do slide ${index + 1}`);
+                    }}
+                  />
+                  {showTitles && slide.title && (
+                    <div className="absolute left-1/2 -translate-x-1/2 bottom-3 w-full flex justify-center px-2">
+                      <span
+                        title={slide.title}
+                        className="inline-block rounded-[12px] border border-[#D4B076] shadow-[0_4px_12px_rgba(0,0,0,0.16)] backdrop-blur-sm font-montserrat font-normal whitespace-nowrap overflow-hidden text-ellipsis leading-tight px-5 py-2 text-[clamp(12px,1.1vw,16px)] max-w-[88%]"
+                        style={{
+                          background: 'rgba(255, 232, 196, 0.8)',
+                          color: '#8A541C',
+                        }}
+                      >
+                        {slide.title}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           );
         })}
       </div>
 
-      <button
-        aria-label="anterior"
-        onClick={previous}
-        className="absolute top-1/2 -translate-y-1/2 z-40 text-3xl text-gold hover:scale-110 transition-transform"
-        style={{ left: '16px' }}
-      >
-        <BsFillArrowLeftCircleFill />
-      </button>
-      <button
-        aria-label="próximo"
-        onClick={next}
-        className="absolute top-1/2 -translate-y-1/2 z-40 text-3xl text-gold hover:scale-110 transition-transform"
-        style={{ right: '16px' }}
-      >
-        <BsFillArrowRightCircleFill />
-      </button>
+      {slides.length > 1 && (
+        <>
+          <button
+            aria-label="anterior"
+            onClick={previous}
+            className="absolute top-1/2 z-40 text-4xl text-gold hover:scale-110 transition-transform"
+            style={{ 
+              left: itemsPerView === 1 ? '16px' : '16px',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <BsFillArrowLeftCircleFill />
+          </button>
+          <button
+            aria-label="próximo"
+            onClick={next}
+            className="absolute top-1/2 z-40 text-4xl text-gold hover:scale-110 transition-transform"
+            style={{ 
+              right: itemsPerView === 1 ? '16px' : '16px',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <BsFillArrowRightCircleFill />
+          </button>
+        </>
+      )}
 
-      {showIndicators && (
-        <div className="absolute bottom-0 py-2 flex justify-center gap-2 w-full">
+      {showIndicators && slides.length > 1 && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 py-2 flex justify-center gap-2 z-30">
           {slides.map((_, i) => (
             <button
               aria-label={`ir para slide ${i + 1}`}
               onClick={() => setCurrent(i)}
               key={`dot-${i}`}
-              className={`rounded-full w-2 h-2 ${i === current ? 'bg-gold' : 'bg-blue'}`}
+              className={`rounded-full w-2.5 h-2.5 transition-all ${i === current ? 'bg-gold w-3 h-3' : 'bg-blue opacity-60 hover:opacity-100'}`}
             />
           ))}
         </div>

@@ -1,16 +1,16 @@
 import { useState, useRef, useEffect } from "react";
-import { X, Upload } from "lucide-react";
+import { X, Upload, Trash2 } from "lucide-react";
 import { RiFileTextLine } from "react-icons/ri";
 import Button from "../Button";
 import InputOption from "../InputOption";
 import { axiosApi } from "../../provider/AxiosApi";
 import { fetchAllAdicionais } from "../../service/adicionalService";
-import { updateDecoracao, getDecoraceosComAdicionais } from "../../service/decoracaoService";
+import { updateDecoracao, getDecoraceosComAdicionais, getDecoracaoById } from "../../service/decoracaoService";
 import { toast } from "../../utils/toast";
 
 export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProdutoEditado, initialCategoria }) {
-    const [file, setFile] = useState(null);
-    const [filePreview, setFilePreview] = useState(null);
+    const [imagens, setImagens] = useState([]); // Array de { url: string, file: File | null, isNew: boolean }
+    const [imagensOriginaisCount, setImagensOriginaisCount] = useState(0); // Contador de imagens originais
     const imagemRef = useRef(null);
 
     const [produtoNome, setProdutoNome] = useState("");
@@ -24,27 +24,84 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
     const [allAdicionais, setAllAdicionais] = useState([]);
     const [adicionaisToRequest, setAdicionaisToRequest] = useState([]);
 
+    // Buscar dados atualizados quando o modal abrir
     useEffect(() => {
-        if (!isOpen) return;
-        // inicializa campos a partir do produto recebido
-        setProdutoNome(produto?.produto || produto?.nome || "");
-        // set category based on initialCategoria prop (coming from ProductList)
-        const categoria = initialCategoria || produto?.categoria || "";
-        setCategoria(categoria);
-        setValor(produto?.valor ?? produto?.preco ?? "");
-        setObservacao(produto?.descricao || "");
-        setCategoriaFornada(produto?.categoria || "");
-        setNomeDecoracao(produto?.nomeDecoracao || produto?.nome || "");
-        setCategoriaDecoracao(produto?.categoriaDecoracao || "");
-        setObservacoesDecoracao(produto?.observacoesDecoracao || produto?.observacao || "");
-        setFilePreview(produto?.imagemUrl || produto?.imagens?.[0] || produto?.image || null);
-        // se o produto já tem adicionais, pré-seleciona
-        if (produto?.adicionais && Array.isArray(produto.adicionais)) {
-            setAdicionaisToRequest(produto.adicionais.map(a => ({ id: a.id, descricao: a.descricao })));
-        } else {
-            setAdicionaisToRequest([]);
-        }
-    }, [isOpen, produto, initialCategoria]);
+        if (!isOpen || !produto?.id) return;
+        
+        const carregarDadosAtualizados = async () => {
+            try {
+                // Se for decoração, buscar dados atualizados da API
+                const categoria = initialCategoria || produto?.categoria || "";
+                if (categoria === "Decoracao" || categoria?.toLowerCase().includes("decoracao")) {
+                    const decoracaoId = produto?.decoracaoId || produto?.id;
+                    const decoracaoAtualizada = await getDecoracaoById(decoracaoId);
+                    if (decoracaoAtualizada) {
+                        // Atualizar produto com dados mais recentes
+                        const produtoAtualizado = {
+                            ...produto,
+                            nomeDecoracao: decoracaoAtualizada.nome,
+                            categoriaDecoracao: decoracaoAtualizada.categoria || "",
+                            observacoesDecoracao: decoracaoAtualizada.observacao || "",
+                            observacao: decoracaoAtualizada.observacao || "",
+                            imagens: decoracaoAtualizada.imagens || [],
+                            imagemUrl: decoracaoAtualizada.imagens?.[0] || null,
+                            adicionais: decoracaoAtualizada.adicionais || []
+                        };
+                        inicializarCampos(produtoAtualizado);
+                        return;
+                    }
+                }
+                // Se não for decoração ou não conseguir buscar, usar dados do produto recebido
+                inicializarCampos(produto);
+            } catch (error) {
+                console.warn("Erro ao buscar dados atualizados, usando dados do produto recebido:", error);
+                inicializarCampos(produto);
+            }
+        };
+        
+        const inicializarCampos = (produtoData) => {
+            // inicializa campos a partir do produto recebido
+            setProdutoNome(produtoData?.produto || produtoData?.nome || "");
+            // set category based on initialCategoria prop (coming from ProductList)
+            const categoria = initialCategoria || produtoData?.categoria || "";
+            setCategoria(categoria);
+            setValor(produtoData?.valor ?? produtoData?.preco ?? "");
+            setObservacao(produtoData?.descricao || "");
+            setCategoriaFornada(produtoData?.categoria || "");
+            setNomeDecoracao(produtoData?.nomeDecoracao || produtoData?.nome || "");
+            setCategoriaDecoracao(produtoData?.categoriaDecoracao || "");
+            setObservacoesDecoracao(produtoData?.observacoesDecoracao || produtoData?.observacao || "");
+            
+            // Inicializar imagens existentes
+            const imagensExistentes = [];
+            if (produtoData?.imagens && Array.isArray(produtoData.imagens) && produtoData.imagens.length > 0) {
+                // Se imagens é um array de URLs
+                produtoData.imagens.forEach(url => {
+                    if (url && typeof url === 'string') {
+                        imagensExistentes.push({ url, file: null, isNew: false });
+                    }
+                });
+            } else if (produtoData?.imagemUrl) {
+                // Se tem imagemUrl única
+                imagensExistentes.push({ url: produtoData.imagemUrl, file: null, isNew: false });
+            } else if (produtoData?.image) {
+                // Se tem image única
+                imagensExistentes.push({ url: produtoData.image, file: null, isNew: false });
+            }
+            setImagens(imagensExistentes);
+            setImagensOriginaisCount(imagensExistentes.length); // Guardar contador de imagens originais
+            
+            // se o produto já tem adicionais, pré-seleciona
+            if (produtoData?.adicionais && Array.isArray(produtoData.adicionais)) {
+                setAdicionaisToRequest(produtoData.adicionais.map(a => ({ id: a.id, descricao: a.descricao })));
+            } else {
+                setAdicionaisToRequest([]);
+            }
+        };
+        
+        carregarDadosAtualizados();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, produto?.id]);
 
     const getAllAdicionais = async () => {
         setAllAdicionais(await fetchAllAdicionais().then(data => data || []));
@@ -62,7 +119,7 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
             const decoracaoId = produto?.decoracaoId || produto?.id;
             const decoracaoData = decoracoesComAdicionais.find(d => d.decoracaoId === decoracaoId);
 
-            if (!decoracaoData || !decoracaoData.adicionaisPossiveis) {
+            if (!decoracaoData || !decoracaoData.adicionaisPossiveis || decoracaoData.adicionaisPossiveis.length === 0) {
                 return;
             }
 
@@ -89,7 +146,9 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
 
             setAdicionaisToRequest(selectedAdicionais);
         } catch (error) {
-            console.error("Erro ao buscar adicionais da decoração:", error);
+            // Silenciosamente falha - não quebra o modal se não conseguir buscar adicionais
+            console.warn("Erro ao buscar adicionais da decoração (continuando sem pré-seleção):", error);
+            // Mantém os adicionais que já estavam selecionados (se houver)
         }
     }
 
@@ -104,12 +163,44 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
         }
     }, [isOpen]);
 
+    // Cleanup: revogar URLs de objetos quando o componente desmontar ou fechar
+    useEffect(() => {
+        return () => {
+            imagens.forEach(imagem => {
+                if (imagem.isNew && imagem.url) {
+                    URL.revokeObjectURL(imagem.url);
+                }
+            });
+        };
+    }, []);
+
     const anexarImagem = (e) => {
-        const img = e.target.files[0];
-        if (img) {
-            setFile(img);
-            setFilePreview(URL.createObjectURL(img));
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+        
+        const novasImagens = files.map(file => ({
+            url: URL.createObjectURL(file),
+            file: file,
+            isNew: true
+        }));
+        
+        setImagens(prev => [...prev, ...novasImagens]);
+        
+        // Limpar o input para permitir selecionar o mesmo arquivo novamente
+        if (imagemRef.current) {
+            imagemRef.current.value = '';
         }
+    };
+
+    const removerImagem = (index) => {
+        setImagens(prev => {
+            const novaLista = prev.filter((_, i) => i !== index);
+            // Se a imagem removida era nova (File), revogar a URL do objeto
+            if (prev[index]?.isNew && prev[index]?.url) {
+                URL.revokeObjectURL(prev[index].url);
+            }
+            return novaLista;
+        });
     };
 
     const exibirImagem = () => imagemRef.current?.click();
@@ -135,9 +226,17 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
 
         const decoracaoId = produto?.decoracaoId || produto?.id;
         const formData = new FormData();
-        formData.append("nome", nomeDecoracao);
-        formData.append("categoria", categoriaDecoracao || "");
-        formData.append("observacao", observacoesDecoracao || "");
+        
+        // Garantir que nome sempre seja uma string válida
+        formData.append("nome", String(nomeDecoracao || ""));
+        
+        // Garantir que categoria sempre seja uma string válida
+        formData.append("categoria", categoriaDecoracao != null ? String(categoriaDecoracao) : "");
+        
+        // Sempre enviar observacao como string válida (não pode ser null ou undefined)
+        // O backend requer este campo, então sempre enviar, mesmo que vazio
+        const observacaoValue = String(observacoesDecoracao || "");
+        formData.append("observacao", observacaoValue);
         
         // Adicionar adicionais como string separada por vírgula
         if (adicionaisToRequest && adicionaisToRequest.length > 0) {
@@ -147,17 +246,78 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
             formData.append("adicionais", "");
         }
         
-        // Adicionar imagem apenas se um novo arquivo foi selecionado
-        if (file) {
-            formData.append("imagens", file);
+        // Verificar se houve remoção de imagens existentes
+        const imagensExistentesAtuais = imagens.filter(img => !img.isNew).length;
+        const houveRemocao = imagensExistentesAtuais < imagensOriginaisCount;
+        const todasImagensRemovidas = imagens.length === 0 && imagensOriginaisCount > 0;
+        const novasImagens = imagens.filter(imagem => imagem.isNew && imagem.file);
+        
+        // Se houve remoção de imagens existentes, precisamos re-enviar todas as imagens restantes
+        if (houveRemocao || todasImagensRemovidas) {
+            // Baixar e re-enviar todas as imagens restantes (existentes + novas)
+            const imagensParaEnviar = [];
+            
+            // Primeiro, adicionar novas imagens que já têm file
+            imagensParaEnviar.push(...novasImagens.map(img => img.file));
+            
+            // Depois, baixar e adicionar imagens existentes que foram mantidas
+            const imagensExistentesMantidas = imagens.filter(img => !img.isNew);
+            for (const imagemExistente of imagensExistentesMantidas) {
+                try {
+                    const response = await fetch(imagemExistente.url);
+                    const blob = await response.blob();
+                    const file = new File([blob], `imagem_${Date.now()}.jpg`, { type: blob.type });
+                    imagensParaEnviar.push(file);
+                } catch (error) {
+                    console.warn(`Erro ao baixar imagem ${imagemExistente.url}:`, error);
+                }
+            }
+            
+            // Se todas as imagens foram removidas, enviar um arquivo vazio para indicar remoção
+            if (todasImagensRemovidas && imagensParaEnviar.length === 0) {
+                // Enviar um arquivo vazio para indicar que todas as imagens devem ser removidas
+                const emptyBlob = new Blob([], { type: 'image/png' });
+                const emptyFile = new File([emptyBlob], 'empty.png', { type: 'image/png' });
+                formData.append("imagens", emptyFile);
+            } else {
+                // Enviar todas as imagens restantes
+                imagensParaEnviar.forEach(file => {
+                    if (file) {
+                        formData.append("imagens", file);
+                    }
+                });
+            }
+        } else {
+            // Se não houve remoção, só enviar novas imagens
+            if (novasImagens.length > 0) {
+                novasImagens.forEach(imagem => {
+                    if (imagem.file) {
+                        formData.append("imagens", imagem.file);
+                    }
+                });
+            }
+            // Se não houver novas imagens e não houve remoção, não enviar o campo (backend manterá as existentes)
         }
 
-        console.log('decoracaoId: ', decoracaoId)
+        // Debug: verificar o que está sendo enviado
+        console.log('Atualizando decoração:', {
+            decoracaoId,
+            nome: nomeDecoracao,
+            observacao: observacaoValue,
+            categoria: categoriaDecoracao,
+            novasImagens: novasImagens.length,
+            totalImagens: imagens.length,
+            houveRemocao
+        });
 
         try {
             const response = await updateDecoracao(decoracaoId, formData);
             toast.success('Decoração atualizada com sucesso!');
-            onProdutoEditado && onProdutoEditado();
+            
+            // Recarregar produtos antes de fechar para garantir dados atualizados
+            if (onProdutoEditado) {
+                await onProdutoEditado();
+            }
             onClose();
         } catch (error) {
             toast.error('Erro ao atualizar decoração!');
@@ -170,10 +330,16 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
 
         const formData = new FormData();
         formData.append("produto", produtoNome);
-        formData.append("descricao", observacao);
+        formData.append("descricao", observacao || "");
         formData.append("valor", valor);
         formData.append("categoria", categoriaFornada || categoria);
-        if (file) formData.append("imagens", file);
+        
+        // Adicionar todas as novas imagens (apenas as que têm file)
+        imagens.forEach(imagem => {
+            if (imagem.isNew && imagem.file) {
+                formData.append("imagens", imagem.file);
+            }
+        });
 
         try {
             await axiosApi.put(`/fornadas/produto-fornada/${produto.id}`, formData, {
@@ -215,32 +381,73 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
                 </header>
 
                 <section className="flex px-8 gap-8 py-4 h-[557px] overflow-y-auto">
-                    {/* Imagem */}
-                    <div className="w-1/2 flex flex-col items-center justify-center gap-4">
-                        <div className="flex flex-col gap-4 items-center border-[3px] border-[#d6a87c] rounded-md p-2 px-1 w-72 h-80">
-                            <div className="border-2 border-dashed border-[#d6a87c] rounded-md p-4 flex flex-col items-center justify-center gap-3 bg-white w-64 h-64 overflow-hidden">
-                                {filePreview ? (
-                                    <img
-                                        src={filePreview}
-                                        alt="Prévia"
-                                        className="w-full h-full object-contain rounded-md"
-                                    />
-                                ) : (
-                                    <RiFileTextLine size={100} className="text-goldCard" />
-                                )}
-                            </div>
+                    {/* Imagens */}
+                    <div className="w-1/2 flex flex-col items-start gap-4">
+                        <div className="w-full">
+                            <label className="font-medium mb-2 block">Imagens do Produto</label>
+                            
+                            {/* Grid de imagens */}
+                            {imagens.length > 0 ? (
+                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                    {imagens.map((imagem, index) => (
+                                        <div key={index} className="relative border-2 border-[#d6a87c] rounded-md p-2 bg-white group">
+                                            <div className="relative w-full h-40 overflow-hidden rounded-md">
+                                                <img
+                                                    src={imagem.url}
+                                                    alt={`Imagem ${index + 1}`}
+                                                    className="w-full h-full object-contain"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        removerImagem(index);
+                                                    }}
+                                                    className="absolute top-1 right-1 text-white rounded-full p-1.5 shadow-lg border-2 border-white z-50 transition-all hover:scale-110 active:scale-95"
+                                                    title="Remover imagem"
+                                                    aria-label="Remover imagem"
+                                                    style={{
+                                                        backgroundColor: '#dc2626', // Vermelho vibrante
+                                                        width: '28px',
+                                                        height: '28px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        boxShadow: '0 2px 8px rgba(220, 38, 38, 0.5), 0 0 0 2px rgba(255, 255, 255, 0.8)'
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        e.currentTarget.style.backgroundColor = '#b91c1c'; // Vermelho mais escuro no hover
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        e.currentTarget.style.backgroundColor = '#dc2626'; // Volta ao vermelho original
+                                                    }}
+                                                >
+                                                    <Trash2 size={16} strokeWidth={2.5} fill="currentColor" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="border-2 border-dashed border-[#d6a87c] rounded-md p-8 flex flex-col items-center justify-center gap-3 bg-white mb-4">
+                                    <RiFileTextLine size={80} className="text-goldCard" />
+                                    <span className="text-sm text-gray-500">Nenhuma imagem adicionada</span>
+                                </div>
+                            )}
 
                             <Button
                                 type="button"
                                 className="text-sm flex flex-row gap-2 items-center"
                                 onClick={exibirImagem}
                             >
-                                <Upload size={16} /> Atualizar Imagem
+                                <Upload size={16} /> {imagens.length > 0 ? 'Adicionar Mais Imagens' : 'Adicionar Imagens'}
                             </Button>
                             <input
                                 type="file"
                                 ref={imagemRef}
                                 accept="image/*"
+                                multiple
                                 className="hidden"
                                 onChange={anexarImagem}
                             />

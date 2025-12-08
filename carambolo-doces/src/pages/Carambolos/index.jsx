@@ -160,17 +160,23 @@ const renderSection = (title, decoracoes, page, onArrowClick, isSelected, catego
           />
           <div className="flex space-x-12">
             {paginatedDecoracoes && paginatedDecoracoes.length > 0 ? (
-              paginatedDecoracoes.map((decoracao) => (
+              paginatedDecoracoes.map((decoracao, idx) => {
+                const isFirst = idx === 0;
+                return (
                 <div
                   key={decoracao.id}
-                  className="relative rounded-lg overflow-hidden border border-gold bg-white cursor-pointer transition-all duration-500 hover:scale-105 shadow-lg flex-none"
-                  style={{ width: '280px' }}
+                  className={`relative rounded-lg overflow-hidden bg-white cursor-pointer transition-all duration-500 hover:scale-105 shadow-lg flex-none ${
+                    isFirst 
+                      ? 'border-2 border-gold shadow-[0_12px_24px_rgba(0,0,0,0.2)] scale-105' 
+                      : 'border border-gold shadow-[0_6px_14px_rgba(0,0,0,0.12)]'
+                  }`}
+                  style={{ width: '400px' }}
                   onClick={() => handleCardClick(decoracao)}
                 >
                   <img
                     src={decoracao.imagens?.[0] || 'https://via.placeholder.com/256'}
                     alt={decoracao.nome}
-                    className="w-full h-64 object-cover"
+                    className="w-full h-48 object-cover"
                   />
                   <div className="absolute left-1/2 -translate-x-1/2 bottom-3 w-full flex justify-center px-2">
                     <span
@@ -185,7 +191,8 @@ const renderSection = (title, decoracoes, page, onArrowClick, isSelected, catego
                     </span>
                   </div>
                 </div>
-              ))
+                );
+              })
             ) : (
               <div className="text-center py-8 text-gray-500">
                 Nenhuma decoração disponível nesta categoria.
