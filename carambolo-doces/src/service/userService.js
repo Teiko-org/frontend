@@ -64,9 +64,10 @@ const handleAuthError = (error, phone) => {
     toast.error(
       'Este telefone já está cadastrado. Tente fazer login ou use outro número.',
       {
-        autoClose: 5000,
+        autoClose: 15000,
         closeOnClick: true,
-        pauseOnHover: true,
+        pauseOnHover: false,
+        hideProgressBar: false,
       }
     );
   } else if (error.response && error.response.status === 500) {
@@ -77,18 +78,18 @@ const handleAuthError = (error, phone) => {
       setTimeout(() => {
         toast.error('Telefone ou Senha incorretos.', {
           toastId: LOGIN_ERROR_TOAST_ID,
-          autoClose: 4000,
+          autoClose: 15000,
           closeOnClick: true,
-          pauseOnHover: true,
+          pauseOnHover: false,
           hideProgressBar: false,
         });
       }, 10);
     } else {
       toast.error('Telefone ou Senha incorretos.', {
         toastId: LOGIN_ERROR_TOAST_ID,
-        autoClose: 4000,
+        autoClose: 15000,
         closeOnClick: true,
-        pauseOnHover: true,
+        pauseOnHover: false,
         hideProgressBar: false,
       });
     }

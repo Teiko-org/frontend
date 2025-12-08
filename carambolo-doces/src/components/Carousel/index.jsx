@@ -1,10 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { BsFillArrowRightCircleFill, BsFillArrowLeftCircleFill } from "react-icons/bs";
 
 export default function Carousel({ slides, autoPlay = true, interval = 4000, showIndicators = false, imageHeightClass = 'h-[270px]', itemsPerView = 3, showTitles = true, onSlideClick }) {
   const [current, setCurrent] = useState(0);
   const cardWidthPercent = itemsPerView === 1 ? 85 : 24;
   const timerRef = useRef(null);
+  const containerRef = useRef(null);
+  const slidesContainerRef = useRef(null);
+  const itemRefs = useRef([]);
 
   const previous = () => {
     setCurrent((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
@@ -29,19 +32,95 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
     return () => timerRef.current && clearInterval(timerRef.current);
   }, [autoPlay, interval, slides.length]);
 
-  const translatePercent = useMemo(() => {
-    const totalWidth = slides.length * cardWidthPercent;
-    const maxTranslate = Math.max(0, totalWidth - 100);
-    const desired = current * cardWidthPercent + cardWidthPercent / 2 - 50;
-    const clamped = Math.min(Math.max(desired, 0), maxTranslate);
-    return clamped;
-  }, [current, slides.length, cardWidthPercent]);
+  // Calcular translateX em pixels quando current mudar
+  useEffect(() => {
+    if (!containerRef.current || !slidesContainerRef.current || slides.length <= itemsPerView) {
+      return;
+    }
+
+    const updateTranslate = () => {
+      const container = containerRef.current;
+      const slidesContainer = slidesContainerRef.current;
+      
+      if (!container || !slidesContainer) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const containerWidth = containerRect.width;
+      const slidesContainerWidth = slidesContainer.scrollWidth;
+      
+      if (slidesContainerWidth <= containerWidth) {
+        slidesContainer.style.transform = 'translateX(0px)';
+        return;
+      }
+
+      // Calcular gap e largura do card em pixels
+      const gapPx = itemsPerView === 1 ? 8 : 54;
+      const cardPaddingPx = 8;
+      const cardWidthPx = (containerWidth * cardWidthPercent) / 100;
+      const itemTotalWidth = cardWidthPx + (cardPaddingPx * 2) + gapPx;
+
+      // Calcular posição desejada para centralizar o item atual
+      let desiredPx = current * itemTotalWidth + cardWidthPx / 2 + cardPaddingPx - containerWidth / 2;
+
+      // Calcular maxTranslate primeiro
+      const maxTranslatePx = slidesContainerWidth - containerWidth;
+      
+      // Se estamos nos últimos itens, garantir que o último item fique totalmente visível
+      const lastVisibleIndex = slides.length - itemsPerView;
+      let clampedPx;
+      
+      if (current >= lastVisibleIndex) {
+        // Primeiro, aplicar maxTranslatePx
+        clampedPx = maxTranslatePx;
+        slidesContainer.style.transform = `translateX(-${clampedPx}px)`;
+        
+        // Aguardar um frame e verificar se o último item está visível
+        requestAnimationFrame(() => {
+          if (itemRefs.current[slides.length - 1]) {
+            const lastItem = itemRefs.current[slides.length - 1];
+            const lastItemRect = lastItem.getBoundingClientRect();
+            const containerRight = containerRect.right;
+            const containerPaddingRight = itemsPerView === 1 ? 16 : 48;
+            const visibleRight = containerRight - containerPaddingRight;
+            
+            // Se o último item ainda está cortado
+            if (lastItemRect.right > visibleRight) {
+              // Calcular o translateX atual do slidesContainer
+              const slidesContainerRect = slidesContainer.getBoundingClientRect();
+              const currentTranslate = containerRect.left - slidesContainerRect.left;
+              
+              // Calcular quanto mais precisamos mover
+              const overflow = lastItemRect.right - visibleRight;
+              const adjustedTranslate = currentTranslate + overflow;
+              
+              slidesContainer.style.transform = `translateX(-${adjustedTranslate}px)`;
+            }
+          }
+        });
+        
+        return; // Já aplicamos o transform acima
+      } else {
+        // Para outros itens, calcular normalmente
+        clampedPx = Math.min(Math.max(desiredPx, 0), maxTranslatePx);
+      }
+      
+      slidesContainer.style.transform = `translateX(-${clampedPx}px)`;
+    };
+
+    // Aguardar frames para garantir que o DOM esteja atualizado
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(updateTranslate);
+      });
+    });
+  }, [current, slides.length, cardWidthPercent, itemsPerView]);
 
   return (
-    <div className="relative w-full overflow-x-hidden overflow-y-visible pb-8">
+    <div ref={containerRef} className="relative w-full overflow-x-hidden overflow-y-visible pb-8" style={{ overflow: 'hidden' }}>
       <div
+        ref={slidesContainerRef}
         className={`flex transition-transform ease-out duration-500 ${itemsPerView === 1 ? 'gap-x-8 px-4' : 'gap-x-[54px] px-6 md:px-12'}`}
-        style={{ transform: `translateX(-${translatePercent}%)` }}
+        style={{ overflow: 'visible' }}
       >
         {slides.map((slide, index) => {
           const isCenter = index === current;
@@ -52,11 +131,15 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
           return (
             <div
               key={`${slide.title ?? 'slide'}-${index}`}
-              className="flex-none"
-              style={{ width: `${cardWidthPercent}%` }}
+              ref={(el) => {
+                if (el) itemRefs.current[index] = el;
+              }}
+              className="flex-none flex justify-center"
+              style={{ width: `${cardWidthPercent}%`, overflow: 'visible', padding: '8px' }}
             >
               <div
                 className={`relative rounded-lg overflow-hidden border border-gold bg-white transition-all duration-500 ${cardClasses} ${onSlideClick ? 'cursor-pointer' : ''}`}
+                style={{ overflow: 'visible' }}
                 onClick={() => handleSlideClick(slide)}
               >
                 <img
@@ -64,7 +147,6 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
                   alt={slide.title || `Slide ${index + 1}`}
                   className={`w-full object-cover ${imageHeightClass}`}
                   onError={(e) => {
-                    // Se a imagem falhar, não faz nada (já deve ter fallback no componente pai)
                     console.warn(`Erro ao carregar imagem do slide ${index + 1}`);
                   }}
                 />

@@ -133,6 +133,12 @@ function FornadaDashboard() {
       setInitialEditingFornada(JSON.parse(JSON.stringify(fornadaInicial)));
       setInitialSelectedProducts(JSON.parse(JSON.stringify(produtosSelecionados)));
       setIsEditing(true);
+      
+      // Disparar evento para forçar recarregamento da lista de produtos
+      setTimeout(() => {
+        console.log('📢 Disparando evento fornadaEditModeActivated...');
+        window.dispatchEvent(new CustomEvent('fornadaEditModeActivated'));
+      }, 100);
     } catch (error) {
       console.error("Erro ao carregar produtos da fornada:", error);
       toast.error("Erro ao carregar produtos da fornada. Tente novamente.");
@@ -602,7 +608,7 @@ function FornadaDashboard() {
   const renderProductTable = () => {
     if (isEditing) {
       return (
-        <div className="w-full flex justify-center">
+        <div className="w-full flex justify-center m-0 p-0">
           <TableSelectProductsFornada />
         </div>
       );
@@ -617,8 +623,8 @@ function FornadaDashboard() {
     }
 
     return (
-      <div className="w-full">
-        <div className="w-full flex justify-center border-2 border-gold rounded-2xl bg-bgHome">
+      <div className="w-full flex justify-center items-center">
+        <div className="w-full border-2 border-gold rounded-2xl bg-bgHome mx-auto">
           <div className="w-full">
             <header className="flex flex-row justify-between rounded-t-2xl px-6 py-4 items-center bg-gradient-blue h-[3.6875rem] w-full flex-shrink-0">
               <h1 className="text-gold text-[1.5rem]">Produtos da Fornada</h1>
@@ -683,9 +689,9 @@ function FornadaDashboard() {
             <KPIThisMonthFornadas key={`month-${kpiRefreshKey}`} />
           </div>
 
-          <div className="flex flex-col w-full items-center gap-5 pt-5">
+          <div className={`flex flex-col w-full items-center gap-5 ${isEditing ? 'pt-0' : 'pt-5'}`}>
             {/* Tabela de produtos baseada no estado e modo */}
-            <div className="transition-all duration-500 ease-in-out w-full">
+            <div className="transition-all duration-500 ease-in-out w-full flex justify-center">
               {renderProductTable()}
             </div>
 

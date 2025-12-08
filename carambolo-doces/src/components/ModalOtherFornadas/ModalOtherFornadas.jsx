@@ -17,7 +17,7 @@ function ModalOtherFornadas(props) {
             <div className="w-full flex flex-col justify-center items-center gap-y-4">
 
                 <div className="w-full h-fit flex justify-between border-2 border-gold rounded-2xl bg-bgHome px-5 py-2">
-                    <span>1ª Fornada: 99/99/9999 - 99/99/9999</span>
+                    <span>Consultar fornadas anteriores</span>
                     <Button variant="outline" onClick={openModal}>Consultar</Button>
                 </div>
 

@@ -101,17 +101,21 @@ export default function ModalOrderDetails(props) {
                     <div className="gap-2">
                       <span className="text-blue font-semibold">Tamanho: </span>
                       <span>
-                        {props?.order?.tamanho === "TAMANHO_5"
-                          ? "5 centímetros"
-                          : props?.order?.tamanho === "TAMANHO_7"
-                          ? "7 centímetros"
-                          : props?.order?.tamanho === "TAMANHO_12"
-                          ? "12 centímetros"
-                          : props?.order?.tamanho === "TAMANHO_15"
-                          ? "15 centímetros"
-                          : props?.order?.tamanho === "TAMANHO_17"
-                          ? "17 centímetros"
-                          : "Carregando..."}
+                        {(() => {
+                          const tamanho = props?.order?.tamanho;
+                          if (!tamanho) return "Carregando...";
+                          
+                          // Mapeamento correto dos enums para os tamanhos disponíveis
+                          const tamanhos = {
+                            "TAMANHO_5": "11cm",   // TAMANHO_5 era usado incorretamente para 11cm (pedidos antigos)
+                            "TAMANHO_7": "13cm",   // TAMANHO_7 era usado incorretamente para 13cm (pedidos antigos)
+                            "TAMANHO_12": "11cm",  // TAMANHO_12 é usado para 11cm (mapeamento atual)
+                            "TAMANHO_15": "15cm",  // TAMANHO_15 é usado para 15cm
+                            "TAMANHO_17": "17cm"   // TAMANHO_17 é usado para 17cm
+                          };
+                          
+                          return tamanhos[tamanho] || tamanho;
+                        })()}
                       </span>
                     </div>
 

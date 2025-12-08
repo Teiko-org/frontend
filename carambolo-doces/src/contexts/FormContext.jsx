@@ -53,10 +53,10 @@ export const FormProvider = ({ children }) => {
 
   const mapTamanhoToEnum = (tamanho) => {
     const mapping = {
-      "11cm": "TAMANHO_5",
-      "13cm": "TAMANHO_7", 
-      "15cm": "TAMANHO_12",
-      "17cm": "TAMANHO_15"
+      "11cm": "TAMANHO_12",  // 11cm mapeia para TAMANHO_12 (mais próximo disponível)
+      "13cm": "TAMANHO_12",  // 13cm mapeia para TAMANHO_12 (mais próximo disponível)
+      "15cm": "TAMANHO_15",  // 15cm mapeia para TAMANHO_15
+      "17cm": "TAMANHO_17"   // 17cm mapeia para TAMANHO_17
     };
     return mapping[tamanho] || null;
   };
@@ -368,6 +368,9 @@ export const FormProvider = ({ children }) => {
       const linkWhatsApp = `https://wa.me/55${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`;
 
       toast.success("Pedido realizado com sucesso!");
+      
+      // Disparar evento para que outras telas possam recarregar
+      window.dispatchEvent(new CustomEvent('pedidoCriado', { detail: { pedidoId: pedidoId, resumoId: resumo.id } }));
       
       setTimeout(() => {
         window.open(linkWhatsApp, "_blank");

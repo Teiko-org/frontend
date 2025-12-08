@@ -93,12 +93,17 @@ export default function Producao() {
   }, [anoSelecionado, tipoGrafico]);
 
   const formatarData = (dataString) => {
-    if (!dataString) return "";
-    const data = new Date(dataString);
-    const dia = String(data.getDate()).padStart(2, "0");
-    const mes = String(data.getMonth() + 1).padStart(2, "0");
-    const ano = String(data.getFullYear()).slice(-2);
-    return `${dia}/${mes}/${ano}`;
+    if (!dataString) return "Data não disponível";
+    try {
+      const data = new Date(dataString);
+      if (isNaN(data.getTime())) return "Data inválida";
+      const dia = String(data.getDate()).padStart(2, "0");
+      const mes = String(data.getMonth() + 1).padStart(2, "0");
+      const ano = String(data.getFullYear()).slice(-2);
+      return `${dia}/${mes}/${ano}`;
+    } catch (error) {
+      return "Data inválida";
+    }
   };
 
   const formatarTelefone = (telefone) => {
@@ -246,11 +251,11 @@ export default function Producao() {
                         <div className="flex items-center justify-between mt-auto">
                           <button
                             onClick={() => handleVerPedidos(massa.pedidos, "Massa", massa.nome)}
-                            className="bg-white border border-gold rounded-lg px-3 py-1 text-xs font-bold text-gold font-montserrat hover:bg-bgNativeHome transition-colors"
+                            className="bg-white border border-gold rounded-lg px-3 py-1 text-sm font-bold text-gold font-montserrat hover:bg-bgNativeHome transition-colors"
                           >
                             Ver pedidos
                           </button>
-                          <div className="text-xs text-gray-600">x{massa.quantidade} Pedidos Pendentes</div>
+                          <div className="text-sm text-gray-600">x{massa.quantidade} Pedidos Pendentes</div>
                         </div>
                       </div>
                     ))
@@ -273,11 +278,11 @@ export default function Producao() {
                         <div className="flex items-center justify-between mt-auto">
                           <button
                             onClick={() => handleVerPedidos(recheio.pedidos, "Recheio", recheio.nome)}
-                            className="bg-white border border-gold rounded-lg px-3 py-1 text-xs font-bold text-gold font-montserrat hover:bg-bgNativeHome transition-colors"
+                            className="bg-white border border-gold rounded-lg px-3 py-1 text-sm font-bold text-gold font-montserrat hover:bg-bgNativeHome transition-colors"
                           >
                             Ver pedidos
                           </button>
-                          <div className="text-xs text-gray-600">x{recheio.quantidade} Pedidos Pendentes</div>
+                          <div className="text-sm text-gray-600">x{recheio.quantidade} Pedidos Pendentes</div>
                         </div>
                       </div>
                     ))
@@ -300,7 +305,7 @@ export default function Producao() {
                           <div className="font-semibold text-darkBlue">{pedido.nomeCliente || "Cliente"}</div>
                           <div className="bg-red rounded-full px-2 py-1 flex items-center gap-1">
                             <MdWarning className="text-white text-xs" />
-                            <span className="text-xs text-white font-semibold">{formatarData(pedido.dataEntrega)}</span>
+                            <span className="text-sm text-white font-semibold">{formatarData(pedido.dataEntrega)}</span>
                           </div>
                         </div>
                         <div className="text-sm text-darkBlue mb-1">{formatarTelefone(pedido.telefone)}</div>
@@ -309,7 +314,7 @@ export default function Producao() {
                           <span className="text-sm font-semibold text-darkBlue">{formatarValor(pedido.valorTotal)}</span>
                           <button
                             onClick={() => handleVerDetalhes(pedido.id)}
-                            className="bg-white border border-gold rounded-lg px-3 py-1 text-xs font-bold text-gold font-montserrat hover:bg-bgNativeHome transition-colors"
+                            className="bg-white border border-gold rounded-lg px-3 py-1 text-sm font-bold text-gold font-montserrat hover:bg-bgNativeHome transition-colors"
                           >
                             Detalhes
                           </button>
@@ -330,33 +335,42 @@ export default function Producao() {
             </div>
 
             <div className="w-[92%] border-2 border-gold rounded-xl overflow-hidden mb-6">
-              <div className="bg-gradient-to-b from-[#1C3B57] to-[#0F2A3D] text-gold px-5 py-3 flex items-center justify-between">
-                <div>
-                  <div className="text-xl font-bold tracking-wide">
-                    {tipoGrafico === "Massas" ? "Massas" : tipoGrafico === "Recheios" ? "Recheios" : "Decorações"} Mais Pedidas Por Mês - {anoSelecionado}
+              <div className="bg-gradient-to-b from-[#1C3B57] to-[#0F2A3D] text-gold px-5 py-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <div className="text-xl font-bold tracking-wide">
+                      {tipoGrafico === "Massas" ? "Massas" : tipoGrafico === "Recheios" ? "Recheios" : "Decorações"} Mais Pedidas Por Mês - {anoSelecionado}
+                    </div>
+                    <div className="text-lg font-bold text-gold mt-2">
+                      {dadosGrafico.massaSelecionada && `Item mais pedido: ${dadosGrafico.massaSelecionada.toUpperCase()}`}
+                    </div>
                   </div>
-                  <div className="text-[11px] opacity-90">
-                    {dadosGrafico.massaSelecionada && `Item mais pedido: ${dadosGrafico.massaSelecionada}`}
+                  <div className="flex items-center gap-2">
+                    <select
+                      className="bg-bgHome text-darkBlue px-3 py-1 rounded-full border-2 border-gold shadow"
+                      value={tipoGrafico}
+                      onChange={(e) => setTipoGrafico(e.target.value)}
+                    >
+                      <option value="Massas">Massas</option>
+                      <option value="Recheios">Recheios</option>
+                    </select>
+                    <select
+                      className="bg-bgHome text-darkBlue px-3 py-1 rounded-full border-2 border-gold shadow"
+                      value={anoSelecionado}
+                      onChange={(e) => setAnoSelecionado(Number(e.target.value))}
+                    >
+                      {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map((ano) => (
+                        <option key={ano} value={ano}>{ano}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <select
-                    className="bg-bgHome text-darkBlue px-3 py-1 rounded-full border-2 border-gold shadow"
-                    value={tipoGrafico}
-                    onChange={(e) => setTipoGrafico(e.target.value)}
-                  >
-                    <option value="Massas">Massas</option>
-                    <option value="Recheios">Recheios</option>
-                  </select>
-                  <select
-                    className="bg-bgHome text-darkBlue px-3 py-1 rounded-full border-2 border-gold shadow"
-                    value={anoSelecionado}
-                    onChange={(e) => setAnoSelecionado(Number(e.target.value))}
-                  >
-                    {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map((ano) => (
-                      <option key={ano} value={ano}>{ano}</option>
-                    ))}
-                  </select>
+                <div className="bg-yellow-100 border-2 border-yellow-400 rounded-lg px-4 py-2 mt-3 flex items-start gap-2">
+                  <MdWarning className="text-yellow-600 text-lg flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-yellow-800 font-semibold">
+                    <strong>⚠️ ATENÇÃO:</strong> Este gráfico mostra apenas <strong>UMA {tipoGrafico === "Massas" ? "MASSA" : "RECHEIO"}</strong> específica ({dadosGrafico.massaSelecionada || "selecionada automaticamente"}) ao longo dos meses do ano {anoSelecionado}. 
+                    Não representa todos os itens, apenas o item mais pedido.
+                  </div>
                 </div>
               </div>
               <div className="bg-bgHome p-6 min-h-[400px]">

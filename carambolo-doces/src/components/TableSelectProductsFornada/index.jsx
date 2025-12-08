@@ -21,9 +21,15 @@ const columns = [
   { id: "quantidade", label: "QUANTIDADE", minWidth: 50, align: "left" },
 ];
 
+// Função para remover acentos
+const removeAccents = (str) => {
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+};
+
 export default function TableSelectProductsFornada() {
   const storageKey = "fornada_select_table_pagination";
   const [products, setProducts] = React.useState([]);
+  const [allProducts, setAllProducts] = React.useState([]); // Todos os produtos para busca
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedProducts, setSelectedProducts] = React.useState([]);
   const [currentPage, setCurrentPage] = React.useState(() => {
@@ -33,6 +39,7 @@ export default function TableSelectProductsFornada() {
   const [pageSize, setPageSize] = React.useState(10);
   const [totalPages, setTotalPages] = React.useState(0);
   const [totalElements, setTotalElements] = React.useState(0);
+  const [isSearching, setIsSearching] = React.useState(false);
 
   React.useEffect(() => {
     const savedPage = sessionStorage.getItem(storageKey);
@@ -43,6 +50,53 @@ export default function TableSelectProductsFornada() {
     if (produtosSalvos.length > 0) {
       setSelectedProducts(produtosSalvos);
     }
+
+    // Listener para recarregar quando um produto for criado/atualizado
+    const handleProductUpdate = () => {
+      console.log('Evento de produto criado/atualizado recebido, recarregando lista...');
+      const savedPage = sessionStorage.getItem(storageKey);
+      const pageToLoad = savedPage ? parseInt(savedPage, 10) : 0;
+      getData(pageToLoad);
+    };
+
+    // Listener para quando o modo de edição é ativado
+    const handleEditModeActivated = () => {
+      console.log('🔄 Modo de edição ativado, recarregando lista de produtos...');
+      const savedPage = sessionStorage.getItem(storageKey);
+      const pageToLoad = savedPage ? parseInt(savedPage, 10) : 0;
+      getData(pageToLoad);
+    };
+
+    // Eventos customizados
+    window.addEventListener('productCreated', handleProductUpdate);
+    window.addEventListener('productUpdated', handleProductUpdate);
+    window.addEventListener('fornadaEditModeActivated', handleEditModeActivated);
+    
+    // Recarregar quando a janela recebe foco (útil quando volta de outra aba)
+    const handleFocus = () => {
+      const savedPage = sessionStorage.getItem(storageKey);
+      const pageToLoad = savedPage ? parseInt(savedPage, 10) : 0;
+      getData(pageToLoad);
+    };
+    window.addEventListener('focus', handleFocus);
+
+    // Recarregar quando o componente é montado novamente (útil ao entrar em modo de edição)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        const savedPage = sessionStorage.getItem(storageKey);
+        const pageToLoad = savedPage ? parseInt(savedPage, 10) : 0;
+        getData(pageToLoad);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('productCreated', handleProductUpdate);
+      window.removeEventListener('productUpdated', handleProductUpdate);
+      window.removeEventListener('fornadaEditModeActivated', handleEditModeActivated);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const getData = async (page = 0) => {
@@ -77,19 +131,72 @@ export default function TableSelectProductsFornada() {
     }
   };
 
-  const filteredProducts = (products || []).filter((product) => {
-    if (!searchTerm) return true;
-    
-    const searchLower = searchTerm.toLowerCase();
-    const matchProduct = product.produto
-      .toLowerCase()
-      .includes(searchLower);
-    const matchCategory = product.categoria
-      .toLowerCase()
-      .includes(searchLower);
+  // Buscar todos os produtos quando há termo de busca
+  const getAllProductsForSearch = async () => {
+    if (!searchTerm.trim()) {
+      setIsSearching(false);
+      setAllProducts([]);
+      return;
+    }
 
-    return matchProduct || matchCategory;
-  });
+    setIsSearching(true);
+    try {
+      // Buscar primeira página para saber quantas páginas existem
+      const firstPage = await productsFornadasService(0, pageSize);
+      const totalPagesCount = firstPage.totalPages || 1;
+      
+      // Buscar todas as páginas
+      const allPagesPromises = [];
+      for (let i = 0; i < totalPagesCount; i++) {
+        allPagesPromises.push(productsFornadasService(i, pageSize));
+      }
+      
+      const allPagesResults = await Promise.all(allPagesPromises);
+      const allProductsList = allPagesResults.flatMap(result => 
+        result.content && Array.isArray(result.content) ? result.content : (Array.isArray(result) ? result : [])
+      );
+      
+      setAllProducts(allProductsList);
+    } catch (error) {
+      console.error("Erro ao buscar todos os produtos:", error);
+      setAllProducts([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Effect para buscar todos os produtos quando há busca
+  React.useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchTerm.trim()) {
+        getAllProductsForSearch();
+      } else {
+        setIsSearching(false);
+        setAllProducts([]);
+      }
+    }, 300); // Debounce de 300ms
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  const filteredProducts = React.useMemo(() => {
+    if (!searchTerm.trim()) {
+      return products || [];
+    }
+
+    // Se há termo de busca e allProducts tem dados, usar allProducts, senão usar products da página atual
+    const productsToFilter = (searchTerm.trim() && allProducts.length > 0) ? allProducts : products;
+    
+    const searchNormalized = removeAccents(searchTerm.toLowerCase());
+    
+    return (productsToFilter || []).filter((product) => {
+      const productNameNormalized = removeAccents((product.produto || "").toLowerCase());
+      const categoryNormalized = removeAccents((product.categoria || "").toLowerCase());
+      
+      return productNameNormalized.includes(searchNormalized) || 
+             categoryNormalized.includes(searchNormalized);
+    });
+  }, [searchTerm, products, allProducts]);
 
   React.useEffect(() => {
     localStorage.setItem("selectedProducts", JSON.stringify(selectedProducts));
@@ -140,10 +247,10 @@ export default function TableSelectProductsFornada() {
 
   return (
     <div className="flex flex-col w-[90%] h-[420px] border-2 border-gold bg-bgHome rounded-2xl overflow-hidden">
-      <header className="flex flex-row justify-between px-20 items-center bg-gradient-blue h-[3.6875rem] w-full flex-shrink-0 rounded-t-2xl">
-        <h1 className="text-gold text-[1.5rem]">Selecionar Produtos</h1>
+      <header className="flex flex-row justify-between px-20 items-center bg-gradient-blue h-[3.6875rem] w-full flex-shrink-0 rounded-t-2xl overflow-hidden relative z-10">
+        <h1 className="text-gold text-[1.5rem] whitespace-nowrap">Selecionar Produtos</h1>
 
-        <div className="flex w-96 px-3 py-2 items-center justify-between bg-white rounded-lg border border-gray-300">
+        <div className="flex w-96 px-3 py-2 items-center justify-between bg-white rounded-lg border border-gray-300 flex-shrink-0">
           <input
             type="text"
             placeholder="Procurar por produto"
@@ -155,7 +262,7 @@ export default function TableSelectProductsFornada() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden bg-bgHome">
         <Paper
           className="h-full"
           sx={{
@@ -165,6 +272,7 @@ export default function TableSelectProductsFornada() {
             border: "none",
             boxShadow: "none",
             borderRadius: "0",
+            backgroundColor: "transparent",
           }}
         >
           <TableContainer
@@ -172,6 +280,7 @@ export default function TableSelectProductsFornada() {
               height: "100%",
               maxHeight: "100%",
               overflow: "auto",
+              padding: "0",
               '&::-webkit-scrollbar': {
                 width: '8px',
               },
@@ -187,11 +296,11 @@ export default function TableSelectProductsFornada() {
                 background: '#B8956F',
               },
             }}
-            className="bg-bgHome p-2 rounded-lg"
+            className="bg-bgHome"
           >
-            <Table stickyHeader aria-label="sticky table">
-              <TableHead>
-                <TableRow>
+            <Table stickyHeader aria-label="sticky table" sx={{ margin: 0, padding: 0 }}>
+              <TableHead sx={{ margin: 0, padding: 0 }}>
+                <TableRow sx={{ margin: 0, padding: 0 }}>
                   {columns.map((column) => (
                     <TableCell
                       key={column.id}
@@ -204,9 +313,12 @@ export default function TableSelectProductsFornada() {
                         borderBottom: "1px solid #C8A882",
                         paddingTop: "0.75rem",
                         paddingBottom: "0.75rem",
+                        paddingLeft: "1rem",
+                        paddingRight: "1rem",
                         position: "sticky",
                         top: 0,
                         zIndex: 2,
+                        margin: 0,
                       }}
                     >
                       {column.label}
@@ -246,36 +358,41 @@ export default function TableSelectProductsFornada() {
                               boxShadow: "none",
                               paddingTop: "0.5rem",
                               paddingBottom: "0.5rem",
+                              paddingLeft: "1rem",
+                              paddingRight: "0.5rem",
                             }}
                           >
-                            <input
-                              onChange={() => handleSelect(row.id)}
-                              type="checkbox"
-                              checked={checked}
-                              className="peer appearance-none w-5 h-5 border-2 border-gold rounded-full bg-white checked:bg-gold checked:border-gold cursor-pointer relative"
-                              style={{ outline: "none" }}
-                            />
-                            <span
-                              className={`pointer-events-none absolute inset-0 flex items-center justify-center ${checked ? "" : "hidden"
-                                }`}
-                              style={{ zIndex: 10 }}
-                            >
-                              <svg
-                                width="25"
-                                height="25"
-                                viewBox="0 0 20 28"
-                                fill="none"
-                                className="block"
-                              >
-                                <path
-                                  d="M5 10.5L9 14.5L15 7.5"
-                                  stroke="white"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            </span>
+                            <div className="relative w-5 h-5 flex items-center justify-center">
+                              <input
+                                onChange={() => handleSelect(row.id)}
+                                type="checkbox"
+                                checked={checked}
+                                className="peer appearance-none w-5 h-5 border-2 border-gold rounded-full bg-white checked:bg-gold checked:border-gold cursor-pointer relative z-10"
+                                style={{ outline: "none" }}
+                              />
+                              {checked && (
+                                <span
+                                  className="pointer-events-none absolute inset-0 flex items-center justify-center"
+                                  style={{ zIndex: 20 }}
+                                >
+                                  <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 20 20"
+                                    fill="none"
+                                    className="block"
+                                  >
+                                    <path
+                                      d="M5 10L9 14L15 7"
+                                      stroke="white"
+                                      strokeWidth="2.5"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
+                                  </svg>
+                                </span>
+                              )}
+                            </div>
                           </TableCell>
                         );
                       }
@@ -294,6 +411,8 @@ export default function TableSelectProductsFornada() {
                               boxShadow: "none",
                               paddingTop: "0.5rem",
                               paddingBottom: "0.5rem",
+                              paddingLeft: "0.5rem",
+                              paddingRight: "1rem",
                             }}
                           >
                             <div className="flex items-center justify-evenly w-20 bg-bgNativeHome border border-gold rounded-xl">
@@ -332,6 +451,8 @@ export default function TableSelectProductsFornada() {
                               boxShadow: "none",
                               paddingTop: "0.5rem",
                               paddingBottom: "0.5rem",
+                              paddingLeft: "0.5rem",
+                              paddingRight: "0.5rem",
                             }}
                           >
                             {"R$" + row.valor.toFixed(2)}
@@ -348,6 +469,8 @@ export default function TableSelectProductsFornada() {
                             boxShadow: "none",
                             paddingTop: "0.5rem",
                             paddingBottom: "0.5rem",
+                            paddingLeft: "0.5rem",
+                            paddingRight: "0.5rem",
                           }}
                         >
                           {column.format && typeof value === "number"
@@ -365,7 +488,7 @@ export default function TableSelectProductsFornada() {
       </div>
 
       {/* Pagination Controls */}
-      {totalPages > 1 && (
+      {!searchTerm.trim() && totalPages > 1 && (
         <div className="flex justify-center items-center gap-4 mt-4 mb-4">
           <button
             onClick={handlePreviousPage}
@@ -386,6 +509,13 @@ export default function TableSelectProductsFornada() {
           >
             Próxima <FaChevronRight />
           </button>
+        </div>
+      )}
+      {searchTerm.trim() && (
+        <div className="flex justify-center items-center gap-4 mt-4 mb-4">
+          <span className="text-blue font-bold">
+            {filteredProducts.length} resultado(s) encontrado(s)
+          </span>
         </div>
       )}
     </div>

@@ -204,8 +204,14 @@ export const getProdutosFornadaComImagens = async (fornadaId) => {
     const produtosComImagens = await Promise.all(
       produtosFornada.map(async (produto) => {
         try {
-          let response = await axiosApi.get('/fornadas/produto-fornada');
-          const produtosLista = Array.isArray(response.data) ? response.data : [];
+          let response = await axiosApi.get('/fornadas/produto-fornada', {
+            params: {
+              page: 0,
+              size: 10000  // Número muito grande para pegar todos os produtos
+            }
+          });
+          // O backend retorna Page, então precisa pegar .content
+          const produtosLista = Array.isArray(response.data?.content) ? response.data.content : (Array.isArray(response.data) ? response.data : []);
           const produtoDetalhado = produtosLista.find(p => p.id === produto.id);
 
           if (produtoDetalhado) {
