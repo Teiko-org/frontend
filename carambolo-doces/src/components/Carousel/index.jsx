@@ -3,7 +3,7 @@ import { BsFillArrowRightCircleFill, BsFillArrowLeftCircleFill } from "react-ico
 
 export default function Carousel({ slides, autoPlay = true, interval = 4000, showIndicators = false, imageHeightClass = 'h-[270px]', itemsPerView = 3, showTitles = true, onSlideClick }) {
   const [current, setCurrent] = useState(0);
-  const cardWidthPercent = itemsPerView === 1 ? 85 : 24;
+  const cardWidthPercent = itemsPerView === 1 ? 100 : 24;
   const timerRef = useRef(null);
   const containerRef = useRef(null);
   const slidesContainerRef = useRef(null);
@@ -34,7 +34,7 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
 
   // Calcular translateX em pixels quando current mudar
   useEffect(() => {
-    if (!containerRef.current || !slidesContainerRef.current || slides.length <= itemsPerView) {
+    if (!containerRef.current || !slidesContainerRef.current) {
       return;
     }
 
@@ -46,7 +46,40 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
 
       const containerRect = container.getBoundingClientRect();
       const containerWidth = containerRect.width;
+      
+      // Se itemsPerView === 1, mostrar apenas o slide atual centralizado
+      if (itemsPerView === 1) {
+        if (slides.length <= 1) {
+          slidesContainer.style.transform = 'translateX(0px)';
+          return;
+        }
+        
+        // Medir a largura real do primeiro slide para calcular o translateX corretamente
+        let slideWidth = containerWidth;
+        if (itemRefs.current[0]) {
+          const firstSlideRect = itemRefs.current[0].getBoundingClientRect();
+          slideWidth = firstSlideRect.width;
+        }
+        
+        // Se não conseguimos medir, calcular baseado no container menos padding
+        if (!slideWidth || slideWidth === 0 || isNaN(slideWidth)) {
+          const containerPadding = 160; // 80px de cada lado
+          slideWidth = containerWidth - containerPadding;
+        }
+        
+        // O translateX deve mover cada slide pela sua largura real medida
+        const translateX = -current * slideWidth;
+        
+        slidesContainer.style.transform = `translateX(${translateX}px)`;
+        return;
+      }
+      
       const slidesContainerWidth = slidesContainer.scrollWidth;
+      
+      if (slidesContainerWidth <= containerWidth) {
+        slidesContainer.style.transform = 'translateX(0px)';
+        return;
+      }
       
       if (slidesContainerWidth <= containerWidth) {
         slidesContainer.style.transform = 'translateX(0px)';
@@ -54,7 +87,7 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
       }
 
       // Calcular gap e largura do card em pixels
-      const gapPx = itemsPerView === 1 ? 8 : 54;
+      const gapPx = 54;
       const cardPaddingPx = 8;
       const cardWidthPx = (containerWidth * cardWidthPercent) / 100;
       const itemTotalWidth = cardWidthPx + (cardPaddingPx * 2) + gapPx;
@@ -116,17 +149,25 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
   }, [current, slides.length, cardWidthPercent, itemsPerView]);
 
   return (
-    <div ref={containerRef} className="relative w-full overflow-x-hidden overflow-y-visible pb-8" style={{ overflow: 'hidden' }}>
+    <div ref={containerRef} className="relative w-full overflow-hidden pb-8" style={{ paddingLeft: itemsPerView === 1 ? '80px' : '0', paddingRight: itemsPerView === 1 ? '80px' : '0' }}>
       <div
         ref={slidesContainerRef}
-        className={`flex transition-transform ease-out duration-500 ${itemsPerView === 1 ? 'gap-x-8 px-4' : 'gap-x-[54px] px-6 md:px-12'}`}
-        style={{ overflow: 'visible' }}
+        className={`flex transition-transform ease-out duration-500 ${itemsPerView === 1 ? '' : 'gap-x-[54px] px-6 md:px-12'}`}
+        style={{ 
+          overflow: 'visible'
+        }}
       >
         {slides.map((slide, index) => {
           const isCenter = index === current;
-          const cardClasses = isCenter
-            ? "scale-[1.02] translate-y-3 z-20 shadow-[0_12px_24px_rgba(0,0,0,0.18)]"
-            : "scale-[0.98] -translate-y-1 z-10 opacity-95 shadow-[0_6px_14px_rgba(0,0,0,0.12)]";
+          // Quando itemsPerView === 1, não aplicar transformações verticais ou de escala
+          // Quando itemsPerView !== 1, manter todos os cards alinhados verticalmente
+          const cardClasses = itemsPerView === 1
+            ? (isCenter 
+                ? "z-20 shadow-[0_8px_16px_rgba(0,0,0,0.15)]"
+                : "opacity-0 pointer-events-none")
+            : (isCenter
+                ? "scale-[1.05] z-20 shadow-[0_12px_24px_rgba(0,0,0,0.18)]"
+                : "scale-[0.95] z-10 opacity-90 shadow-[0_6px_14px_rgba(0,0,0,0.12)]");
 
           return (
             <div
@@ -134,12 +175,25 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
               ref={(el) => {
                 if (el) itemRefs.current[index] = el;
               }}
-              className="flex-none flex justify-center"
-              style={{ width: `${cardWidthPercent}%`, overflow: 'visible', padding: '8px' }}
+              className="flex-none flex justify-center items-center"
+              style={{ 
+                width: itemsPerView === 1 ? '100%' : `${cardWidthPercent}%`, 
+                overflow: 'visible', 
+                padding: itemsPerView === 1 ? '0' : '8px',
+                flexShrink: 0,
+                minWidth: itemsPerView === 1 ? '100%' : '0',
+                maxWidth: itemsPerView === 1 ? '100%' : 'none',
+                alignItems: 'center' // Garantir alinhamento vertical
+              }}
             >
               <div
-                className={`relative rounded-lg overflow-hidden border border-gold bg-white transition-all duration-500 ${cardClasses} ${onSlideClick ? 'cursor-pointer' : ''}`}
-                style={{ overflow: 'visible' }}
+                className={`relative rounded-lg overflow-hidden border border-gold bg-white transition-all duration-500 ${cardClasses} ${onSlideClick ? 'cursor-pointer' : ''} ${itemsPerView === 1 ? 'w-full max-w-[320px] mx-auto' : ''}`}
+                style={{ 
+                  overflow: 'visible',
+                  width: itemsPerView === 1 ? '100%' : 'auto',
+                  maxWidth: itemsPerView === 1 ? '320px' : 'none',
+                  alignSelf: 'center' // Garantir alinhamento vertical
+                }}
                 onClick={() => handleSlideClick(slide)}
               >
                 <img
@@ -176,31 +230,53 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
         })}
       </div>
 
-      <button
-        aria-label="anterior"
-        onClick={previous}
-        className="absolute top-1/2 -translate-y-1/2 z-40 text-3xl text-gold hover:scale-110 transition-transform"
-        style={{ left: '16px' }}
-      >
-        <BsFillArrowLeftCircleFill />
-      </button>
-      <button
-        aria-label="próximo"
-        onClick={next}
-        className="absolute top-1/2 -translate-y-1/2 z-40 text-3xl text-gold hover:scale-110 transition-transform"
-        style={{ right: '16px' }}
-      >
-        <BsFillArrowRightCircleFill />
-      </button>
+      {slides.length > 1 && (
+        <>
+          <button
+            aria-label="anterior"
+            onClick={previous}
+            className="absolute top-1/2 z-40 text-4xl text-gold hover:scale-110 transition-transform"
+            style={{ 
+              left: itemsPerView === 1 ? '16px' : '16px',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <BsFillArrowLeftCircleFill />
+          </button>
+          <button
+            aria-label="próximo"
+            onClick={next}
+            className="absolute top-1/2 z-40 text-4xl text-gold hover:scale-110 transition-transform"
+            style={{ 
+              right: itemsPerView === 1 ? '16px' : '16px',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <BsFillArrowRightCircleFill />
+          </button>
+        </>
+      )}
 
-      {showIndicators && (
-        <div className="absolute bottom-0 py-2 flex justify-center gap-2 w-full">
+      {showIndicators && slides.length > 1 && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 py-2 flex justify-center gap-2 z-30">
           {slides.map((_, i) => (
             <button
               aria-label={`ir para slide ${i + 1}`}
               onClick={() => setCurrent(i)}
               key={`dot-${i}`}
-              className={`rounded-full w-2 h-2 ${i === current ? 'bg-gold' : 'bg-blue'}`}
+              className={`rounded-full w-2.5 h-2.5 transition-all ${i === current ? 'bg-gold w-3 h-3' : 'bg-blue opacity-60 hover:opacity-100'}`}
             />
           ))}
         </div>
