@@ -227,12 +227,17 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
   };
 
   const formatarData = (dataString) => {
-    if (!dataString) return "";
-    const date = new Date(dataString);
-    if (isNaN(date)) return "";
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    return `${day}/${month}`;
+    if (!dataString) return null;
+    try {
+      const date = new Date(dataString);
+      if (isNaN(date.getTime())) return null;
+      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch (error) {
+      return null;
+    }
   };
 
   const formatarCep = (cep) => {
@@ -668,7 +673,19 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
                       <div>
                         <span className="font-semibold">Data: </span>
                         <span>
-                          {pedidoSelecionado?.data ? formatarData(pedidoSelecionado.data) : "99/99"}
+                          {(() => {
+                            const data = detalhesPedido?.dataEntrega || detalhesPedido?.data || pedidoSelecionado?.dataEntrega || pedidoSelecionado?.data;
+                            if (data) {
+                              const date = new Date(data);
+                              if (!isNaN(date.getTime())) {
+                                const day = String(date.getDate()).padStart(2, "0");
+                                const month = String(date.getMonth() + 1).padStart(2, "0");
+                                const year = date.getFullYear();
+                                return `${day}/${month}/${year}`;
+                              }
+                            }
+                            return "Data não disponível";
+                          })()}
                         </span>
                       </div>
                     </div>
@@ -679,11 +696,11 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
                     <div className="grid grid-cols-2 gap-y-4 text-blue">
                       <div>
                         <span className="font-semibold">Nome solicitante: </span>
-                        <span className="break-words">{pedidoSelecionado?.nomeCliente || "Murilo Do Nascimento Barros"}</span>
+                        <span className="break-words">{detalhesPedido?.nomeCliente || pedidoSelecionado?.nomeCliente || "Não informado"}</span>
                       </div>
                       <div>
                         <span className="font-semibold">Telefone: </span>
-                        <span>{formatarTelefoneCompleto(pedidoSelecionado?.telefone) || "(XX) X XXXX-XXXX"}</span>
+                        <span>{formatarTelefoneCompleto(detalhesPedido?.telefone || pedidoSelecionado?.telefone) || "Não informado"}</span>
                       </div>
                     </div>
                   </div>
@@ -691,38 +708,59 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
                   {pedidoSelecionado?.tipoEntrega === "ENTREGA" && (
                     <div className="px-4 pt-6 pb-6">
                       <h3 className="font-bold text-xl text-blue pb-4">Endereço</h3>
-                      <div className="grid grid-cols-3 gap-y-4 text-blue mb-4">
-                        <div>
-                          <span className="font-semibold">CEP: </span>
-                          <span>{formatarCep(pedidoSelecionado?.cep) || "00000-00"}</span>
-                        </div>
-                        <div>
-                          <span className="font-semibold">Estado: </span>
-                          <span>{pedidoSelecionado?.estado || "SP"}</span>
-                        </div>
-                        <div>
-                          <span className="font-semibold">Cidade: </span>
-                          <span className="break-words">{pedidoSelecionado?.cidade || "São Paulo"}</span>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-y-4 text-blue">
-                        <div>
-                          <span className="font-semibold">Bairro: </span>
-                          <span className="break-words">{pedidoSelecionado?.bairro || "Jardim Guairaca"}</span>
-                        </div>
-                        <div>
-                          <span className="font-semibold">Rua: </span>
-                          <span className="break-words">{pedidoSelecionado?.rua || "Rua Antônio Marques Julião"}</span>
-                        </div>
-                        <div>
-                          <span className="font-semibold">Número: </span>
-                          <span>{pedidoSelecionado?.numero || "9999"}</span>
-                        </div>
-                        <div>
-                          <span className="font-semibold">Complemento: </span>
-                          <span className="break-words">{pedidoSelecionado?.complemento || "Inserir seu endereço"}</span>
-                        </div>
-                      </div>
+                      {(() => {
+                        // Tentar pegar endereço de detalhesPedido primeiro, depois de pedidoSelecionado
+                        const endereco = detalhesPedido?.endereco || pedidoSelecionado?.endereco;
+                        const cep = endereco?.cep || detalhesPedido?.cep || pedidoSelecionado?.cep;
+                        const estado = endereco?.estado || detalhesPedido?.estado || pedidoSelecionado?.estado;
+                        const cidade = endereco?.cidade || detalhesPedido?.cidade || pedidoSelecionado?.cidade;
+                        const bairro = endereco?.bairro || detalhesPedido?.bairro || pedidoSelecionado?.bairro;
+                        const rua = endereco?.logradouro || endereco?.rua || detalhesPedido?.rua || pedidoSelecionado?.rua;
+                        const numero = endereco?.numero || detalhesPedido?.numero || pedidoSelecionado?.numero;
+                        const complemento = endereco?.complemento || detalhesPedido?.complemento || pedidoSelecionado?.complemento;
+                        
+                        // Se não tiver nenhum dado de endereço, mostrar mensagem
+                        if (!cep && !cidade && !rua) {
+                          return <p className="text-blue">Endereço não disponível</p>;
+                        }
+                        
+                        return (
+                          <>
+                            <div className="grid grid-cols-3 gap-y-4 text-blue mb-4">
+                              <div>
+                                <span className="font-semibold">CEP: </span>
+                                <span>{formatarCep(cep) || "Não informado"}</span>
+                              </div>
+                              <div>
+                                <span className="font-semibold">Estado: </span>
+                                <span>{estado || "Não informado"}</span>
+                              </div>
+                              <div>
+                                <span className="font-semibold">Cidade: </span>
+                                <span className="break-words">{cidade || "Não informado"}</span>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-y-4 text-blue">
+                              <div>
+                                <span className="font-semibold">Bairro: </span>
+                                <span className="break-words">{bairro || "Não informado"}</span>
+                              </div>
+                              <div>
+                                <span className="font-semibold">Rua: </span>
+                                <span className="break-words">{rua || "Não informado"}</span>
+                              </div>
+                              <div>
+                                <span className="font-semibold">Número: </span>
+                                <span>{numero || "Não informado"}</span>
+                              </div>
+                              <div>
+                                <span className="font-semibold">Complemento: </span>
+                                <span className="break-words">{complemento || "Não informado"}</span>
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   )}
                 </>

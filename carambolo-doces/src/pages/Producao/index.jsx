@@ -93,12 +93,17 @@ export default function Producao() {
   }, [anoSelecionado, tipoGrafico]);
 
   const formatarData = (dataString) => {
-    if (!dataString) return "";
-    const data = new Date(dataString);
-    const dia = String(data.getDate()).padStart(2, "0");
-    const mes = String(data.getMonth() + 1).padStart(2, "0");
-    const ano = String(data.getFullYear()).slice(-2);
-    return `${dia}/${mes}/${ano}`;
+    if (!dataString) return "Data não disponível";
+    try {
+      const data = new Date(dataString);
+      if (isNaN(data.getTime())) return "Data inválida";
+      const dia = String(data.getDate()).padStart(2, "0");
+      const mes = String(data.getMonth() + 1).padStart(2, "0");
+      const ano = String(data.getFullYear()).slice(-2);
+      return `${dia}/${mes}/${ano}`;
+    } catch (error) {
+      return "Data inválida";
+    }
   };
 
   const formatarTelefone = (telefone) => {
