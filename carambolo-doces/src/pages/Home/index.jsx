@@ -10,20 +10,15 @@ import Button from "../../components/Button";
 import BannerPrincipal from "../../components/BannerPrincipal";
 import BannerFornada from "../../components/BannerFornada";
 import { getFornadaRealmenteAtiva, getFornadaAtiva, getProdutosFornadaComImagens } from "../../service/fornadaService";
-import { findFeaturedDecoracoes } from "../../service/productService";
-import { getBolosComImagens } from "../../service/boloService";
-import { getProdutosMaisPedidos } from "../../service/dashboardService";
+import { getAllDecoracoes } from "../../service/decoracaoService";
 import Carousel from "../../components/Carousel";
 import defaultImageCard from "../../assets/image_card.png";
 import './cardsTransition.css';
 
 function Home() {
   const [decoracoes, setDecoracoes] = useState([]);
-  const [slidesCarambolos, setSlidesCarambolos] = useState([]);
   const [produtosFornada, setProdutosFornada] = useState([]);
-  const [fornada, setFornada] = useState(null);
   const [fornadaParaBanner, setFornadaParaBanner] = useState(null);
-  const [carambolosMaisPedidos, setCarambolosMaisPedidos] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
   const searchQuery = new URLSearchParams(location.search).get('q')?.trim().toLowerCase() || '';
@@ -31,8 +26,33 @@ function Home() {
   useEffect(() => {
     const fetchDecoracoes = async () => {
       try {
-        const data = await findFeaturedDecoracoes();
-        setDecoracoes(data || []);
+        const data = await getAllDecoracoes();
+        // Group decorações by categoria and create slides
+        const groupedByCategoria = {};
+        (data || []).forEach((decoracao) => {
+          const categoria = decoracao.categoria || 'Sem Categoria';
+          if (!groupedByCategoria[categoria]) {
+            groupedByCategoria[categoria] = [];
+          }
+          groupedByCategoria[categoria].push({
+            id: decoracao.id,
+            nome: decoracao.nome,
+            image: decoracao.imagens?.[0] || defaultImageCard,
+            observacao: decoracao.observacao,
+            categoria: decoracao.categoria,
+            title: decoracao.nome,
+          });
+        });
+        
+        // Create a flat array of slides with categoria info
+        const slides = Object.entries(groupedByCategoria).flatMap(([categoria, items]) =>
+          items.map(item => ({
+            ...item,
+            categoria,
+          }))
+        );
+        
+        setDecoracoes(slides);
       } catch (error) {
         if (error.response?.status !== 401) {
           console.warn("Erro ao carregar decorações:", error.message);
@@ -49,12 +69,10 @@ function Home() {
         const fornadaAtual = await getFornadaRealmenteAtiva();
         
         if (fornadaAtual) {
-          setFornada(fornadaAtual);
           const produtos = await getProdutosFornadaComImagens(fornadaAtual.id);
           const visiveis = (produtos || []).filter(p => (p.quantidade ?? 0) > 0 && (p.isAtivo ?? true));
           setProdutosFornada(visiveis.slice(0, 4));
         } else {
-          setFornada(null);
           setProdutosFornada([]);
         }
       } catch (error) {
@@ -62,186 +80,23 @@ function Home() {
           console.warn("Erro ao carregar dados da fornada:", error.message);
         }
         setFornadaParaBanner(null);
-        setFornada(null);
         setProdutosFornada([]);
       }
     };
 
     fetchDecoracoes();
     carregarDadosFornada();
-
-    (async () => {
-      try {
-        const bolosAtivos = await getBolosComImagens();
-        const porCategoria = new Map();
-        (bolosAtivos || []).forEach((b) => {
-          if (!b?.categoria) return;
-          if (!porCategoria.has(b.categoria)) {
-            const imagem = b.imagens?.[0] ?? defaultImageCard;
-            porCategoria.set(b.categoria, { image: imagem, title: b.categoria, categoria: b.categoria, id: b.boloId ?? b.id });
-          }
-        });
-        setSlidesCarambolos(Array.from(porCategoria.values()));
-      } catch (e) {
-        setSlidesCarambolos([]);
-      }
-    })();
-
-    (async () => {
-      try {
-        const top = await getProdutosMaisPedidos();
-        const apenasBolos = (top || [])
-          .filter((p) => p.tipo === "BOLO")
-          .filter((p) => (p.isAtivo ?? p.ativo ?? true) === true)
-          .slice(0, 4)
-          .map((p) => ({
-            id: p.id,
-            nome: p.nome,
-            quantidade: p.quantidade,
-            valorTotal: p.valorTotal,
-            imagens: [defaultImageCard],
-          }));
-        try {
-          const { axiosApi } = await import("../../provider/AxiosApi");
-          const { data: todosDetalhes } = await axiosApi.get('/bolos/detalhe');
-          
-          // Coletar todos os IDs de decoração únicos
-          const decoracaoIds = [...new Set(
-            apenasBolos
-              .map(p => {
-                const detalhe = todosDetalhes.find((d) => d.boloId === p.id);
-                return detalhe?.decoracaoId;
-              })
-              .filter(Boolean)
-          )];
-          
-          // Buscar todas as decorações de uma vez em paralelo
-          const decoracoesMap = new Map();
-          if (decoracaoIds.length > 0) {
-            const decoracoesPromises = decoracaoIds.map(id => 
-              axiosApi.get(`/decoracoes/${id}`).then(r => [id, r.data]).catch(() => [id, null])
-            );
-            const decoracoesResults = await Promise.all(decoracoesPromises);
-            decoracoesResults.forEach(([id, data]) => {
-              if (data) decoracoesMap.set(id, data);
-            });
-          }
-          
-          // Enriquecer os bolos usando o mapa de decorações
-          const enriquecidos = apenasBolos.map((p) => {
-              try {
-                const detalheBolo = todosDetalhes.find((d) => d.boloId === p.id);
-                const categoria = detalheBolo?.categoria;
-                const decoracaoId = detalheBolo?.decoracaoId;
-              if (decoracaoId && decoracoesMap.has(decoracaoId)) {
-                const decoracao = decoracoesMap.get(decoracaoId);
-                  const imagemUrl = decoracao?.imagens?.[0];
-                  return { ...p, imagens: [imagemUrl || p.imagens?.[0]], categoria };
-                }
-                return { ...p, categoria };
-              } catch {
-              return p;
-              }
-          });
-          setCarambolosMaisPedidos(enriquecidos.filter(Boolean));
-        } catch {
-          setCarambolosMaisPedidos(apenasBolos);
-        }
-      } catch (err) {
-        console.warn("Erro ao carregar produtos mais pedidos:", err?.message);
-        setCarambolosMaisPedidos([]);
-      }
-    })();
-
-    const onVisibilityChanged = async () => {
-      try {
-        const top = await getProdutosMaisPedidos();
-        const apenasBolos = (top || [])
-          .filter((p) => p.tipo === "BOLO")
-          .filter((p) => (p.isAtivo ?? p.ativo ?? true) === true)
-          .slice(0, 4)
-          .map((p) => ({
-            id: p.id,
-            nome: p.nome,
-            quantidade: p.quantidade,
-            valorTotal: p.valorTotal,
-            imagens: [defaultImageCard],
-          }));
-
-        const { axiosApi } = await import("../../provider/AxiosApi");
-        const { data: todosDetalhes } = await axiosApi.get('/bolos/detalhe');
-        
-        // Coletar todos os IDs de decoração únicos
-        const decoracaoIds = [...new Set(
-          apenasBolos
-            .map(p => {
-              const detalhe = todosDetalhes.find((d) => d.boloId === p.id);
-              return detalhe?.decoracaoId;
-            })
-            .filter(Boolean)
-        )];
-        
-        // Buscar todas as decorações de uma vez em paralelo
-        const decoracoesMap = new Map();
-        if (decoracaoIds.length > 0) {
-          const decoracoesPromises = decoracaoIds.map(id => 
-            axiosApi.get(`/decoracoes/${id}`).then(r => [id, r.data]).catch(() => [id, null])
-          );
-          const decoracoesResults = await Promise.all(decoracoesPromises);
-          decoracoesResults.forEach(([id, data]) => {
-            if (data) decoracoesMap.set(id, data);
-          });
-        }
-        
-        // Enriquecer os bolos usando o mapa de decorações
-        const enriquecidos = apenasBolos.map((p) => {
-            try {
-              const detalheBolo = todosDetalhes.find((d) => d.boloId === p.id);
-              const categoria = detalheBolo?.categoria;
-              const decoracaoId = detalheBolo?.decoracaoId;
-            if (decoracaoId && decoracoesMap.has(decoracaoId)) {
-              const decoracao = decoracoesMap.get(decoracaoId);
-                const imagemUrl = decoracao?.imagens?.[0];
-                return { ...p, imagens: [imagemUrl || p.imagens?.[0]], categoria };
-              }
-              return { ...p, categoria };
-            } catch {
-            return p;
-            }
-        });
-        setCarambolosMaisPedidos(enriquecidos.filter(Boolean));
-      } catch {}
-    };
-    window.addEventListener('carambolo:visibility-changed', onVisibilityChanged);
-    return () => {
-      window.removeEventListener('carambolo:visibility-changed', onVisibilityChanged);
-    };
   }, []);
 
   const slides = useMemo(() => {
-    const base = slidesCarambolos;
+    const base = decoracoes;
     if (!base || base.length === 0) return [];
     if (!searchQuery) return base;
     const q = searchQuery;
     if (q.includes('fornada')) return [];
     if (q.includes('carambolo') || q.includes('bolo')) return base;
     return base.filter(s => (s.title || '').toLowerCase().includes(q));
-  }, [slidesCarambolos, searchQuery]);
-
-  const slidesMaisPedidos = useMemo(() => {
-    if (!carambolosMaisPedidos || carambolosMaisPedidos.length === 0) return [];
-    const base = carambolosMaisPedidos.map((p) => ({
-      image: p.imagens?.[0] ?? defaultImageCard,
-      title: p.nome || "Carambolo",
-      id: p.id,
-      categoria: p.categoria,
-    }));
-    if (!searchQuery) return base;
-    const q = searchQuery;
-    if (q.includes('fornada')) return [];
-    if (q.includes('carambolo') || q.includes('bolo')) return base;
-    return base.filter(s => (s.title || '').toLowerCase().includes(q));
-  }, [carambolosMaisPedidos, searchQuery]);
+  }, [decoracoes, searchQuery]);
 
   const showCarambolos = !searchQuery || searchQuery.includes('carambolo') || searchQuery.includes('bolo');
   const showFornada = !searchQuery || searchQuery.includes('fornada');
@@ -254,14 +109,6 @@ function Home() {
 
   const handleVerMaisTemas = () => {
     navigate('/carambolos');
-  };
-
-  const handleMaisPedidosClick = (slide) => {
-    if (slide?.categoria) {
-      navigate('/carambolos', { state: { categoriaSelecionada: slide.categoria } });
-    } else {
-      navigate('/carambolos');
-    }
   };
 
   return (
@@ -310,51 +157,6 @@ function Home() {
                 textColor="text-blue"
                 borderColor="border-gold"
                 onClick={handleVerMaisTemas}
-              />
-            </div>
-          </>
-        )}
-      </section>
-      )}
-
-      {/* Espaço consistente entre seções */}
-      <div className="h-24"></div>
-
-      {/* Carambolos Mais Pedidos - com carrossel */}
-      {showCarambolos && (
-      <section className="pt-8 pb-8 bg-bgHome border-t border-b border-gold">
-        <h2 className="text-center text-4xl font-medium mb-6">
-          CARAMBOLOS MAIS PEDIDOS
-        </h2>
-        
-        {slidesMaisPedidos.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="animate-pulse">
-              <div className="h-8 bg-gray-200 rounded-lg mx-auto mb-4 w-64"></div>
-              <p className="text-xl text-gray-600 mb-4">
-                {searchQuery ? 'Nenhum resultado para sua busca.' : 'Carregando carambolos...'}
-              </p>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="px-6">
-              <Carousel 
-                slides={slidesMaisPedidos} 
-                autoPlay 
-                interval={3500}
-                onSlideClick={handleMaisPedidosClick}
-              />
-            </div>
-            <div className="h-10"></div>
-            <div className="flex justify-center">
-              <Button
-                text="Ver mais temas"
-                bgColor="bg-gradient-to-l from-gold to-darkGold"
-                fontSize="text-lg"
-                textColor="text-blue"
-                borderColor="border-gold"
-                onClick={() => navigate('/carambolos')}
               />
             </div>
           </>
