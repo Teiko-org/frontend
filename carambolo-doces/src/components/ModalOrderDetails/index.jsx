@@ -199,70 +199,10 @@ export default function ModalOrderDetails(props) {
                     Adicionais
                   </h3>
                   
-                  {/* Adicionais Selecionados */}
-                  <div className="mb-6">
-                    <h4 className="text-lg font-semibold text-blue mb-3">Selecionados:</h4>
-                    <div className="flex flex-wrap gap-3">
-                      {(() => {
-                        // Check multiple possible property names for adicionais selecionados
-                        const add = 
-                          props?.order?.adicionais ?? 
-                          props?.order?.adicionaisPedido ?? 
-                          props?.order?.extras ?? 
-                          props?.order?.options ?? 
-                          props?.order?.itemsAdicionais ??
-                          props?.order?.adicionaisDetalhes ??
-                          props?.order?.adicionaisSelected;
-                        
-                        let list = [];
-                        
-                        // Handle different data formats
-                        if (Array.isArray(add)) {
-                          list = add;
-                        } else if (typeof add === 'string' && add.trim().length > 0) {
-                          list = add.split(',').map(item => ({ descricao: item.trim() }));
-                        } else if (typeof add === 'object' && add !== null) {
-                          list = [add];
-                        }
-                        
-                        if (list.length === 0) {
-                          return <span className="text-gray-500">Nenhum adicional selecionado</span>;
-                        }
-                        
-                        return list.map((item, index) => {
-                          const label = 
-                            (typeof item === 'object' && item !== null) ?
-                              (item?.descricao ?? item?.nome ?? item?.name ?? item?.description ?? item?.label ?? String(item))
-                            : String(item).trim();
-                          
-                          return (
-                            <label
-                              key={`adicional-selecionado-${index}`}
-                              className="flex items-center gap-2 bg-gradient-to-r from-[#f5e6d3] to-[#fdd6c4] border-2 border-gold rounded-full px-4 py-2 cursor-default"
-                            >
-                              <div className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-gold bg-white">
-                                <svg
-                                  className="w-4 h-4 text-gold"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="3"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                              </div>
-                              <span className="text-blue font-semibold">{label}</span>
-                            </label>
-                          );
-                        });
-                      })()}
-                    </div>
-                  </div>
-
-                  {/* Adicionais Disponíveis da Decoração */}
+                  {/* Adicionais Selecionados da Decoração */}
                   {props?.order?.decoracaoId && (
                     <div>
-                      <h4 className="text-lg font-semibold text-blue mb-3">Disponíveis para esta decoração:</h4>
+                      <h4 className="text-lg font-semibold text-blue mb-3">Selecionados:</h4>
                       <div className="flex flex-wrap gap-3">
                         {loadingAdicionais ? (
                           <span className="text-gray-500">Carregando adicionais...</span>
