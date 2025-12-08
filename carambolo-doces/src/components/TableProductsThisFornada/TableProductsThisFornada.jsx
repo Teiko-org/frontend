@@ -7,7 +7,6 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import { productsThisFornadasService } from "../../service/productsFornadasService";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 export default function TableProductsThisFornada(props) {
 
@@ -90,17 +89,6 @@ export default function TableProductsThisFornada(props) {
         return matchProduct || matchCategory;
     });
 
-    const handleNextPage = () => {
-        if (currentPage < totalPages - 1) {
-            getData(currentPage + 1, pageSize);
-        }
-    };
-
-    const handlePreviousPage = () => {
-        if (currentPage > 0) {
-            getData(currentPage - 1, pageSize);
-        }
-    };
 
     return (
         <div className={`flex flex-col ${compact ? "w-[720px] h-[280px] ml-auto mr-0" : "w-[90%] h-[420px]"} border-2 border-gold rounded-2xl overflow-hidden`}>
@@ -196,25 +184,23 @@ export default function TableProductsThisFornada(props) {
                                                         }}
                                                     >
                                                         {(() => {
-                                                            const vendidos = row.quantidadeVendida || 0;
-                                                            const restante = row.quantidade || 0;
-                                                            // Use o campo fixo quantidadeTotal do backend
-                                                            const planejado = row.quantidadeTotal ?? (vendidos + restante);
+                                                            // Mostrar apenas a quantidade cadastrada na fornada
+                                                            const quantidadeCadastrada = row.quantidade || 0;
                                                             if (compact) {
                                                                 return (
-                                                                    <div className="pr-2">{vendidos}/{planejado}</div>
+                                                                    <div className="pr-2">{quantidadeCadastrada}</div>
                                                                 );
                                                             }
                                                             if (props.amountLeft) {
                                                                 return (
                                                                     <div className="flex gap-1 items-center">
-                                                                      <div className="flex items-center w-fit bg-bgNativeHome px-2 border-2 border-gold rounded-lg text-base">{vendidos} / {planejado}</div>
+                                                                      <div className="flex items-center w-fit bg-bgNativeHome px-2 border-2 border-gold rounded-lg text-base">{quantidadeCadastrada}</div>
                                                                       Restantes
                                                                     </div>
                                                                 );
                                                             }
                                                             return (
-                                                                <div>{vendidos}/{planejado}</div>
+                                                                <div>{quantidadeCadastrada}</div>
                                                             );
                                                         })()}
                                                     </TableCell>
@@ -262,31 +248,6 @@ export default function TableProductsThisFornada(props) {
                     </TableContainer>
                 </Paper>
             </div>
-
-            {/* Pagination Controls */}
-        
-                <div className="flex justify-center items-center gap-4 mt-4 mb-4">
-                    <button
-                        onClick={handlePreviousPage}
-                        disabled={currentPage === 0}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-gold bg-bgHome text-blue font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:scale-105 transition-transform duration-200"
-                    >
-                        <FaChevronLeft /> Anterior
-                    </button>
-
-                    <span className="text-blue font-bold">
-                        Página {currentPage + 1} de {totalPages}
-                    </span>
-
-                    <button
-                        onClick={handleNextPage}
-                        disabled={currentPage === totalPages - 1}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-gold bg-bgHome text-blue font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:scale-105 transition-transform duration-200"
-                    >
-                        Próxima <FaChevronRight />
-                    </button>
-                </div>
-            
         </div>
     );
 }
