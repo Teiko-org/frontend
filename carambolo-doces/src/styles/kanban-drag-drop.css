@@ -25,18 +25,17 @@
 
 /* Container principal do kanban */
 .kanban-columns-container {
-  min-height: calc(100vh - 200px);
-  max-height: calc(100vh - 120px);
   height: 100%;
   padding: 1rem;
+  overflow: hidden;
 }
 
 /* Coluna do kanban */
 .kanban-column {
-  min-height: calc(100vh - 250px);
-  max-height: calc(100vh - 170px);
   height: 100%;
   transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Container da coluna */
@@ -47,9 +46,7 @@
 
 /* Conteúdo da coluna */
 .column-content {
-  min-height: calc(100vh - 300px);
-  max-height: calc(100vh - 220px);
-  height: 100%;
+  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
 }

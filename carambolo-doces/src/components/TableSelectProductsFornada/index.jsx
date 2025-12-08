@@ -7,7 +7,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import { axiosApi } from "../../provider/AxiosApi";
-import { FaMinus } from "react-icons/fa";
+import { FaMinus, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { FaPlus } from "react-icons/fa";
 import Button from "../Button";
 import { CiSearch } from "react-icons/ci";
@@ -22,12 +22,23 @@ const columns = [
 ];
 
 export default function TableSelectProductsFornada() {
+  const storageKey = "fornada_select_table_pagination";
   const [products, setProducts] = React.useState([]);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedProducts, setSelectedProducts] = React.useState([]);
+  const [currentPage, setCurrentPage] = React.useState(() => {
+    const savedPage = sessionStorage.getItem(storageKey);
+    return savedPage ? parseInt(savedPage, 10) : 0;
+  });
+  const [pageSize, setPageSize] = React.useState(10);
+  const [totalPages, setTotalPages] = React.useState(0);
+  const [totalElements, setTotalElements] = React.useState(0);
 
   React.useEffect(() => {
-    getData();
+    const savedPage = sessionStorage.getItem(storageKey);
+    const pageToLoad = savedPage ? parseInt(savedPage, 10) : 0;
+    getData(pageToLoad);
+    
     const produtosSalvos = JSON.parse(localStorage.getItem("selectedProducts") || "[]");
     if (produtosSalvos.length > 0) {
       setSelectedProducts(produtosSalvos);
@@ -73,17 +84,35 @@ export default function TableSelectProductsFornada() {
     };
   }, []);
 
-  const getData = async () => {
+  const getData = async (page = 0) => {
     try {
-      console.log('🔄 Buscando produtos da fornada...');
-      const response = await productsFornadasService();
-      console.log('✅ Produtos recebidos:', response);
-      console.log('📦 Total de produtos:', Array.isArray(response) ? response.length : 0);
-
-      setProducts(Array.isArray(response) ? response : []);
+      const response = await productsFornadasService(page, pageSize);
+      
+      // Handle both paginated response and direct array response
+      if (response.content && Array.isArray(response.content)) {
+        setProducts(response.content);
+        setTotalPages(response.totalPages || 0);
+        setTotalElements(response.totalElements || 0);
+        setCurrentPage(page);
+        // Save pagination state to sessionStorage
+        sessionStorage.setItem(storageKey, page.toString());
+      } else if (Array.isArray(response)) {
+        // Fallback for non-paginated responses
+        setProducts(response);
+        setTotalPages(1);
+        setTotalElements(response.length);
+        setCurrentPage(0);
+        sessionStorage.setItem(storageKey, '0');
+      } else {
+        setProducts([]);
+        setTotalPages(0);
+        setTotalElements(0);
+      }
     } catch (error) {
-      console.error('❌ Erro ao buscar produtos:', error);
+      console.log(error);
       setProducts([]);
+      setTotalPages(0);
+      setTotalElements(0);
     }
   };
 
@@ -136,9 +165,21 @@ export default function TableSelectProductsFornada() {
     });
   };
 
+  const handleNextPage = () => {
+    if (currentPage < totalPages - 1) {
+      getData(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 0) {
+      getData(currentPage - 1);
+    }
+  };
+
   return (
-    <div className="flex flex-col w-[90%] h-[320px] border-rounded-lg border-2 border-gold bg-bgHome">
-      <header className="flex flex-row justify-between border-rounded-lg px-20 items-center bg-gradient-blue h-[3.6875rem] w-full flex-shrink-0">
+    <div className="flex flex-col w-[90%] h-[420px] border-2 border-gold bg-bgHome rounded-2xl overflow-hidden">
+      <header className="flex flex-row justify-between px-20 items-center bg-gradient-blue h-[3.6875rem] w-full flex-shrink-0 rounded-t-2xl">
         <h1 className="text-gold text-[1.5rem]">Selecionar Produtos</h1>
 
         <div className="flex w-96 px-3 py-2 items-center justify-between bg-white rounded-lg border border-gray-300">
@@ -155,13 +196,14 @@ export default function TableSelectProductsFornada() {
 
       <div className="flex-1 overflow-hidden">
         <Paper
-          className="rounded-lg h-full"
+          className="h-full"
           sx={{
             width: "100%",
             height: "100%",
             overflow: "hidden",
             border: "none",
             boxShadow: "none",
+            borderRadius: "0",
           }}
         >
           <TableContainer
@@ -360,6 +402,31 @@ export default function TableSelectProductsFornada() {
           </TableContainer>
         </Paper>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-4 mt-4 mb-4">
+          <button
+            onClick={handlePreviousPage}
+            disabled={currentPage === 0}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-gold bg-bgHome text-blue font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:scale-105 transition-transform duration-200"
+          >
+            <FaChevronLeft /> Anterior
+          </button>
+
+          <span className="text-blue font-bold">
+            Página {currentPage + 1} de {totalPages}
+          </span>
+
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages - 1}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-gold bg-bgHome text-blue font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:scale-105 transition-transform duration-200"
+          >
+            Próxima <FaChevronRight />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

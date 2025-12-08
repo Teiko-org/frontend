@@ -17,6 +17,12 @@ function OrderKanban() {
   const [isLoading, setIsLoading] = useState(true);
   const [forceUpdate, setForceUpdate] = useState(0);
 
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+
   // Filtros
   const [filterMes, setFilterMes] = useState("");
   const [filterAno, setFilterAno] = useState("");
@@ -25,11 +31,15 @@ function OrderKanban() {
   const getData = async () => {
     setIsLoading(true);
     try {
-      const data = await orderSummary();
-      setOrders(Array.isArray(data) ? data : []);
+      const response = await orderSummary(currentPage, pageSize);
+      setOrders(Array.isArray(response.content) ? response.content : []);
+      setTotalPages(response.totalPages || 0);
+      setTotalElements(response.totalElements || 0);
     } catch (err) {
       console.error("❌ Erro ao buscar pedidos:", err);
       setOrders([]);
+      setTotalPages(0);
+      setTotalElements(0);
     } finally {
       setIsLoading(false);
     }
@@ -37,7 +47,7 @@ function OrderKanban() {
 
   useEffect(() => {
     getData();
-  }, [refresh]);
+  }, [refresh, currentPage, pageSize]);
 
   const handleStatusChange = async (orderId, newStatus) => {
     let previousStatus = null;
@@ -127,11 +137,11 @@ function OrderKanban() {
   }, [orders, filterMes, filterAno, filterTipo]);
 
   return (
-    <div className="flex bg-bgNativeHome min-h-screen">
+    <div className="flex bg-bgNativeHome h-screen overflow-hidden">
       <BarraLateralDashboard />
 
-      <div className="w-full pl-56 flex flex-col min-h-screen">
-        <header className="pb-5 bg-bgNativeHome">
+      <div className="w-full pl-56 flex flex-col h-screen overflow-hidden">
+        <header className="pb-5 bg-bgNativeHome flex-shrink-0">
           <HeaderDashboard
             title={"Pedidos"}
             rightContent={
@@ -189,7 +199,7 @@ function OrderKanban() {
           />
         </header>
 
-        <main className="flex-1 flex flex-col">
+        <main className="flex-1 overflow-hidden flex flex-col">
           {isLoading ? (
             <div className="flex justify-center items-center py-20 flex-1">
               <div className="text-center">
@@ -232,6 +242,51 @@ function OrderKanban() {
             </div>
           )}
         </main>
+
+        {/* Footer de Paginação */}
+        <footer className="bg-bgNativeHome border-t border-gold py-4 px-6 flex-shrink-0">
+          <div className="flex items-center gap-3 justify-end">
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(0);
+              }}
+              className="bg-white text-black rounded-full px-3 py-2 min-w-[100px] border border-gold"
+            >
+              <option value="10">10 por página</option>
+              <option value="20">20 por página</option>
+              <option value="50">50 por página</option>
+              <option value="100">100 por página</option>
+            </select>
+
+            <button
+              type="button"
+              onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+              disabled={currentPage === 0}
+              className="bg-gradient-to-l from-gold to-darkGold text-blue border border-gold rounded-full px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              ← Anterior
+            </button>
+
+            <span className="text-blue font-semibold min-w-[120px] text-center">
+              Página {currentPage + 1} de {totalPages}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
+              disabled={currentPage >= totalPages - 1}
+              className="bg-gradient-to-l from-gold to-darkGold text-blue border border-gold rounded-full px-3 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Próxima →
+            </button>
+
+            <span className="text-blue text-sm">
+              Total: {totalElements} pedidos
+            </span>
+          </div>
+        </footer>
       </div>
     </div>
   );
