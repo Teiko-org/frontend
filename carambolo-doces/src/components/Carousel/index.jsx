@@ -47,30 +47,10 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
       const containerRect = container.getBoundingClientRect();
       const containerWidth = containerRect.width;
       
-      // Se itemsPerView === 1, mostrar apenas o slide atual centralizado
+      // Se itemsPerView === 1, não fazer nenhuma transformação
+      // O slide atual já é renderizado e está centralizado via flexbox
       if (itemsPerView === 1) {
-        if (slides.length <= 1) {
-          slidesContainer.style.transform = 'translateX(0px)';
-          return;
-        }
-        
-        // Medir a largura real do primeiro slide para calcular o translateX corretamente
-        let slideWidth = containerWidth;
-        if (itemRefs.current[0]) {
-          const firstSlideRect = itemRefs.current[0].getBoundingClientRect();
-          slideWidth = firstSlideRect.width;
-        }
-        
-        // Se não conseguimos medir, calcular baseado no container menos padding
-        if (!slideWidth || slideWidth === 0 || isNaN(slideWidth)) {
-          const containerPadding = 160; // 80px de cada lado
-          slideWidth = containerWidth - containerPadding;
-        }
-        
-        // O translateX deve mover cada slide pela sua largura real medida
-        const translateX = -current * slideWidth;
-        
-        slidesContainer.style.transform = `translateX(${translateX}px)`;
+        slidesContainer.style.transform = 'translateX(0px)';
         return;
       }
       
@@ -150,21 +130,26 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
   }, [current, slides.length, cardWidthPercent, itemsPerView]);
 
   return (
-    <div ref={containerRef} className="relative w-full overflow-hidden pb-8 flex justify-center" style={{ paddingLeft: itemsPerView === 1 ? '80px' : '0', paddingRight: itemsPerView === 1 ? '80px' : '0' }}>
+    <div ref={containerRef} className="relative w-full overflow-hidden pb-8 flex justify-center" style={{ paddingLeft: '0', paddingRight: '0' }}>
       <div
         ref={slidesContainerRef}
-        className={`flex transition-transform ease-out duration-500 ${itemsPerView === 1 ? '' : 'gap-x-[54px] px-6 md:px-12'}`}
+        className={`flex transition-transform ease-out duration-500 ${itemsPerView === 1 ? 'justify-center items-center' : 'gap-x-[54px] px-6 md:px-12'}`}
         style={{ 
-          overflow: 'visible'
+          overflow: 'visible',
+          width: itemsPerView === 1 ? '100%' : 'auto'
         }}
       >
         {slides.map((slide, index) => {
           const isCenter = index === current;
+          
+          // Se itemsPerView === 1, renderizar apenas o slide atual
+          if (itemsPerView === 1 && !isCenter) {
+            return null;
+          }
+          
           // Destaque visual para o item ativo quando itemsPerView > 1
           const cardClasses = itemsPerView === 1
-            ? (isCenter 
-                ? "z-20"
-                : "opacity-0 pointer-events-none absolute")
+            ? "z-20"
             : (isCenter
                 ? "z-20 scale-[1.05] shadow-[0_12px_24px_rgba(0,0,0,0.2)] border-2"
                 : "z-10 scale-[0.95] opacity-80");
@@ -177,14 +162,14 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
               }}
               className="flex-none flex justify-center items-center"
               style={{ 
-                width: itemsPerView === 1 ? '100%' : '296px', 
+                width: itemsPerView === 1 ? '280px' : '296px', 
                 overflow: 'visible', 
-                padding: itemsPerView === 1 ? '0' : '8px',
+                padding: '8px',
                 flexShrink: 0,
-                minWidth: itemsPerView === 1 ? '100%' : '296px',
-                maxWidth: itemsPerView === 1 ? '100%' : '296px',
+                minWidth: itemsPerView === 1 ? '280px' : '296px',
+                maxWidth: itemsPerView === 1 ? '280px' : '296px',
                 alignItems: 'center',
-                position: itemsPerView === 1 && !isCenter ? 'absolute' : 'relative'
+                position: 'relative'
               }}
             >
               <div
