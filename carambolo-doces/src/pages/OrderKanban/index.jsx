@@ -84,7 +84,7 @@ function OrderKanban() {
 
   useEffect(() => {
     getData();
-  }, [refresh, pageSize, filterAno, filterMes, filterTipo]);
+  }, [refresh, pageSize, filterAno, filterMes, filterTipo, currentPage]);
 
   // Resetar página quando filtros mudarem (exceto quando apenas a página muda)
   useEffect(() => {

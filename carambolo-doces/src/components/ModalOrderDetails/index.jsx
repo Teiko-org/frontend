@@ -214,12 +214,9 @@ export default function ModalOrderDetails(props) {
                           adicionaisDisponiveis.map((adicional, index) => (
                             <div
                               key={`adicional-disponivel-${adicional.id ?? index}`}
-                              className="flex items-center gap-2 bg-gray-100 border-2 border-gray-300 rounded-full px-4 py-2"
+                              className="bg-gradient-to-l from-gold to-darkGold text-blue border border-gold rounded-full px-3 py-2"
                             >
-                              <div className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-gray-300 bg-white">
-                                <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-                              </div>
-                              <span className="text-gray-700 font-semibold">{adicional.descricao ?? adicional.nome}</span>
+                              <span className="font-semibold">{adicional.descricao ?? adicional.nome}</span>
                             </div>
                           ))
                         ) : (
