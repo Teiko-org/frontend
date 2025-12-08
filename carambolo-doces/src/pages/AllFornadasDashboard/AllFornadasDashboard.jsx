@@ -57,20 +57,38 @@ function AllFornadasDashboard() {
                 });
             }
 
+            // Ordenar da mais recente (última que aconteceu) para a mais antiga (primeira)
+            // Priorizar data_fim (quando a fornada terminou), depois data_inicio, depois ID
             resultado.sort((a, b) => {
-                const normEnd = (x) => {
-                    const [yi, mi, di] = String(x.dataInicio || '').split('-').map(Number);
-                    const [yf, mf, df] = String(x.dataFim || '').split('-').map(Number);
-                    const ti = new Date(yi || 0, (mi || 1) - 1, di || 1).getTime();
-                    const tf = new Date(yf || 0, (mf || 1) - 1, df || 1).getTime();
-                    return isNaN(tf) ? ti : Math.max(ti, tf);
+                // Função para obter timestamp da data de fim, ou início como fallback
+                const getDateTimestamp = (x) => {
+                    // Tentar data_fim primeiro (quando a fornada terminou)
+                    if (x.dataFim) {
+                        const [yf, mf, df] = String(x.dataFim).split('-').map(Number);
+                        const tf = new Date(yf, (mf || 1) - 1, df || 1).getTime();
+                        if (!isNaN(tf)) return tf;
+                    }
+                    // Fallback para data_inicio
+                    if (x.dataInicio) {
+                        const [yi, mi, di] = String(x.dataInicio).split('-').map(Number);
+                        const ti = new Date(yi, (mi || 1) - 1, di || 1).getTime();
+                        if (!isNaN(ti)) return ti;
+                    }
+                    return 0;
                 };
-                const eb = normEnd(b);
-                const ea = normEnd(a);
-                if (eb !== ea) return eb - ea;
-                const ib = Number(b.id || 0);
-                const ia = Number(a.id || 0);
-                return ib - ia;
+                
+                const timestampB = getDateTimestamp(b);
+                const timestampA = getDateTimestamp(a);
+                
+                // Ordenar decrescente (mais recente primeiro)
+                if (timestampB !== timestampA) {
+                    return timestampB - timestampA;
+                }
+                
+                // Se as datas forem iguais, usar ID como critério de desempate (maior ID primeiro = mais recente)
+                const idB = Number(b.id || 0);
+                const idA = Number(a.id || 0);
+                return idB - idA;
             });
 
             console.log('[ALL-FORNADAS] Filtrado/ordenado:', resultado.map(f => ({ id: f.id, ini: f.dataInicio, fim: f.dataFim })));
