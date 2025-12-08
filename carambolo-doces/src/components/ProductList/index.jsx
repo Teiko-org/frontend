@@ -336,7 +336,7 @@ export default function ProductList() {
                                         if (column.id === 'produto') {
                                             return (
                                                 <TableCell key={column.id} align={column.align} sx={{ boxShadow: "none", borderBottom: "none", padding: 0 }}>
-                                                    {row.produto}
+                                                    {row.produto || ""}
                                                 </TableCell>
                                             )
                                         }
@@ -344,7 +344,7 @@ export default function ProductList() {
                                         if (column.id === 'categoria') {
                                             return (
                                                 <TableCell key={column.id} align={column.align} sx={{ boxShadow: "none", borderBottom: "none", padding: 0 }}>
-                                                    {row.categoria}
+                                                    {row.categoria || ""}
                                                 </TableCell>
                                             )
                                         }
@@ -380,7 +380,8 @@ export default function ProductList() {
                                                 <TableCell key={column.id} align={column.align} className="rounded-r-full" sx={{ boxShadow: "none", borderBottom: "none", padding: 0, paddingRight: '1.25rem' }}>
                                                     <FaRegEdit
                                                         className='cursor-pointer text-[#A47032] text-[1.625rem]'
-                                                        onClick={() => {
+                                                        onClick={async () => {
+                                                            // Usar o produto atual da linha (já está atualizado)
                                                             setProdutoSelecionado(row);
                                                             setModalEdicaoOpen(true);
                                                         }}
@@ -409,16 +410,29 @@ export default function ProductList() {
                 />
             )}
 
-            {isModalEdicaoOpen && (
+            {isModalEdicaoOpen && produtoSelecionado && (
                 <ModalEdicaoProduto
                     isOpen={isModalEdicaoOpen}
                     produto={produtoSelecionado}
                     initialCategoria={determineInitialCategory(produtoSelecionado)}
-                    onProdutoEditado={fetchProducts}
-                    onClose={() => {
+                    onProdutoEditado={async () => {
+                        // Recarregar produtos e atualizar o produto selecionado
+                        await fetchProducts();
+                        // Aguardar um pouco para garantir que o estado foi atualizado
+                        setTimeout(() => {
+                            const produtoAtualizado = products.find(p => 
+                                p.id === produtoSelecionado.id && 
+                                (p.tipo === produtoSelecionado.tipo || (!p.tipo && !produtoSelecionado.tipo))
+                            );
+                            if (produtoAtualizado) {
+                                setProdutoSelecionado(produtoAtualizado);
+                            }
+                        }, 100);
+                    }}
+                    onClose={async () => {
                         setModalEdicaoOpen(false);
+                        await fetchProducts();
                         setProdutoSelecionado(null);
-                        fetchProducts();
                     }}
                 />
             )}

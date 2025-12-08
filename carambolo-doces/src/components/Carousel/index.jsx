@@ -89,7 +89,8 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
       // Calcular gap e largura do card em pixels
       const gapPx = 54;
       const cardPaddingPx = 8;
-      const cardWidthPx = (containerWidth * cardWidthPercent) / 100;
+      // Usar largura fixa do card (280px) igual ao card de CARAMBOLOS MAIS PEDIDOS
+      const cardWidthPx = itemsPerView > 1 ? 280 : (containerWidth * cardWidthPercent) / 100;
       const itemTotalWidth = cardWidthPx + (cardPaddingPx * 2) + gapPx;
 
       // Calcular posição desejada para centralizar o item atual
@@ -159,15 +160,14 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
       >
         {slides.map((slide, index) => {
           const isCenter = index === current;
-          // Quando itemsPerView === 1, não aplicar transformações verticais ou de escala
-          // Quando itemsPerView !== 1, manter todos os cards alinhados verticalmente
+          // Destaque visual para o item ativo quando itemsPerView > 1
           const cardClasses = itemsPerView === 1
             ? (isCenter 
-                ? "z-20 shadow-[0_8px_16px_rgba(0,0,0,0.15)]"
-                : "opacity-0 pointer-events-none")
+                ? "z-20"
+                : "opacity-0 pointer-events-none absolute")
             : (isCenter
-                ? "scale-[1.05] z-20 shadow-[0_12px_24px_rgba(0,0,0,0.18)]"
-                : "scale-[0.95] z-10 opacity-90 shadow-[0_6px_14px_rgba(0,0,0,0.12)]");
+                ? "z-20 scale-[1.05] shadow-[0_12px_24px_rgba(0,0,0,0.2)] border-2"
+                : "z-10 scale-[0.95] opacity-80");
 
           return (
             <div
@@ -183,47 +183,54 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
                 flexShrink: 0,
                 minWidth: itemsPerView === 1 ? '100%' : '0',
                 maxWidth: itemsPerView === 1 ? '100%' : 'none',
-                alignItems: 'center' // Garantir alinhamento vertical
+                alignItems: 'center',
+                position: itemsPerView === 1 && !isCenter ? 'absolute' : 'relative'
               }}
             >
               <div
-                className={`relative rounded-lg overflow-hidden border border-gold bg-white transition-all duration-500 ${cardClasses} ${onSlideClick ? 'cursor-pointer' : ''} ${itemsPerView === 1 ? 'w-full max-w-[320px] mx-auto' : ''}`}
+                className={`relative rounded-lg overflow-hidden border border-gold bg-white transition-all duration-500 ${cardClasses} ${onSlideClick ? 'cursor-pointer' : ''}`}
                 style={{ 
-                  overflow: 'visible',
-                  width: itemsPerView === 1 ? '100%' : 'auto',
-                  maxWidth: itemsPerView === 1 ? '320px' : 'none',
-                  alignSelf: 'center' // Garantir alinhamento vertical
+                  overflow: 'hidden',
+                  width: '280px',
+                  maxWidth: '280px',
+                  height: showTitles ? '320px' : '300px',
+                  alignSelf: 'center',
+                  boxShadow: isCenter && itemsPerView > 1 ? '0 12px 24px rgba(0, 0, 0, 0.2)' : '0 6px 14px rgba(0, 0, 0, 0.12)',
+                  borderWidth: isCenter && itemsPerView > 1 ? '2px' : '1px'
                 }}
                 onClick={() => handleSlideClick(slide)}
               >
-                <img
-                  src={slide.image}
-                  alt={slide.title || `Slide ${index + 1}`}
-                  className={`w-full object-cover ${imageHeightClass}`}
-                  onError={(e) => {
-                    console.warn(`Erro ao carregar imagem do slide ${index + 1}`);
-                  }}
-                />
-                {showTitles && slide.title && (
-                  <div className={`absolute left-1/2 -translate-x-1/2 ${
-                    isCenter ? 'bottom-3' : 'bottom-4'
-                  } w-full flex justify-center px-2`}>
-                    <span
-                      title={slide.title}
-                      className={`inline-block rounded-[12px] border border-[#D4B076] shadow-[0_4px_12px_rgba(0,0,0,0.16)] backdrop-blur-sm font-montserrat font-normal whitespace-nowrap overflow-hidden text-ellipsis leading-tight ${
-                        isCenter
-                          ? 'px-5 py-2 text-[clamp(12px,1.1vw,16px)] max-w-[88%]'
-                          : 'px-4 py-1.5 text-[clamp(10px,0.95vw,14px)] max-w-[80%]'
-                      }`}
-                      style={{
-                        background: 'rgba(255, 232, 196, 0.8)',
-                        color: '#8A541C',
-                      }}
-                    >
-                      {slide.title}
-                    </span>
-                  </div>
-                )}
+                <div className="relative w-full" style={{ height: '100%' }}>
+                  <img
+                    src={slide.image}
+                    alt={slide.title || `Slide ${index + 1}`}
+                    className="w-full h-full object-cover"
+                    style={{
+                      display: 'block',
+                      objectFit: 'cover',
+                      objectPosition: 'center',
+                      width: '100%',
+                      height: '100%'
+                    }}
+                    onError={(e) => {
+                      console.warn(`Erro ao carregar imagem do slide ${index + 1}`);
+                    }}
+                  />
+                  {showTitles && slide.title && (
+                    <div className="absolute left-1/2 -translate-x-1/2 bottom-3 w-full flex justify-center px-2">
+                      <span
+                        title={slide.title}
+                        className="inline-block rounded-[12px] border border-[#D4B076] shadow-[0_4px_12px_rgba(0,0,0,0.16)] backdrop-blur-sm font-montserrat font-normal whitespace-nowrap overflow-hidden text-ellipsis leading-tight px-5 py-2 text-[clamp(12px,1.1vw,16px)] max-w-[88%]"
+                        style={{
+                          background: 'rgba(255, 232, 196, 0.8)',
+                          color: '#8A541C',
+                        }}
+                      >
+                        {slide.title}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           );

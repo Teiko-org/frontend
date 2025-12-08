@@ -338,14 +338,14 @@ export default function FornadaMultiOrderPage() {
         <div className="flex flex-col items-center px-20">
           <h1 className="font-bold text-blue text-3xl py-6">Itens Selecionados</h1>
           {itens.length > 0 && (
-            <div className="w-[480px] mb-2 flex justify-center items-center relative">
+            <div className="w-[360px] mb-2 flex justify-center items-center relative">
               <Carousel
                 slides={itens.map((i, k) => ({ 
                   id: k + 1, 
                   image: i.image ?? defaultImageFornada, 
                   title: i.name 
                 }))}
-                imageHeightClass="h-[320px]"
+                imageHeightClass="h-[300px]"
                 itemsPerView={1}
                 showTitles={false}
                 autoPlay
