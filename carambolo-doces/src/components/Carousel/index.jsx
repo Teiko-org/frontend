@@ -150,7 +150,7 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
   }, [current, slides.length, cardWidthPercent, itemsPerView]);
 
   return (
-    <div ref={containerRef} className="relative w-full overflow-hidden pb-8" style={{ paddingLeft: itemsPerView === 1 ? '80px' : '0', paddingRight: itemsPerView === 1 ? '80px' : '0' }}>
+    <div ref={containerRef} className="relative w-full overflow-hidden pb-8 flex justify-center" style={{ paddingLeft: itemsPerView === 1 ? '80px' : '0', paddingRight: itemsPerView === 1 ? '80px' : '0' }}>
       <div
         ref={slidesContainerRef}
         className={`flex transition-transform ease-out duration-500 ${itemsPerView === 1 ? '' : 'gap-x-[54px] px-6 md:px-12'}`}
@@ -177,12 +177,12 @@ export default function Carousel({ slides, autoPlay = true, interval = 4000, sho
               }}
               className="flex-none flex justify-center items-center"
               style={{ 
-                width: itemsPerView === 1 ? '100%' : `${cardWidthPercent}%`, 
+                width: itemsPerView === 1 ? '100%' : '296px', 
                 overflow: 'visible', 
                 padding: itemsPerView === 1 ? '0' : '8px',
                 flexShrink: 0,
-                minWidth: itemsPerView === 1 ? '100%' : '0',
-                maxWidth: itemsPerView === 1 ? '100%' : 'none',
+                minWidth: itemsPerView === 1 ? '100%' : '296px',
+                maxWidth: itemsPerView === 1 ? '100%' : '296px',
                 alignItems: 'center',
                 position: itemsPerView === 1 && !isCenter ? 'absolute' : 'relative'
               }}
