@@ -260,6 +260,27 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
       try {
         if (pedido.pedidoBoloId) {
           const detalhes = await orderCakeDetails(pedido.pedidoBoloId);
+          console.log("📦 Detalhes do pedido recebidos:", detalhes);
+          console.log("🎁 Adicionais do pedido (do order):", detalhes?.adicionais);
+          console.log("🎨 DecoraigoId:", detalhes?.decoracaoId);
+          
+          // Se tem decoracaoId, buscar os adicionais disponíveis para essa decoração
+          if (detalhes?.decoracaoId) {
+            try {
+              const token = typeof window !== 'undefined' ? localStorage.getItem('JWT_TOKEN') : null;
+              const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+              const response = await axiosApi.get(`/decoracoes/${detalhes.decoracaoId}/adicionais`, config);
+              
+              console.log("✨ Adicionais disponíveis da decoração:", response.data);
+              
+              // Armazenar os adicionais disponíveis junto com os detalhes
+              detalhes.adicionaisDisponiveis = response.data?.adicionaisPossiveis || response.data || [];
+            } catch (error) {
+              console.warn("Erro ao buscar adicionais da decoração:", error);
+              detalhes.adicionaisDisponiveis = [];
+            }
+          }
+          
           setDetalhesPedido(detalhes);
         }
       } catch (error) {
@@ -276,6 +297,27 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
       try {
         if (pedido.pedidoBoloId) {
           const detalhes = await orderCakeDetails(pedido.pedidoBoloId);
+          console.log("📦 Detalhes do pedido recebidos:", detalhes);
+          console.log("🎁 Adicionais do pedido (do order):", detalhes?.adicionais);
+          console.log("🎨 DecoraigoId:", detalhes?.decoracaoId);
+          
+          // Se tem decoracaoId, buscar os adicionais disponíveis para essa decoração
+          if (detalhes?.decoracaoId) {
+            try {
+              const token = typeof window !== 'undefined' ? localStorage.getItem('JWT_TOKEN') : null;
+              const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+              const response = await axiosApi.get(`/decoracoes/${detalhes.decoracaoId}/adicionais`, config);
+              
+              console.log("✨ Adicionais disponíveis da decoração:", response.data);
+              
+              // Armazenar os adicionais disponíveis junto com os detalhes
+              detalhes.adicionaisDisponiveis = response.data?.adicionaisPossiveis || response.data || [];
+            } catch (error) {
+              console.warn("Erro ao buscar adicionais da decoração:", error);
+              detalhes.adicionaisDisponiveis = [];
+            }
+          }
+          
           setDetalhesPedido(detalhes);
         }
       } catch (error) {
@@ -348,6 +390,7 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
       className="fixed inset-0 z-[9999] bg-black bg-opacity-60 flex justify-center items-center p-5 overflow-auto"
       onClick={handleBackdropClick}
     >
+      AAAAAAAAAAAA
       <div className="flex gap-4 items-start flex-shrink-0" onClick={(e) => e.stopPropagation()}>
         <div className="bg-bgHome border-2 border-gold rounded-xl w-[352px] h-[740px] flex flex-col shadow-xl overflow-hidden">
         <header className="bg-gradient-to-b from-[#1C3B57] to-[#0F2A3D] px-4 py-3 flex items-center justify-center rounded-t-xl relative">
@@ -470,8 +513,8 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
               {detalhesPedido || pedidoSelecionado ? (
                 <div className={loadingDetalhes ? "opacity-60 transition-opacity duration-300" : "opacity-100 transition-opacity duration-300"}>
                 <>
-                  <div className="px-4 pt-4 pb-6 border-b border-[#FFC8B2]">
-                    <h3 className="font-bold text-xl text-blue pb-4">Montagem</h3>
+                  <div className="px-4 pt-4 pb-4 border-b border-gold">
+                    <h3 className="font-bold text-lg text-gold pb-3">Montagem</h3>
                     <div className="grid grid-cols-2 gap-y-4">
                       <div>
                         <span className="text-blue font-semibold">Tamanho: </span>
@@ -496,8 +539,8 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
                     </div>
                   </div>
 
-                  <div className="px-4 pt-6 pb-6 border-b border-[#FFC8B2]">
-                    <h3 className="font-bold text-xl text-blue pb-4">Decoração</h3>
+                  <div className="px-4 pt-4 pb-4 border-b border-gold">
+                    <h3 className="font-bold text-lg text-gold pb-3">Decoração</h3>
                     <div className="text-blue italic">
                       {detalhesPedido?.imagensDecoracao && detalhesPedido.imagensDecoracao.length > 0
                         ? "Imagens de referência adicionadas"
@@ -505,164 +548,40 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
                     </div>
                   </div>
 
-                  <div className="px-4 pt-6 pb-6 border-b border-[#FFC8B2]">
-                    <h3 className="font-bold text-xl text-blue pb-4">Observações</h3>
+                  <div className="px-4 pt-4 pb-4 border-b border-gold">
+                    <h3 className="font-bold text-lg text-gold pb-3">Observações</h3>
                     <p className="text-blue break-words">
                       {detalhesPedido?.observacoes || detalhesPedido?.observacao || "Sem cobertura de chocolate"}
                     </p>
                   </div>
 
-                  <div className="px-4 pt-6 pb-6 border-b border-[#FFC8B2]">
-                    <h3 className="font-bold text-xl text-blue pb-4">Adicionais</h3>
-                    <div className="flex flex-wrap gap-4">
+                  <div className="px-4 pt-4 pb-4 border-b border-gold">
+                    <h3 className="font-bold text-lg text-gold pb-3">Adicionais</h3>
+                    <div className="flex flex-wrap gap-2">
                       {(() => {
-                        let adicionaisList = [];
-                        if (detalhesPedido?.adicionais) {
-                          if (Array.isArray(detalhesPedido.adicionais)) {
-                            adicionaisList = detalhesPedido.adicionais;
-                          } else if (typeof detalhesPedido.adicionais === 'string') {
-                            adicionaisList = detalhesPedido.adicionais.split(',').map(a => a.trim()).filter(Boolean);
-                          } else if (typeof detalhesPedido.adicionais === 'object') {
-                            adicionaisList = Object.keys(detalhesPedido.adicionais).filter(key => detalhesPedido.adicionais[key]);
-                          }
-                        }
-                        return adicionaisList.length > 0 ? (
-                          adicionaisList.map((adicional, index) => (
-                          <div key={index} className="flex items-center gap-2 text-blue text-sm font-semibold">
-                            <span
-                              className="w-5 h-5 rounded-sm p-[1px]"
-                              style={{
-                                background: "linear-gradient(180deg, #A47032 0%, #D4B076 100%)",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                              }}
-                            >
-                              <span
-                                className="w-full h-full rounded-[1px] flex items-center justify-center"
-                                style={{
-                                  background: "linear-gradient(180deg, #A47032 0%, #D4B076 100%)",
-                                  transition: "all 0.2s ease",
-                                }}
-                              >
-                                <svg
-                                  className="w-3 h-3 text-white"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="3"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path d="M5 13l4 4L19 7" />
-                                </svg>
-                              </span>
-                            </span>
-                            {typeof adicional === 'string' ? adicional : adicional}
-                          </div>
+                        // Get all available adicionais from the decoration
+                        const adicionaisDisponiveis = detalhesPedido?.adicionaisDisponiveis || [];
+                        console.log("📦 Adicionais disponíveis da decoração:", adicionaisDisponiveis);
+                        
+                        return adicionaisDisponiveis.length > 0 ? (
+                          adicionaisDisponiveis.map((adicional, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            className="bg-gradient-to-l from-gold to-darkGold text-blue border border-gold rounded-full px-3 py-1.5 text-sm font-semibold hover:shadow-md transition-shadow duration-200"
+                          >
+                            {adicional.descricao || adicional}
+                          </button>
                         ))
-                        ) : null;
+                        ) : (
+                          <span className="text-gray-500 text-sm">Nenhum adicional disponível para esta decoração</span>
+                        );
                       })()}
-                      {(!detalhesPedido?.adicionais || 
-                        (Array.isArray(detalhesPedido.adicionais) && detalhesPedido.adicionais.length === 0) ||
-                        (typeof detalhesPedido.adicionais === 'string' && detalhesPedido.adicionais.trim() === '') ||
-                        (typeof detalhesPedido.adicionais === 'object' && Object.keys(detalhesPedido.adicionais).filter(key => detalhesPedido.adicionais[key]).length === 0)) && (
-                        <>
-                          <div className="flex items-center gap-2 text-blue text-sm font-semibold">
-                            <span
-                              className="w-5 h-5 rounded-sm p-[1px]"
-                              style={{
-                                background: "linear-gradient(180deg, #A47032 0%, #D4B076 100%)",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                              }}
-                            >
-                              <span
-                                className="w-full h-full rounded-[1px] flex items-center justify-center"
-                                style={{
-                                  background: "linear-gradient(180deg, #A47032 0%, #D4B076 100%)",
-                                  transition: "all 0.2s ease",
-                                }}
-                              >
-                                <svg
-                                  className="w-3 h-3 text-white"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="3"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path d="M5 13l4 4L19 7" />
-                                </svg>
-                              </span>
-                            </span>
-                            CEREJA
-                          </div>
-                          <div className="flex items-center gap-2 text-blue text-sm font-semibold">
-                            <span
-                              className="w-5 h-5 rounded-sm p-[1px]"
-                              style={{
-                                background: "linear-gradient(180deg, #A47032 0%, #D4B076 100%)",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                              }}
-                            >
-                              <span
-                                className="w-full h-full rounded-[1px] flex items-center justify-center"
-                                style={{
-                                  background: "linear-gradient(180deg, #A47032 0%, #D4B076 100%)",
-                                  transition: "all 0.2s ease",
-                                }}
-                              >
-                                <svg
-                                  className="w-3 h-3 text-white"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="3"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path d="M5 13l4 4L19 7" />
-                                </svg>
-                              </span>
-                            </span>
-                            GLITTER
-                          </div>
-                          <div className="flex items-center gap-2 text-blue text-sm font-semibold">
-                            <span
-                              className="w-5 h-5 rounded-sm p-[1px]"
-                              style={{
-                                background: "linear-gradient(180deg, #A47032 0%, #D4B076 100%)",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                              }}
-                            >
-                              <span
-                                className="w-full h-full rounded-[1px] flex items-center justify-center"
-                                style={{
-                                  background: "linear-gradient(180deg, #A47032 0%, #D4B076 100%)",
-                                  transition: "all 0.2s ease",
-                                }}
-                              >
-                                <svg
-                                  className="w-3 h-3 text-white"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="3"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path d="M5 13l4 4L19 7" />
-                                </svg>
-                              </span>
-                            </span>
-                            PEROLADO
-                          </div>
-                        </>
-                      )}
                     </div>
                   </div>
 
-                  <div className="px-4 pt-6 pb-6 border-b border-[#FFC8B2]">
-                    <h3 className="font-bold text-xl text-blue pb-4">Dados da Entrega</h3>
+                  <div className="px-4 pt-4 pb-4 border-b border-gold">
+                    <h3 className="font-bold text-lg text-gold pb-3">Dados da Entrega</h3>
                     <div className="grid grid-cols-2 gap-y-4 text-blue">
                       <div>
                         <span className="font-semibold">O pedido será: </span>
@@ -691,8 +610,8 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
                     </div>
                   </div>
 
-                  <div className="px-4 pt-6 pb-6 border-b border-[#FFC8B2]">
-                    <h3 className="font-bold text-xl text-blue pb-4">Dados do Solicitante</h3>
+                  <div className="px-4 pt-4 pb-4 border-b border-gold">
+                    <h3 className="font-bold text-lg text-gold pb-3">Dados do Solicitante</h3>
                     <div className="grid grid-cols-2 gap-y-4 text-blue">
                       <div>
                         <span className="font-semibold">Nome solicitante: </span>
@@ -706,8 +625,8 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
                   </div>
 
                   {pedidoSelecionado?.tipoEntrega === "ENTREGA" && (
-                    <div className="px-4 pt-6 pb-6">
-                      <h3 className="font-bold text-xl text-blue pb-4">Endereço</h3>
+                    <div className="px-4 pt-4 pb-6">
+                      <h3 className="font-bold text-lg text-gold pb-3">Endereço</h3>
                       {(() => {
                         // Tentar pegar endereço de detalhesPedido primeiro, depois de pedidoSelecionado
                         const endereco = detalhesPedido?.endereco || pedidoSelecionado?.endereco;

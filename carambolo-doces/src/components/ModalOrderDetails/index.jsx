@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import OrderStatusChanger from "../OrderStatusChanger";
-import { getAdicionaisByDecoracao } from "../../service/decoracaoService";
 
 function formatPhone(phone) {
   if (!phone) return "Carregando...";
@@ -39,30 +38,42 @@ function formatCep(cep) {
 
 export default function ModalOrderDetails(props) {
   const [imgError, setImgError] = useState(false);
-  const [adicionaisDisponiveis, setAdicionaisDisponiveis] = useState([]);
-  const [loadingAdicionais, setLoadingAdicionais] = useState(false);
 
-  // Fetch adicionais based on decoracaoId when modal opens
-  useEffect(() => {
-    const fetchAdicionais = async () => {
-      if (props.fornada == null && props?.order?.decoracaoId) {
-        setLoadingAdicionais(true);
+  // Extract selected adicionais from the order
+  const getAdicionaisSelecionados = () => {
+    const adicionais = props?.order?.adicionais;
+    
+    if (!adicionais) {
+      return [];
+    }
+
+    // Handle array format
+    if (Array.isArray(adicionais)) {
+      return adicionais;
+    }
+
+    // Handle string format (comma-separated)
+    if (typeof adicionais === 'string') {
+      return adicionais.split(',').map(a => {
+        const trimmed = a.trim();
+        // Try to parse if it looks like JSON, otherwise just use the string
         try {
-          console.log(`🔍 Buscando adicionais para decoração ID: ${props.order.decoracaoId}`);
-          const adicionaisData = await getAdicionaisByDecoracao(props.order.decoracaoId);
-          console.log("✅ Adicionais da decoração obtidos:", adicionaisData);
-          setAdicionaisDisponiveis(adicionaisData || []);
-        } catch (error) {
-          console.error("❌ Erro ao buscar adicionais da decoração:", error);
-          setAdicionaisDisponiveis([]);
-        } finally {
-          setLoadingAdicionais(false);
+          return typeof trimmed === 'string' ? JSON.parse(trimmed) : trimmed;
+        } catch {
+          return { descricao: trimmed, id: trimmed };
         }
-      }
-    };
+      }).filter(Boolean);
+    }
 
-    fetchAdicionais();
-  }, [props?.order?.decoracaoId, props.fornada]);
+    // Handle object format
+    if (typeof adicionais === 'object') {
+      return Object.entries(adicionais)
+        .filter(([_, value]) => value === true || value === 'true')
+        .map(([key, _]) => ({ descricao: key, id: key }));
+    }
+
+    return [];
+  };
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black bg-opacity-60 flex justify-center pt-10 pb-5 modal-overlay modal-fixed">
@@ -203,27 +214,31 @@ export default function ModalOrderDetails(props) {
                     Adicionais
                   </h3>
                   
-                  {/* Adicionais Selecionados da Decoração */}
-                  {props?.order?.decoracaoId && (
+                  {/* Adicionais Selecionados do Pedido */}
+                  {props?.order?.adicionais ? (
                     <div>
                       <h4 className="text-lg font-semibold text-blue mb-3">Selecionados:</h4>
                       <div className="flex flex-wrap gap-3">
-                        {loadingAdicionais ? (
-                          <span className="text-gray-500">Carregando adicionais...</span>
-                        ) : adicionaisDisponiveis.length > 0 ? (
-                          adicionaisDisponiveis.map((adicional, index) => (
-                            <div
-                              key={`adicional-disponivel-${adicional.id ?? index}`}
-                              className="bg-gradient-to-l from-gold to-darkGold text-blue border border-gold rounded-full px-3 py-2"
-                            >
-                              <span className="font-semibold">{adicional.descricao ?? adicional.nome}</span>
-                            </div>
-                          ))
-                        ) : (
-                          <span className="text-gray-500">Nenhum adicional disponível para esta decoração</span>
-                        )}
+                        {(() => {
+                          const adicionaisSelecionados = getAdicionaisSelecionados();
+                          
+                          if (adicionaisSelecionados.length > 0) {
+                            return adicionaisSelecionados.map((adicional, index) => (
+                              <div
+                                key={`adicional-selecionado-${adicional.id ?? index}`}
+                                className="bg-gradient-to-l from-gold to-darkGold text-blue border border-gold rounded-full px-3 py-2"
+                              >
+                                <span className="font-semibold">{adicional.descricao ?? adicional.nome ?? adicional}</span>
+                              </div>
+                            ));
+                          }
+                          
+                          return <span className="text-gray-500">Nenhum adicional selecionado</span>;
+                        })()}
                       </div>
                     </div>
+                  ) : (
+                    <span className="text-gray-500">Nenhum adicional selecionado</span>
                   )}
                 </div>
               )}
