@@ -21,7 +21,10 @@ import './cardsTransition.css';
 function BolosMaisPedidosCarousel({ bolos }) {
   const [current, setCurrent] = useState(0);
   const itemsPerView = 4;
-  const cardWidthPercent = 24;
+  // Ajustar a largura do card baseado no número de itens
+  const cardWidthPercent = bolos.length <= itemsPerView 
+    ? 100 / Math.max(bolos.length, 1) - 2 // Se há poucos itens, distribuir melhor o espaço
+    : 24; // Se há muitos itens, usar 24% (4 por view)
   const timerRef = useRef(null);
 
   const previous = () => {
@@ -43,27 +46,33 @@ function BolosMaisPedidosCarousel({ bolos }) {
   }, [bolos.length]);
 
   const translatePercent = useMemo(() => {
+    // Se há poucos itens, não precisa fazer scroll
     if (bolos.length <= itemsPerView) {
       return 0;
     }
     
     const totalWidth = bolos.length * cardWidthPercent;
-    const maxTranslate = Math.max(0, totalWidth - 100);
-    
-    let desired = current * cardWidthPercent + cardWidthPercent / 2 - 50;
-    
     const lastVisibleIndex = bolos.length - itemsPerView;
+    
+    // Quando chegamos nos últimos itens, garantir que o último item seja totalmente visível
     if (current >= lastVisibleIndex) {
-      const lastItemsStart = (bolos.length - itemsPerView) * cardWidthPercent;
-      desired = lastItemsStart + (itemsPerView * cardWidthPercent) / 2 - 50;
+      const lastItemIndex = bolos.length - 1;
+      const lastItemStart = lastItemIndex * cardWidthPercent;
+      // O último item precisa terminar dentro de 100%, mas com espaço para o padding
+      // Considerar que temos paddingRight de 3rem (~48px), que é aproximadamente 3-4% da largura
+      const paddingPercent = 4; // Aproximação do padding em percentual
+      const maxTranslate = lastItemStart + cardWidthPercent - 100 + paddingPercent;
+      return Math.max(0, maxTranslate);
     }
     
-    const clamped = Math.min(Math.max(desired, 0), maxTranslate);
-    return clamped;
+    // Para itens no meio, centralizar normalmente
+    let desired = current * cardWidthPercent + cardWidthPercent / 2 - 50;
+    const maxTranslate = Math.max(0, totalWidth - 100);
+    return Math.min(Math.max(desired, 0), maxTranslate);
   }, [current, bolos.length, cardWidthPercent, itemsPerView]);
 
   return (
-    <div className="relative w-full pb-8" style={{ overflow: 'hidden', overflowX: 'hidden', overflowY: 'hidden' }}>
+    <div className="relative w-full pb-8" style={{ overflow: 'visible' }}>
       <style>{`
         .bolos-carousel-container::-webkit-scrollbar {
           display: none;
@@ -74,8 +83,12 @@ function BolosMaisPedidosCarousel({ bolos }) {
         }
       `}</style>
       <div
-        className="flex transition-transform ease-out duration-500 gap-x-[54px] px-6 md:px-12 py-4 bolos-carousel-container"
-        style={{ transform: `translateX(-${translatePercent}%)`, overflow: 'visible' }}
+        className="flex transition-transform ease-out duration-500 gap-x-6 px-6 md:px-12 py-4 bolos-carousel-container"
+        style={{ 
+          transform: `translateX(-${translatePercent}%)`, 
+          overflow: 'visible',
+          paddingRight: '3rem'
+        }}
       >
         {bolos.map((bolo, index) => {
           const isCenter = index === current;
@@ -104,7 +117,14 @@ function BolosMaisPedidosCarousel({ bolos }) {
             <div
               key={bolo.id}
               className="flex-none flex justify-center"
-              style={{ width: `${cardWidthPercent}%`, overflow: 'visible', padding: '8px' }}
+              style={{ 
+                width: bolos.length <= itemsPerView 
+                  ? `${100 / Math.max(bolos.length, 1)}%` 
+                  : `${cardWidthPercent}%`, 
+                overflow: 'visible', 
+                padding: '8px',
+                maxWidth: bolos.length <= itemsPerView ? '280px' : 'none'
+              }}
             >
               <div className={`transition-all duration-500 ${cardClasses}`} style={{ overflow: 'visible' }}>
                 <Card
@@ -177,31 +197,28 @@ function FornadaCarousel({ produtos }) {
     }
     
     const totalWidth = produtos.length * cardWidthPercent;
-    // Calcular maxTranslate para garantir que o último item seja totalmente visível
-    // O último item deve estar completamente dentro da viewport (100% da largura)
-    const maxTranslate = Math.max(0, totalWidth - 100);
-    
-    // Calcular a posição desejada para centralizar o item atual
-    let desired = current * cardWidthPercent + cardWidthPercent / 2 - 50;
-    
-    // Se estamos nos últimos itens, garantir que o último item seja totalmente visível
     const lastVisibleIndex = produtos.length - itemsPerView;
+    
+    // Quando chegamos nos últimos itens, garantir que o último item seja totalmente visível
     if (current >= lastVisibleIndex) {
-      // Quando chegamos nos últimos itens, posicionar para mostrar os últimos itemsPerView itens
-      // Isso garante que o último card seja totalmente visível
-      const lastItemsStart = (produtos.length - itemsPerView) * cardWidthPercent;
-      // Centralizar o último conjunto de itens
-      desired = lastItemsStart + (itemsPerView * cardWidthPercent) / 2 - 50;
+      // Calcular a posição para mostrar os últimos itemsPerView itens
+      // O último item (índice produtos.length - 1) deve estar completamente visível
+      const lastItemIndex = produtos.length - 1;
+      const lastItemStart = lastItemIndex * cardWidthPercent;
+      // O último item precisa terminar dentro de 100%, mas com espaço para o padding
+      const paddingPercent = 4; // Aproximação do padding em percentual
+      const maxTranslate = lastItemStart + cardWidthPercent - 100 + paddingPercent;
+      return Math.max(0, maxTranslate);
     }
     
-    // Garantir que não vá além do máximo permitido
-    // Mas usar maxTranslate sem restrição adicional para permitir chegar até o final
-    const clamped = Math.min(Math.max(desired, 0), maxTranslate);
-    return clamped;
+    // Para itens no meio, centralizar normalmente
+    let desired = current * cardWidthPercent + cardWidthPercent / 2 - 50;
+    const maxTranslate = Math.max(0, totalWidth - 100);
+    return Math.min(Math.max(desired, 0), maxTranslate);
   }, [current, produtos.length, cardWidthPercent, itemsPerView]);
 
   return (
-    <div className="relative w-full pb-8" style={{ overflow: 'hidden', overflowX: 'hidden', overflowY: 'hidden' }}>
+    <div className="relative w-full pb-8" style={{ overflow: 'hidden' }}>
       <style>{`
         .fornada-carousel-container::-webkit-scrollbar {
           display: none;
@@ -212,8 +229,12 @@ function FornadaCarousel({ produtos }) {
         }
       `}</style>
       <div
-        className="flex transition-transform ease-out duration-500 gap-x-[54px] px-6 md:px-12 py-4 fornada-carousel-container"
-        style={{ transform: `translateX(-${translatePercent}%)`, overflow: 'visible' }}
+        className="flex transition-transform ease-out duration-500 gap-x-6 px-6 md:px-12 py-4 fornada-carousel-container"
+        style={{ 
+          transform: `translateX(-${translatePercent}%)`, 
+          overflow: 'visible',
+          paddingRight: '3rem'
+        }}
       >
         {produtos.map((produto, index) => {
           const isCenter = index === current;
@@ -489,12 +510,12 @@ function Home() {
 
       {/* Carambolos Mais Pedidos */}
       {bolosMaisPedidos.length > 0 && (
-        <section className="pt-8 pb-16 bg-bgHome border-t border-gold">
+        <section className="pt-8 pb-16 bg-bgHome border-t border-gold" style={{ overflow: 'visible' }}>
           <h2 className="text-center text-4xl font-medium mb-6">
             CARAMBOLOS MAIS PEDIDOS
           </h2>
           
-          <div className="px-6">
+          <div className="px-6" style={{ overflow: 'visible' }}>
             <BolosMaisPedidosCarousel bolos={bolosMaisPedidos} />
           </div>
         </section>
