@@ -296,23 +296,28 @@ export default function ModalPedidosPendentes({ isOpen, onClose, tipo, nome, ped
       return tamanho;
     }
     
-    // Extrair número do tamanho (ex: "TAMANHO_17" -> "17cm")
+    // Mapeamento correto dos enums para os tamanhos disponíveis
+    // TAMANHO_12 pode ser 11cm ou 13cm (ambos mapeiam para TAMANHO_12)
+    // Vamos usar 11cm como padrão para TAMANHO_12, mas idealmente deveria vir do backend
+    const tamanhos = {
+      "TAMANHO_5": "11cm",   // TAMANHO_5 era usado incorretamente para 11cm (pedidos antigos)
+      "TAMANHO_7": "13cm",   // TAMANHO_7 era usado incorretamente para 13cm (pedidos antigos)
+      "TAMANHO_12": "11cm",  // TAMANHO_12 é usado para 11cm (mapeamento atual)
+      "TAMANHO_15": "15cm",  // TAMANHO_15 é usado para 15cm
+      "TAMANHO_17": "17cm"   // TAMANHO_17 é usado para 17cm
+    };
+    
+    if (tamanhos[tamanho]) {
+      return tamanhos[tamanho];
+    }
+    
+    // Fallback: extrair número do tamanho se não estiver no mapeamento
     const numero = extrairNumeroTamanho(tamanho);
     if (numero > 0) {
       return `${numero}cm`;
     }
     
-    // Fallback para mapeamento direto
-    const tamanhos = {
-      "TAMANHO_5": "5cm",
-      "TAMANHO_7": "7cm",
-      "TAMANHO_11": "11cm",
-      "TAMANHO_12": "12cm",
-      "TAMANHO_13": "13cm",
-      "TAMANHO_15": "15cm",
-      "TAMANHO_17": "17cm"
-    };
-    return tamanhos[tamanho] || tamanho;
+    return tamanho;
   };
 
   const getFormatoTexto = (formato) => {

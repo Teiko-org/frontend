@@ -28,7 +28,7 @@ const columns = [
     { id: 'ativo', label: '', minWidth: 50, align: 'left' },
     { id: 'produto', label: 'PRODUTO', minWidth: 100, align: 'left' },
     { id: 'categoria', label: 'CATEGORIA', minWidth: 100, align: 'left' },
-    { id: 'preco', label: 'PREÇO', minWidth: 100, align: 'left' },
+    { id: 'preco', label: 'PREÇO', minWidth: 130, align: 'left' },
     { id: 'status', label: 'STATUS', minWidth: 100, align: 'center' },
     { id: 'edit', label: '', minWidth: 100 },
 ];
@@ -199,7 +199,7 @@ export default function ProductList() {
     }
 
     return (
-        <div className='flex flex-col w-[100%] h-[70%]'>
+        <div className='flex flex-col w-[100%] h-[85%]'>
             <div className='flex flex-row justify-between items-center bg-gradient-blue h-[4.6875rem] w-full'>
                 <h1 className='bg-gradient-gold text-transparent bg-clip-text pl-[5%] text-[1.5rem] font-bold'>Listagem de produtos</h1>
                 <div className='flex flex-1 flex-row items-center justify-end pr-[5%]'>
@@ -225,7 +225,7 @@ export default function ProductList() {
                 </div>
             </div>
             <Paper sx={{ width: '100%', maxHeight: '100%', overflow: 'hidden', border: 'none', boxShadow: 'none' }} >
-                <TableContainer sx={{ maxHeight: 440 }} className='bg-[#FFE7DD]'>
+                <TableContainer sx={{ maxHeight: 600 }} className='bg-[#FFE7DD]'>
                     <Table stickyHeader aria-label="sticky table">
                         <TableHead>
                             <TableRow>

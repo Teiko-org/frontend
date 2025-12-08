@@ -89,8 +89,10 @@ function OrderKanban() {
 
   // Helpers de leitura
   const getOrderDate = (o) => {
-    const raw = o?.data || o?.dataPedido || o?.createdAt || o?.created_at || o?.created_date;
-    const d = raw ? new Date(raw) : null;
+    // Tentar múltiplas propriedades de data, priorizando dataEntrega e dataPedido
+    const raw = o?.dataEntrega || o?.data || o?.dataPedido || o?.createdAt || o?.created_at || o?.created_date;
+    if (!raw) return null;
+    const d = new Date(raw);
     return isNaN(d?.getTime?.()) ? null : d;
   };
 
