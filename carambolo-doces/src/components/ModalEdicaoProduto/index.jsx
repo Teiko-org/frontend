@@ -179,7 +179,11 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
             await axiosApi.put(`/fornadas/produto-fornada/${produto.id}`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            toast.success("Fornada atualizada com sucesso!");
+            toast.success("Produto atualizado com sucesso!");
+            
+            // Disparar evento para recarregar a lista de produtos
+            window.dispatchEvent(new CustomEvent('productUpdated'));
+            
             onProdutoEditado && onProdutoEditado();
             onClose();
         } catch (error) {

@@ -2,7 +2,13 @@ import { axiosApi } from '../provider/AxiosApi.js';
 
 export const productsFornadasService = async () => {
     try {
-        const response = await axiosApi.get('/fornadas/produto-fornada');
+        // Buscar todos os produtos sem paginação (size muito grande)
+        const response = await axiosApi.get('/fornadas/produto-fornada', {
+            params: {
+                page: 0,
+                size: 10000  // Número muito grande para pegar todos os produtos
+            }
+        });
         return response.data.content;
     } catch (error) {
         console.error("Erro ao buscar os produtos da Fornada:", error);

@@ -90,13 +90,27 @@ function OrderKanban() {
     return "DESCONHECIDO";
   };
 
-  // Opções para selects
+  // Opções para selects - inclui anos dos pedidos + ano atual e próximo
   const anosDisponiveis = useMemo(() => {
     const set = new Set();
+    const anoAtual = new Date().getFullYear();
+    const proximoAno = anoAtual + 1;
+    
+    // Adiciona anos dos pedidos
     orders.forEach((o) => {
       const d = getOrderDate(o);
       if (d) set.add(d.getFullYear());
     });
+    
+    // Sempre inclui o ano atual e o próximo ano
+    set.add(anoAtual);
+    set.add(proximoAno);
+    
+    // Garante pelo menos os últimos 3 anos
+    for (let i = 0; i < 3; i++) {
+      set.add(anoAtual - i);
+    }
+    
     return Array.from(set).sort((a, b) => b - a);
   }, [orders]);
 

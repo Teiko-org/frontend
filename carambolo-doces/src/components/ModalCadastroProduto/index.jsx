@@ -120,7 +120,10 @@ export default function ModalCadastroProduto() {
             await axiosApi.post("/fornadas/produto-fornada", formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            toast.success("Fornada cadastrada com sucesso!");
+            toast.success("Produto cadastrado com sucesso!");
+
+            // Disparar evento para recarregar a lista de produtos
+            window.dispatchEvent(new CustomEvent('productCreated'));
 
             setProduto("");
             setValor("");
@@ -130,7 +133,7 @@ export default function ModalCadastroProduto() {
 
             setIsOpen(false);
         } catch (error) {
-            toast.error("Erro ao cadastrar fornada!");
+            toast.error("Erro ao cadastrar produto!");
             console.error("Erro completo:", error);
         }
     };

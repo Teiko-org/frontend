@@ -16,7 +16,12 @@ async function testarAPIs() {
         
         // Teste 2: Produtos de fornada
         console.log('🍰 Testando API de produtos de fornada...');
-        const produtos = await axiosApi.get('/fornadas/produto-fornada');
+        const produtos = await axiosApi.get('/fornadas/produto-fornada', {
+          params: {
+            page: 0,
+            size: 10000  // Número muito grande para pegar todos os produtos
+          }
+        });
         console.log('✅ Produtos:', produtos.data);
         console.log('📊 Total de produtos:', produtos.data.length);
         

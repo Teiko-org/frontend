@@ -52,7 +52,7 @@ function PrincipaisClientes() {
       <div className="border-2 border-gold rounded-xl overflow-hidden bg-bgHome">
         <div className="bg-gradient-to-b from-[#1C3B57] to-[#0F2A3D] text-gold px-5 py-3">
           <div className="text-xl font-bold tracking-wide">Principais Clientes</div>
-          <div className="text-[11px] opacity-90">Clientes com mais pedidos no período recente.</div>
+          <div className="text-sm opacity-90">Clientes com mais pedidos no período recente.</div>
         </div>
         <div className="p-4 h-80 flex items-center justify-center">
           <div className="text-sm text-gray-500">Carregando...</div>
@@ -82,10 +82,10 @@ function PrincipaisClientes() {
                   </div>
                   
                   <div className="flex-1">
-                    <div className="text-xs font-medium text-gray-700 mb-1">Nome</div>
-                    <div className="text-sm font-bold text-gray-900 mb-1">{cliente.nome}</div>
-                    <div className="text-xs text-gray-600 mb-1">Total de Pedidos: {cliente.totalPedidos}</div>
-                    <div className="text-xs text-gray-600">{cliente.telefone}</div>
+                    <div className="text-sm font-medium text-gray-700 mb-1">Nome</div>
+                    <div className="text-base font-bold text-gray-900 mb-1">{cliente.nome}</div>
+                    <div className="text-sm text-gray-600 mb-1">Total de Pedidos: {cliente.totalPedidos}</div>
+                    <div className="text-sm text-gray-600">{cliente.telefone}</div>
                   </div>
                 </div>
               </div>

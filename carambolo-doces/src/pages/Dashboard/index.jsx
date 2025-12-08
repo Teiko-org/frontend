@@ -298,29 +298,29 @@ export default function Dashboard() {
         <div className="w-[92%] grid grid-cols-3 gap-6">
           <div className="bg-bgHome border-2 border-gold rounded-xl p-4 shadow gradient-border hover:shadow-lg transition-shadow duration-300">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-xs text-gray-600 font-medium">Pedidos de Bolo</div>
+              <div className="text-base text-gray-600 font-medium">Pedidos de Bolo</div>
               <div className="w-3 h-3 bg-gradient-to-r from-[#D4B076] to-[#A47032] rounded-full"></div>
             </div>
             <div className="text-3xl font-bold text-gray-800 mb-2">{kpis.pedidosBolo || 0}</div>
-            <div className="text-xs text-gray-500 mb-3">{periodo === 'ano' ? 'Tendência dos últimos anos' : 'Tendência dos últimos meses'}</div>
+            <div className="text-sm text-gray-500 mb-3">{periodo === 'ano' ? 'Tendência dos últimos anos' : 'Tendência dos últimos meses'}</div>
             <div className="mt-2">
               <ReactApexChart options={sparkOptionsBolo} series={pedidosSerieSpark} type="area" height={60} />
             </div>
           </div>
           <div className="bg-bgHome border-2 border-gold rounded-xl p-4 shadow gradient-border hover:shadow-lg transition-shadow duration-300">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-xs text-gray-600 font-medium">Pedidos de Fornada</div>
+              <div className="text-base text-gray-600 font-medium">Pedidos de Fornada</div>
               <div className="w-3 h-3 bg-gradient-to-r from-[#1C3B57] to-[#0F2A3D] rounded-full"></div>
             </div>
             <div className="text-3xl font-bold text-gray-800 mb-2">{kpis.pedidosFornada || 0}</div>
-            <div className="text-xs text-gray-500 mb-3">{periodo === 'ano' ? 'Tendência dos últimos anos' : 'Tendência dos últimos meses'}</div>
+            <div className="text-sm text-gray-500 mb-3">{periodo === 'ano' ? 'Tendência dos últimos anos' : 'Tendência dos últimos meses'}</div>
             <div className="mt-2">
               <ReactApexChart options={sparkOptionsFornada} series={fornadaSerieSpark} type="area" height={60} />
             </div>
           </div>
           <div className="bg-bgHome border-2 border-gold rounded-xl p-4 shadow gradient-border hover:shadow-lg transition-shadow duration-300">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-xs text-gray-600 font-medium">Clientes Únicos</div>
+              <div className="text-base text-gray-600 font-medium">Clientes Únicos</div>
               <div className="w-3 h-3 bg-gradient-to-r from-[#C3A36A] to-[#A47032] rounded-full"></div>
             </div>
             <div className="text-3xl font-bold text-gray-800 mb-2">{kpis.clientes || 0}</div>
@@ -336,7 +336,7 @@ export default function Dashboard() {
           <div className="bg-gradient-to-b from-[#1C3B57] to-[#0F2A3D] text-gold px-5 py-3 flex items-center justify-between">
             <div>
               <div className="text-xl font-bold tracking-wide">Pedidos</div>
-              <div className="text-[11px] opacity-90">Concluídos x Cancelados · Filtrar por tipo</div>
+              <div className="text-sm opacity-90">Concluídos x Cancelados · Filtrar por tipo</div>
             </div>
             <div className="flex items-center gap-2">
               <select className="bg-bgHome text-darkBlue px-3 py-1 rounded-full border-2 border-gold shadow" value={tipoGrafico} onChange={(e) => setTipoGrafico(e.target.value)}>
@@ -379,7 +379,7 @@ export default function Dashboard() {
                 <button
                   key={b.label}
                   onClick={() => setTabProdutos(b.label)}
-                  className={`px-3 py-1 rounded-full text-xs transition-all button-animated ${
+                  className={`px-3 py-1 rounded-full text-sm transition-all button-animated ${
                     tabProdutos === b.label ? "bg-gradient-to-l from-gold to-darkGold text-blue border-2 border-gold shadow hover:shadow-md" : "bg-bgHome text-gold border-2 border-gold hover:bg-[#f6efe4]"
                   }`}
                 >
@@ -388,7 +388,7 @@ export default function Dashboard() {
               ))}
             </div>
             <div className="p-3 h-80 flex flex-col">
-              <div className="grid grid-cols-4 text-xs font-semibold border-b border-gold pb-2 flex-shrink-0">
+              <div className="grid grid-cols-4 text-base font-semibold border-b border-gold pb-2 flex-shrink-0">
                 <div>Imagem</div>
                 <div>Nome</div>
                 <div className="text-center">Quantidade</div>
@@ -396,7 +396,7 @@ export default function Dashboard() {
               </div>
               <div className="flex-1 overflow-auto custom-scrollbar pr-3">
                 {produtosFiltrados.map((p) => (
-                  <div key={`${p.tipo}-${p.id}`} className="grid grid-cols-4 items-center py-2 border-b border-gold/40 text-sm">
+                  <div key={`${p.tipo}-${p.id}`} className="grid grid-cols-4 items-center py-2 border-b border-gold/40 text-base">
                     <div>
                       <img
                         src={p.imagemUrl || defaultImageCard}
