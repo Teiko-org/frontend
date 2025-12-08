@@ -4,8 +4,8 @@ import { RiFileTextLine } from "react-icons/ri";
 import Button from "../Button";
 import InputOption from "../InputOption";
 import { axiosApi } from "../../provider/AxiosApi";
-import { toast } from "react-toastify";
 import { fetchAllAdicionais } from "../../service/adicionalService";
+import { toast } from "../../utils/toast";
 
 export default function ModalCadastroProduto() {
     const [isModalOpen, setIsOpen] = useState(false);
@@ -60,7 +60,7 @@ export default function ModalCadastroProduto() {
         e?.preventDefault?.();
 
         if (!nomeDecoracao) {
-            toast.warn("Preencha o nome da decoração!");
+            toast.warn('Preencha o nome da decoração!');
             return;
         }
 
@@ -82,7 +82,7 @@ export default function ModalCadastroProduto() {
             const response = await axiosApi.post("/decoracoes", formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            toast.success("Decoração cadastrada com sucesso!");
+            toast.success('Decoração cadastrada com sucesso!');
 
             setNomeDecoracao("");
             setObservacao([]);
@@ -97,7 +97,7 @@ export default function ModalCadastroProduto() {
 
             return response.data.id;
         } catch (error) {
-            toast.error("Erro ao cadastrar decoração!");
+            toast.error('Erro ao cadastrar decoração!');
             console.error("Erro completo:", error);
             throw error;
         }
@@ -120,7 +120,7 @@ export default function ModalCadastroProduto() {
             await axiosApi.post("/fornadas/produto-fornada", formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            toast.success("Produto cadastrado com sucesso!");
+            toast.success('Produto cadastrado com sucesso!');
 
             // Disparar evento para recarregar a lista de produtos
             window.dispatchEvent(new CustomEvent('productCreated'));
@@ -133,7 +133,7 @@ export default function ModalCadastroProduto() {
 
             setIsOpen(false);
         } catch (error) {
-            toast.error("Erro ao cadastrar produto!");
+            toast.error('Erro ao cadastrar produto!');
             console.error("Erro completo:", error);
         }
     };

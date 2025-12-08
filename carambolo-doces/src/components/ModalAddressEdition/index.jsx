@@ -3,7 +3,7 @@ import ModalBaseForm from "../ModalBaseForm";
 import Button from "../Button";
 import axios from "axios";
 import { updateAddress } from "../../service/addressService";
-import { toast } from 'react-toastify';
+import { toast } from "../../utils/toast";
 
 function ModalAddressEdition({ onClose, endereco, onAddressUpdated }) {
   const [isLoading, setIsLoading] = useState(false);
@@ -68,7 +68,7 @@ function ModalAddressEdition({ onClose, endereco, onAddressUpdated }) {
 
       if (response.data && !response.data.erro) {
         if (response.data.uf && response.data.uf.toUpperCase() !== "SP") {
-          toast.error("Apenas endereços de São Paulo são permitidos.");
+          toast.error('Apenas endereços de São Paulo são permitidos.');
           setCep(formatCepForDisplay(endereco.cep) || "");
           setEstado(endereco.estado || "");
           setCidade(endereco.cidade || "");

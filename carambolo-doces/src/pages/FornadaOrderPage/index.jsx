@@ -13,10 +13,10 @@ import axios from "axios";
 import { IoIosInformationCircle } from "react-icons/io";
 import { listUserAddresses } from "../../service/addressService";
 import { getProdutoFornadaById } from "../../service/fornadaService";
-import { toast } from "react-toastify";
 import { useCart } from "../../contexts/CartContext";
 import defaultFornadaImg from "../../assets/image_fornada.png";
 import { validateBrazilianPhone } from "../../utils/phoneValidation";
+import { toast } from "../../utils/toast";
 
 function FornadaOrderPage() {
     const { removeByFornadaId } = useCart();
@@ -31,7 +31,7 @@ function FornadaOrderPage() {
 
     useEffect(() => {
         if (!produtoSelecionado) {
-            toast.error("Nenhum produto selecionado!");
+            toast.error('Nenhum produto selecionado!');
             navigate("/fornada");
         }
     }, [produtoSelecionado, navigate]);
@@ -123,7 +123,7 @@ function FornadaOrderPage() {
                     }
                 } catch (error) {
                     console.error("Erro ao buscar quantidade disponível:", error);
-                    toast.error("Erro ao verificar estoque do produto");
+                    toast.error('Erro ao verificar estoque do produto');
                     setQuantidadeDisponivel(0);
                     setAmount(1);
                 } finally {
@@ -246,15 +246,15 @@ function FornadaOrderPage() {
 
     const sendOrder = async () => {
         if (!dataEntrega) {
-            toast.warn("Por favor, selecione a data de entrega!");
+            toast.warn('Por favor, selecione a data de entrega!');
             return;
         }
         if (!nome) {
-            toast.warn("Por favor, preencha seu nome!");
+            toast.warn('Por favor, preencha seu nome!');
             return;
         }
         if (!telefone) {
-            toast.warn("Por favor, preencha o telefone!");
+            toast.warn('Por favor, preencha o telefone!');
             return;
         }
         
@@ -265,24 +265,24 @@ function FornadaOrderPage() {
             return;
         }
         if (deliveryOption === "Entrega" && !cep) {
-            toast.warn("Por favor, preencha o CEP para entrega!");
+            toast.warn('Por favor, preencha o CEP para entrega!');
             return;
         }
         if (deliveryOption === "Entrega" && (!cidade || !bairro || !rua || !numero)) {
-            toast.warn("Por favor, preencha todos os campos obrigatórios do endereço!");
+            toast.warn('Por favor, preencha todos os campos obrigatórios do endereço!');
             return;
         }
         if (deliveryOption === "Retirada" && !horario) {
-            toast.warn("Por favor, selecione o horário da retirada!");
+            toast.warn('Por favor, selecione o horário da retirada!');
             return;
         }
         if (amount < 1) {
-            toast.warn("A quantidade deve ser no mínimo 1 unidade!");
+            toast.warn('A quantidade deve ser no mínimo 1 unidade!');
             return;
         }
         
         if (quantidadeDisponivel === 0) {
-            toast.error("Este produto está esgotado!");
+            toast.error('Este produto está esgotado!');
             return;
         }
         
@@ -292,12 +292,12 @@ function FornadaOrderPage() {
         }
         
         setIsSubmitting(true);
-        toast.info("Processando seu pedido...");
+        toast.info('Processando seu pedido...');
         
         try {
             // Validar se o fornadaDaVezId está presente
             if (!produtoSelecionado?.fornadaDaVezId) {
-                toast.error("Produto inválido! Por favor, selecione o produto novamente.");
+                toast.error('Produto inválido! Por favor, selecione o produto novamente.');
                 setIsSubmitting(false);
                 navigate('/carrinho');
                 return;
@@ -307,14 +307,14 @@ function FornadaOrderPage() {
             
             // Verificar se o produto ainda existe e está ativo
             if (!produtoAtualizado || !produtoAtualizado.fornada) {
-                toast.error("Este produto não está mais disponível na fornada atual!");
+                toast.error('Este produto não está mais disponível na fornada atual!');
                 setIsSubmitting(false);
                 navigate('/carrinho');
                 return;
             }
             
             if (produtoAtualizado.quantidade < amount) {
-                toast.error(`Estoque insuficiente! Disponível agora: ${produtoAtualizado.quantidade} unidades`);
+                console.error(`[ERROR] Estoque insuficiente! Disponível agora: ${produtoAtualizado.quantidade} unidades`);
                 setQuantidadeDisponivel(produtoAtualizado.quantidade);
                 if (produtoAtualizado.quantidade > 0) {
                     setAmount(Math.min(amount, produtoAtualizado.quantidade));
@@ -377,7 +377,7 @@ function FornadaOrderPage() {
             const mensagem = resumo.mensagem;
             const linkWhatsApp = `https://wa.me/55${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`;
 
-            toast.success("Pedido realizado com sucesso!");
+            toast.success('Pedido realizado com sucesso!');
             
             try { removeByFornadaId(doceFornada.fornadaDaVezId); } catch {}
             setTimeout(() => {
@@ -400,7 +400,7 @@ function FornadaOrderPage() {
                     }, 2000);
                 }
             } else if (error.response?.status === 404) {
-                toast.error("Produto não encontrado! Por favor, atualize o carrinho.");
+                toast.error('Produto não encontrado! Por favor, atualize o carrinho.');
                 setTimeout(() => {
                     navigate('/carrinho');
                 }, 2000);
@@ -409,7 +409,7 @@ function FornadaOrderPage() {
             } else if (error.message) {
                 toast.error(error.message);
             } else {
-                toast.error("Erro ao realizar pedido! Tente novamente.");
+                toast.error('Erro ao realizar pedido! Tente novamente.');
             }
         } finally {
             setIsSubmitting(false);

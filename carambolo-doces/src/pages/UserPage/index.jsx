@@ -8,7 +8,6 @@ import { changePassword, deleteUser, getUserData, updateUserData } from "../../s
 import { useNavigate } from "react-router-dom";
 import PhoneInputCustom from "../../components/PhoneInput/PhoneInputCustom";
 import CampoComGradiente from "../../components/gradientField";
-import { toast } from "react-toastify";
 
 function UserPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -135,12 +134,12 @@ function UserPage() {
 
   const handleChangePassword = async () => {
     if (!senhaAtual || !novaSenha) {
-      toast.error("Preencha todos os campos!");
+      toast.error('Preencha todos os campos!');
       return;
     }
 
     if (senhaAtual === novaSenha) {
-      toast.error("A nova senha não pode ser igual à senha atual!");
+      toast.error('A nova senha não pode ser igual à senha atual!');
       return;
     }
 
@@ -148,7 +147,7 @@ function UserPage() {
     if (Object.keys(passwordErrors).length > 0) {
       setSenhaErrors(passwordErrors);
       setShowPasswordRules(true);
-      toast.error("A senha não atende aos requisitos de segurança!");
+      toast.error('A senha não atende aos requisitos de segurança!');
       return;
     }
 

@@ -4,9 +4,9 @@ import { RiFileTextLine } from "react-icons/ri";
 import Button from "../Button";
 import InputOption from "../InputOption";
 import { axiosApi } from "../../provider/AxiosApi";
-import { toast } from "react-toastify";
 import { fetchAllAdicionais } from "../../service/adicionalService";
 import { updateDecoracao, getDecoraceosComAdicionais } from "../../service/decoracaoService";
+import { toast } from "../../utils/toast";
 
 export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProdutoEditado, initialCategoria }) {
     const [file, setFile] = useState(null);
@@ -129,7 +129,7 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
         e?.preventDefault?.();
 
         if (!nomeDecoracao) {
-            toast.warn("Preencha o nome da decoração!");
+            toast.warn('Preencha o nome da decoração!');
             return;
         }
 
@@ -156,11 +156,11 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
 
         try {
             const response = await updateDecoracao(decoracaoId, formData);
-            toast.success("Decoração atualizada com sucesso!");
+            toast.success('Decoração atualizada com sucesso!');
             onProdutoEditado && onProdutoEditado();
             onClose();
         } catch (error) {
-            toast.error("Erro ao atualizar decoração!");
+            toast.error('Erro ao atualizar decoração!');
             console.error(error);
         }
     }
@@ -179,7 +179,7 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
             await axiosApi.put(`/fornadas/produto-fornada/${produto.id}`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            toast.success("Produto atualizado com sucesso!");
+            toast.success('Produto atualizado com sucesso!');
             
             // Disparar evento para recarregar a lista de produtos
             window.dispatchEvent(new CustomEvent('productUpdated'));
@@ -187,7 +187,7 @@ export default function ModalEdicaoProduto({ isOpen, onClose, produto, onProduto
             onProdutoEditado && onProdutoEditado();
             onClose();
         } catch (error) {
-            toast.error("Erro ao atualizar fornada!");
+            toast.error('Erro ao atualizar fornada!');
             console.error(error);
         }
     }

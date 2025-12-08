@@ -3,11 +3,10 @@ import { useForm } from "react-hook-form";
 import ModalBaseLogin from "../ModalBaseLogin";
 import Button from "../Button";
 import PhoneInputCustom from "../PhoneInput/PhoneInputCustom";
-import { toast } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
 import { register as registerUser } from "../../service/userService";
 import userIcon from '../../assets/user_icon.png'; // added import
 import { validateBrazilianPhone } from "../../utils/phoneValidation";
+import { toast } from "../../utils/toast";
 
 function RegisterModal({ onClose, switchToLogin }) {
   const {

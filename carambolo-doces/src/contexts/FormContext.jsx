@@ -1,8 +1,8 @@
 import React, { createContext, useState } from 'react';
 import { useForm, FormProvider as RHFProvider } from 'react-hook-form';
 import { axiosApi } from '../provider/AxiosApi';
-import { toast } from 'react-toastify';
 import { validateBrazilianPhone } from '../utils/phoneValidation';
+import { toast } from '../utils/toast';
 
 export const FormContext = createContext();
 
@@ -150,14 +150,14 @@ export const FormProvider = ({ children }) => {
 
   const submitForm = async () => {
     try {
-      toast.info("Processando seu pedido...");
+      toast.info('Processando seu pedido...');
 
       if (!dadosEntrega.nome) {
-        toast.warn("Por favor, preencha seu nome!");
+        toast.warn('Por favor, preencha seu nome!');
         return;
       }
       if (!dadosEntrega.telefone) {
-        toast.warn("Por favor, preencha o telefone!");
+        toast.warn('Por favor, preencha o telefone!');
         return;
       }
       
@@ -168,39 +168,39 @@ export const FormProvider = ({ children }) => {
         return;
       }
       if (!dadosEntrega.data) {
-        toast.warn("Por favor, selecione a data de entrega!");
+        toast.warn('Por favor, selecione a data de entrega!');
         return;
       }
       if (!dadosMontagem.tamanho) {
-        toast.warn("Por favor, selecione o tamanho do bolo!");
+        toast.warn('Por favor, selecione o tamanho do bolo!');
         return;
       }
       if (!dadosMontagem.formato) {
-        toast.warn("Por favor, selecione o formato do bolo!");
+        toast.warn('Por favor, selecione o formato do bolo!');
         return;
       }
       if (!dadosMontagem.massaId) {
-        toast.warn("Por favor, selecione a massa do bolo!");
+        toast.warn('Por favor, selecione a massa do bolo!');
         return;
       }
       if (!dadosMontagem.recheioId) {
-        toast.error("Por favor, selecione o recheio do bolo!");
+        toast.error('Por favor, selecione o recheio do bolo!');
         return;
       }
       if (!dadosMontagem.observacoes || dadosMontagem.observacoes.trim().length < 10) {
-        toast.warn("Por favor, descreva nas observações como você quer o bolo (mín. 10 caracteres).");
+        toast.warn('Por favor, descreva nas observações como você quer o bolo (mín. 10 caracteres).');
         return;
       }
       if (dadosEntrega.deliveryOption === "Entrega" && !dadosEntrega.cep) {
-        toast.warn("Por favor, preencha o CEP para entrega!");
+        toast.warn('Por favor, preencha o CEP para entrega!');
         return;
       }
       if (dadosEntrega.deliveryOption === "Entrega" && (!dadosEntrega.cidade || !dadosEntrega.bairro || !dadosEntrega.rua || !dadosEntrega.numero)) {
-        toast.warn("Por favor, preencha todos os campos obrigatórios do endereço!");
+        toast.warn('Por favor, preencha todos os campos obrigatórios do endereço!');
         return;
       }
       if (dadosEntrega.deliveryOption === "Retirada" && !dadosEntrega.horario) {
-        toast.warn("Por favor, selecione o horário da retirada!");
+        toast.warn('Por favor, selecione o horário da retirada!');
         return;
       }
 
@@ -226,7 +226,7 @@ export const FormProvider = ({ children }) => {
       
       // Validar que o recheioId existe antes de processar
       if (!dadosMontagem.recheioId) {
-        toast.error("Recheio é obrigatório! Por favor, selecione um recheio.");
+        toast.error('Recheio é obrigatório! Por favor, selecione um recheio.');
         return;
       }
       
@@ -243,12 +243,12 @@ export const FormProvider = ({ children }) => {
         recheioPedidoId = await registerRecheioPedido(recheioPedidoData);
       } catch (error) {
         console.error('Erro ao processar recheio:', error);
-        toast.error("Não foi possível processar o recheio selecionado. Por favor, selecione outro recheio.");
+        toast.error('Não foi possível processar o recheio selecionado. Por favor, selecione outro recheio.');
         return;
       }
 
       if (!recheioPedidoId) {
-        toast.error("Não foi possível processar o recheio selecionado. Por favor, selecione outro recheio.");
+        toast.error('Não foi possível processar o recheio selecionado. Por favor, selecione outro recheio.');
         return;
       }
 
@@ -276,7 +276,7 @@ export const FormProvider = ({ children }) => {
         }
       } catch (e) {
         console.error("❌ Erro ao enviar imagens de referência:", e);
-        toast.error("Não foi possível salvar a decoração/imagens de referência. Tente novamente.");
+        toast.error('Não foi possível salvar a decoração/imagens de referência. Tente novamente.');
         return;
       }
 
@@ -289,7 +289,7 @@ export const FormProvider = ({ children }) => {
       }
 
       if (!formatoMapeado) {
-        toast.error(`Formato "${dadosMontagem.formato}" não é válido!`);
+        console.error(`[ERROR] Formato "${dadosMontagem.formato}" não é válido!`);
         return;
       }
 
@@ -357,7 +357,7 @@ export const FormProvider = ({ children }) => {
       const mensagem = resumo.mensagem;
       const linkWhatsApp = `https://wa.me/55${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`;
 
-      toast.success("Pedido realizado com sucesso!");
+      toast.success('Pedido realizado com sucesso!');
       
       // Disparar evento para que outras telas possam recarregar
       window.dispatchEvent(new CustomEvent('pedidoCriado', { detail: { pedidoId: pedidoId, resumoId: resumo.id } }));
@@ -372,15 +372,15 @@ export const FormProvider = ({ children }) => {
       if (error.response?.status === 422 && error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else if (error.response?.status === 400) {
-        toast.error("Dados inválidos! Verifique se todos os campos estão preenchidos corretamente.");
+        toast.error('Dados inválidos! Verifique se todos os campos estão preenchidos corretamente.');
       } else if (error.response?.status === 404) {
-        toast.error("Recurso não encontrado!");
+        toast.error('Recurso não encontrado!');
       } else if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else if (error.message) {
         toast.error(error.message);
       } else {
-        toast.error("Erro ao realizar pedido! Tente novamente.");
+        toast.error('Erro ao realizar pedido! Tente novamente.');
       }
     }
   };

@@ -3,7 +3,6 @@ import CustomDatePicker from "../../components/DatePicker-3";
 import TableSelectProductsFornada from "../../components/TableSelectProductsFornada";
 import Button from "../../components/Button";
 import HeaderDashboard from "../../components/headerDashboard";
-import "react-toastify/dist/ReactToastify.css";
 import KPILastFornada from "../../components/KPILastFornada";
 import KPIThisMonthFornadas from "../../components/KPIThisMonthFornadas";
 import DashboardFornadaData from "../../components/DashboardFornadaData/DashboardFornadaData";

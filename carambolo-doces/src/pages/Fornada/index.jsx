@@ -4,7 +4,6 @@ import Footer from "../../components/Footer";
 import Card from "../../components/Card";
 import BannerFornada from "../../components/BannerFornada";
 import { getFornadaAtiva, getProdutosFornadaComImagens } from "../../service/fornadaService";
-import { toast } from "react-toastify";
 
 function FornadaSemana() {
   const [produtos, setProdutos] = useState([]);
@@ -45,7 +44,7 @@ function FornadaSemana() {
       } catch (error) {
         console.error("Erro ao carregar produtos da fornada:", error);
         if (error.response?.status !== 401) {
-          toast.error("Erro ao carregar os produtos da fornada");
+          toast.error('Erro ao carregar os produtos da fornada');
         }
         setFornada(null);
         setProdutos([]);

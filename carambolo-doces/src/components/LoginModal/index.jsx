@@ -4,12 +4,11 @@ import Button from "../Button";
 import RegisterModal from "../RegisterModal";
 import userIcon from "../../assets/user_icon.png";
 import { useForm } from "react-hook-form";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { login, getUserData } from "../../service/userService";
 import { useCart } from "../../contexts/CartContext";
 import PhoneInputLogin from "../PhoneInput/PhoneInputLogin";
 import { validateBrazilianPhone } from "../../utils/phoneValidation";
+import { toast } from "../../utils/toast";
 
 function LoginModal({ onClose }) {
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm();
@@ -32,7 +31,7 @@ function LoginModal({ onClose }) {
       // Migrar carrinho de convidado para usuário logado
       migrateGuestCartToUser();
 
-      toast.success("Login realizado com sucesso!");
+      toast.success('Login realizado com sucesso!');
       window.dispatchEvent(new Event("storage"));
       onClose();
     } catch (error) {

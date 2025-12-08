@@ -10,7 +10,6 @@ import Button from "../../components/Button";
 import { axiosApi } from "../../provider/AxiosApi";
 import { useCart } from "../../contexts/CartContext";
 import axios from "axios";
-import { toast } from "react-toastify";
 import { IoIosInformationCircle } from "react-icons/io";
 import { listUserAddresses } from "../../service/addressService";
 import { getProdutoFornadaById } from "../../service/fornadaService";
@@ -18,6 +17,7 @@ import Carousel from "../../components/Carousel";
 import defaultImageCard from "../../assets/image_card.png";
 import defaultImageFornada from "../../assets/image_fornada.png";
 import { validateBrazilianPhone } from "../../utils/phoneValidation";
+import { toast } from "../../utils/toast";
 
 export default function FornadaMultiOrderPage() {
   const { removeByFornadaId, removeItem } = useCart();

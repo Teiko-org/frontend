@@ -3,7 +3,7 @@ import ModalBaseForm from "../ModalBaseForm";
 import Button from "../Button";
 import axios from "axios";
 import { createAddress } from "../../service/addressService";
-import { toast } from 'react-toastify';
+import { toast } from "../../utils/toast";
 
 function ModalAddressRegister({ onClose, onAddressCreated }) {
   const [nome, setNome] = useState("");
@@ -58,7 +58,7 @@ function ModalAddressRegister({ onClose, onAddressCreated }) {
 
       if (response.data && !response.data.erro) {
         if (response.data.uf && response.data.uf.toUpperCase() !== "SP") {
-          toast.error("Apenas endereços de São Paulo são permitidos.");
+          toast.error('Apenas endereços de São Paulo são permitidos.');
           cleanAddressFields();
           setCep("");
           return;
