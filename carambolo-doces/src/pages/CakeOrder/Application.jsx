@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from 'react';
+import React, { useEffect, useContext, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { FormProvider, FormContext } from '../../contexts/FormContext';
 import Header from '../../components/Header';
@@ -29,29 +29,71 @@ const Application = () => {
   const StepComponent = steps[currentStep - 1];
   const [selectedBoloName, setSelectedBoloName] = React.useState("CARAMBOLO VINTAGE");
   const [carouselSlides, setCarouselSlides] = React.useState(slides);
+  const decoracaoIdRef = useRef(null);
 
   useEffect(() => {
     // Check if decoration was passed via route state
     const decoracao = location.state?.decoracao;
     if (decoracao && decoracao.id) {
-      // Fetch full decoration data to get all images
-      const fetchDecoracao = async () => {
-        try {
-          const fullDecoracao = await getDecoracaoById(decoracao.id);
-          if (fullDecoracao && fullDecoracao.imagens && fullDecoracao.imagens.length > 0) {
-            setSelectedBoloName(fullDecoracao.nome || decoracao.nome || "CARAMBOLO VINTAGE");
-            const decoracaoSlides = fullDecoracao.imagens.map((imagem, index) => ({
-              id: index + 1,
-              image: typeof imagem === 'object' && imagem.url ? imagem.url : imagem,
-              title: `${fullDecoracao.nome} - ${index + 1}`
-            }));
-            setCarouselSlides(decoracaoSlides);
+      // Only set once if not already set
+      if (decoracaoIdRef.current !== decoracao.id) {
+        console.log("Decoration found in route state, ID:", decoracao.id);
+        decoracaoIdRef.current = decoracao.id;
+        
+        // Store decoration in FormContext for Step3 to access
+        appendFormData({ decoracaoId: decoracao.id }, "dadosMontagem");
+        
+        // Scroll to top only on initial decoration load
+        window.scrollTo(0, 0);
+        
+        // Fetch full decoration data to get all images and adicionais
+        const fetchDecoracao = async () => {
+          try {
+            const fullDecoracao = await getDecoracaoById(decoracao.id);
+            if (fullDecoracao) {
+              console.log("✅ Full decoration loaded:", fullDecoracao);
+              
+              // Store full decoration data in FormContext for Steps to access
+              const decoracaoData = {
+                decoracaoId: decoracao.id,
+                decoracaoCompleta: fullDecoracao
+              };
+              
+              // Extract adicionais if available in the full decoration data
+              let adicionaisExtraidos = [];
+              if (fullDecoracao.adicionaisPossiveis && Array.isArray(fullDecoracao.adicionaisPossiveis)) {
+                adicionaisExtraidos = fullDecoracao.adicionaisPossiveis;
+                console.log("📦 Adicionais extraídos de adicionaisPossiveis:", adicionaisExtraidos);
+              } else if (fullDecoracao.adicionais && Array.isArray(fullDecoracao.adicionais)) {
+                adicionaisExtraidos = fullDecoracao.adicionais;
+                console.log("📦 Adicionais extraídos de adicionais:", adicionaisExtraidos);
+              }
+              
+              // Store adicionais if found
+              if (adicionaisExtraidos.length > 0) {
+                decoracaoData.adicionaisDisponiveis = adicionaisExtraidos;
+                console.log(`✅ ${adicionaisExtraidos.length} adicionais armazenados no contexto`);
+              }
+              
+              appendFormData(decoracaoData, "dadosMontagem");
+              
+              // Set carousel images
+              if (fullDecoracao.imagens && fullDecoracao.imagens.length > 0) {
+                setSelectedBoloName(fullDecoracao.nome || decoracao.nome || "CARAMBOLO VINTAGE");
+                const decoracaoSlides = fullDecoracao.imagens.map((imagem, index) => ({
+                  id: index + 1,
+                  image: typeof imagem === 'object' && imagem.url ? imagem.url : imagem,
+                  title: `${fullDecoracao.nome} - ${index + 1}`
+                }));
+                setCarouselSlides(decoracaoSlides);
+              }
+            }
+          } catch (error) {
+            console.warn("Erro ao carregar decoração:", error);
           }
-        } catch (error) {
-          console.warn("Erro ao carregar decoração:", error);
-        }
-      };
-      fetchDecoracao();
+        };
+        fetchDecoracao();
+      }
     } else {
       // Original behavior: check localStorage for selectedBolo
       const selectedBolo = localStorage.getItem('selectedBolo');
@@ -74,11 +116,13 @@ const Application = () => {
             window.dispatchEvent(event);
           }, 100);
           localStorage.removeItem('selectedBolo');
-        } catch (e) {}
+          window.scrollTo(0, 0);
+        } catch {
+          // Ignore JSON parse errors
+        }
       }
     }
-    window.scrollTo(0, 0);
-  }, [location]);
+  }, [location.state?.decoracao?.id, appendFormData]);
 
   return (
     <div>

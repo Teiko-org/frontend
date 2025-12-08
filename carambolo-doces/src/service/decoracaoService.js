@@ -61,3 +61,29 @@ export async function getDecoraceosComAdicionais() {
     return [];
   }
 }
+
+export async function getAdicionaisByDecoracao(decoracaoId) {
+  try {
+    console.log(`🔍 Calling /decoracoes/${decoracaoId}/adicionais endpoint`);
+    const { data } = await axiosApi.get(`/decoracoes/${decoracaoId}/adicionais`);
+    console.log(`📦 Adicionais response for decoration ${decoracaoId}:`, data);
+    
+    // Handle both array and object responses
+    if (Array.isArray(data)) {
+      console.log(`✅ Found ${data.length} adicionais`);
+      return data;
+    }
+    
+    // If response is an object with adicionaisPossiveis
+    if (data && data.adicionaisPossiveis && Array.isArray(data.adicionaisPossiveis)) {
+      console.log(`✅ Found ${data.adicionaisPossiveis.length} adicionais`);
+      return data.adicionaisPossiveis;
+    }
+    
+    console.log(`⚠️ No adicionais found for decoration ${decoracaoId}`);
+    return [];
+  } catch (error) {
+    console.error(`Erro ao buscar adicionais da decoração ${decoracaoId}:`, error);
+    return [];
+  }
+}
