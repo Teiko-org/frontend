@@ -326,7 +326,7 @@ function FornadaOrderPage() {
             toast.warn('Por favor, preencha todos os campos obrigatórios do endereço!');
             return;
         }
-        if (deliveryOption === "Retirada" && (!horario || horario.trim() === "")) {
+        if (deliveryOption === "Retirada" && (!horario || horario.trim() === "" || horario === "Selecione um horário")) {
             toast.warn('Por favor, selecione o horário da retirada!');
             return;
         }
@@ -717,18 +717,18 @@ function FornadaOrderPage() {
                                 </>
                             )}
                             {deliveryOption === "Retirada" && (
-                                <div className="col-span-2">
+                                <div className="col-span-3">
                                     <Select
                                         label="Horário"
                                         options={[
+                                            { value: "", label: "Selecione um horário" },
                                             { value: "17:00", label: "17:00" },
                                             { value: "17:30", label: "17:30" },
                                             { value: "18:00", label: "18:00" },
                                             { value: "18:30", label: "18:30" },
                                             { value: "19:00", label: "19:00" },
                                         ]}
-                                        placeholder={""}
-                                        value={horario || ""}
+                                        value={horario === undefined || horario === null ? "" : horario}
                                         onChange={e => {
                                             const valor = e.target.value;
                                             setHorario(valor);

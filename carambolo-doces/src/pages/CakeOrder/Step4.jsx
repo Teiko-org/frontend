@@ -499,7 +499,7 @@ const Step4 = () => {
           </>
         )}
         {deliveryOption === "Retirada" && (
-          <div className="col-span-2">
+          <div className="col-span-3">
             <Controller
               name="horario"
               control={control}

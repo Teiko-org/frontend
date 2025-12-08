@@ -185,7 +185,7 @@ export default function FornadaMultiOrderPage() {
     if (!dataEntrega) { setErrors((p)=>({ ...p, dataEntrega:true })); t.warn("Selecione a data de entrega!"); return false; }
     const d = new Date(dataEntrega); const today = new Date(); today.setHours(0,0,0,0);
     if (d < today) { setErrors((p)=>({ ...p, dataEntrega:true })); t.warn("A data não pode ser no passado!"); return false; }
-    if (deliveryOption === 'Retirada' && (!horario || horario.trim() === "")) { setErrors((p)=>({ ...p, horario:true })); t.warn("Selecione o horário da retirada!"); return false; }
+    if (deliveryOption === 'Retirada' && (!horario || horario.trim() === "" || horario === "Selecione um horário")) { setErrors((p)=>({ ...p, horario:true })); t.warn("Selecione o horário da retirada!"); return false; }
     if (deliveryOption === 'Entrega' && !(selectedAddressId && selectedAddressId !== 'novo')) {
       const cepDigits = String(cep || '').replace(/\D/g, '');
       if (cepDigits.length !== 8) { setErrors((p)=>({ ...p, cep:true })); t.warn("CEP inválido!"); return false; }
@@ -439,17 +439,18 @@ export default function FornadaMultiOrderPage() {
                 </>
               )}
               {deliveryOption === "Retirada" && (
-                <div className="col-span-2">
+                <div className="col-span-3">
                   <Select 
                     label="Horário" 
                     options={[
+                      { value: "", label: "Selecione um horário" },
                       { value: "17:00", label: "17:00" }, 
                       { value: "17:30", label: "17:30" }, 
                       { value: "18:00", label: "18:00" }, 
                       { value: "18:30", label: "18:30" }, 
                       { value: "19:00", label: "19:00" }
                     ]} 
-                    value={horario || ""} 
+                    value={horario === undefined || horario === null ? "" : horario} 
                     onChange={(e) => {
                       const valor = e.target.value;
                       setHorario(valor);
