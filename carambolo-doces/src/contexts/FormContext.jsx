@@ -359,6 +359,9 @@ export const FormProvider = ({ children }) => {
 
       toast.success("Pedido realizado com sucesso!");
       
+      // Disparar evento para que outras telas possam recarregar
+      window.dispatchEvent(new CustomEvent('pedidoCriado', { detail: { pedidoId: pedidoId, resumoId: resumo.id } }));
+      
       setTimeout(() => {
         window.open(linkWhatsApp, "_blank");
       }, 1000);
