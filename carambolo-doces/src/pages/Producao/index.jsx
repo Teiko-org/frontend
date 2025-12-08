@@ -246,7 +246,7 @@ export default function Producao() {
                     <div className="text-gray-500 text-sm">Nenhum pedido pendente</div>
                   ) : (
                     massasPendentes.map((massa, index) => (
-                      <div key={index} className="bg-[#F6EFE4] border-2 border-gold rounded-xl p-3 flex flex-col justify-between min-h-[80px]">
+                      <div key={index} className="bg-[#FFEEE7] border-2 border-gold rounded-xl p-3 flex flex-col justify-between min-h-[80px]">
                         <div className="font-semibold text-darkBlue mb-4">{massa.nome}</div>
                         <div className="flex items-center justify-between mt-auto">
                           <button
@@ -273,7 +273,7 @@ export default function Producao() {
                     <div className="text-gray-500 text-sm">Nenhum pedido pendente</div>
                   ) : (
                     recheiosPendentes.map((recheio, index) => (
-                      <div key={index} className="bg-[#F6EFE4] border-2 border-gold rounded-xl p-3 flex flex-col justify-between min-h-[80px]">
+                      <div key={index} className="bg-[#FFEEE7] border-2 border-gold rounded-xl p-3 flex flex-col justify-between min-h-[80px]">
                         <div className="font-semibold text-darkBlue mb-4">{recheio.nome}</div>
                         <div className="flex items-center justify-between mt-auto">
                           <button
@@ -300,7 +300,7 @@ export default function Producao() {
                     <div className="text-gray-500 text-sm">Nenhum pedido próximo da entrega</div>
                   ) : (
                     pedidosProximos.slice(0, 5).map((pedido) => (
-                      <div key={pedido.id} className="bg-[#F6EFE4] border border-gold rounded-xl p-3">
+                      <div key={pedido.id} className="bg-[#FFEEE7] border border-gold rounded-xl p-3">
                         <div className="flex items-start justify-between mb-2">
                           <div className="font-semibold text-darkBlue">{pedido.nomeCliente || "Cliente"}</div>
                           <div className="bg-red rounded-full px-2 py-1 flex items-center gap-1">
