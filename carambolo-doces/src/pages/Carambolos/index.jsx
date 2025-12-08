@@ -5,14 +5,14 @@ import Footer from "../../components/Footer";
 import Card from "../../components/Card";
 import ArrowButton from "../../components/ButtonArrow";
 import Button from "../../components/Button";
-import { getBolosComImagens } from "../../service/boloService";
+import { getAllDecoracoes } from "../../service/decoracaoService";
 
 function Carambolos() {
   const location = useLocation();
   const navigate = useNavigate();
   const categoriaSelecionada = location.state?.categoriaSelecionada;
   
-  const [bolosPorCategoria, setBolosPorCategoria] = React.useState({});
+  const [decoracoesPorCategoria, setDecoraceoesPorCategoria] = React.useState({});
   const [pageByCategory, setPageByCategory] = React.useState({});
   const [loading, setLoading] = React.useState(true);
   const [scrollToCategory, setScrollToCategory] = React.useState(null);
@@ -22,29 +22,29 @@ function Carambolos() {
   const categoryRefs = useRef({});
 
   React.useEffect(() => {
-    const fetchBolos = async () => {
+    const fetchDecoracoes = async () => {
       try {
         setLoading(true);
-        const data = await getBolosComImagens();
+        const data = await getAllDecoracoes();
         
-        // Comportamento original: agrupa por categoria
-        const agrupados = data.reduce((acc, bolo) => {
-          const categoria = bolo.categoria || 'Outros';
+        // Agrupa decorações por categoria
+        const agrupadas = data.reduce((acc, decoracao) => {
+          const categoria = decoracao.categoria || 'Outros';
           if (!acc[categoria]) acc[categoria] = [];
-          acc[categoria].push(bolo);
+          acc[categoria].push(decoracao);
           return acc;
         }, {});
         
-        setBolosPorCategoria(agrupados);
+        setDecoraceoesPorCategoria(agrupadas);
         
         const initialPages = {};
-        Object.keys(agrupados).forEach(cat => { initialPages[cat] = 0; });
+        Object.keys(agrupadas).forEach(cat => { initialPages[cat] = 0; });
         setPageByCategory(initialPages);
         
         // Se uma categoria foi selecionada, marca para scroll
         if (categoriaSelecionada) {
           const categoriaNormalizada = categoriaSelecionada.trim();
-          const categoriaEncontrada = Object.keys(agrupados).find(
+          const categoriaEncontrada = Object.keys(agrupadas).find(
             cat => cat && cat.trim().toLowerCase() === categoriaNormalizada.toLowerCase()
           );
           if (categoriaEncontrada) {
@@ -52,14 +52,14 @@ function Carambolos() {
           }
         }
       } catch (error) {
-        console.error("Erro ao carregar bolos:", error);
-        setBolosPorCategoria({});
+        console.error("Erro ao carregar decorações:", error);
+        setDecoraceoesPorCategoria({});
       } finally {
         setLoading(false);
       }
     };
     
-    fetchBolos();
+    fetchDecoracoes();
   }, [categoriaSelecionada]);
 
   // Effect para fazer scroll para a categoria selecionada
@@ -73,7 +73,7 @@ function Carambolos() {
         setScrollToCategory(null);
       }, 100);
     }
-  }, [scrollToCategory, bolosPorCategoria]);
+  }, [scrollToCategory, decoracoesPorCategoria]);
 
   const handlePrev = (categoria) => {
     setPageByCategory(prev => ({
@@ -95,7 +95,7 @@ function Carambolos() {
   if (loading) {
     return (
       <div className="bg-bgNativeHome min-h-screen flex items-center justify-center">
-        <div className="text-2xl text-blue">Carregando bolos...</div>
+        <div className="text-2xl text-blue">Carregando decorações...</div>
       </div>
     );
   }
@@ -108,21 +108,22 @@ function Carambolos() {
           CARAMBOLOS PRÉ-DECORADOS
         </h2>
         
-        {Object.keys(bolosPorCategoria).length === 0 ? (
+        {Object.keys(decoracoesPorCategoria).length === 0 ? (
           <div className="text-center py-12">
             <p className="text-xl text-gray-600 mb-4">
-              Nenhum bolo cadastrado no momento.
+              Nenhuma decoração cadastrada no momento.
             </p>
           </div>
         ) : (
-          Object.keys(bolosPorCategoria).map((categoria) =>
+          Object.keys(decoracoesPorCategoria).map((categoria) =>
             renderSection(
               categoria,
-              bolosPorCategoria[categoria],
+              decoracoesPorCategoria[categoria],
               pageByCategory[categoria] || 0,
-              (dir) => dir === 'left' ? handlePrev(categoria) : handleNext(categoria, bolosPorCategoria[categoria].length),
+              (dir) => dir === 'left' ? handlePrev(categoria) : handleNext(categoria, decoracoesPorCategoria[categoria].length),
               categoriaSelecionada === categoria,
-              categoryRefs
+              categoryRefs,
+              navigate
             )
           )
         )}
@@ -132,11 +133,15 @@ function Carambolos() {
   );
 }
 
-const renderSection = (title, bolos, page, onArrowClick, isSelected, categoryRefs) => {
+const renderSection = (title, decoracoes, page, onArrowClick, isSelected, categoryRefs, navigate) => {
   const CARDS_PER_PAGE = 4;
   const startIdx = page * CARDS_PER_PAGE;
   const endIdx = startIdx + CARDS_PER_PAGE;
-  const paginatedBolos = bolos.slice(startIdx, endIdx);
+  const paginatedDecoracoes = decoracoes.slice(startIdx, endIdx);
+  
+  const handleCardClick = (decoracao) => {
+    navigate('/pedido-bolo', { state: { decoracao } });
+  };
   
   return (
     <React.Fragment key={title}>
@@ -154,26 +159,43 @@ const renderSection = (title, bolos, page, onArrowClick, isSelected, categoryRef
             disabled={page === 0} 
           />
           <div className="flex space-x-12">
-            {paginatedBolos && paginatedBolos.length > 0 ? (
-              paginatedBolos.map((bolo) => (
-                <Card
-                  key={bolo.boloId ?? bolo.id}
-                  type="Bolo"
-                  nome={bolo.produto}
-                  preco={bolo.precoTotal}
-                  boloData={bolo}
-                />
+            {paginatedDecoracoes && paginatedDecoracoes.length > 0 ? (
+              paginatedDecoracoes.map((decoracao) => (
+                <div
+                  key={decoracao.id}
+                  className="relative rounded-lg overflow-hidden border border-gold bg-white cursor-pointer transition-all duration-500 hover:scale-105 shadow-lg flex-none"
+                  style={{ width: '280px' }}
+                  onClick={() => handleCardClick(decoracao)}
+                >
+                  <img
+                    src={decoracao.imagens?.[0] || 'https://via.placeholder.com/256'}
+                    alt={decoracao.nome}
+                    className="w-full h-64 object-cover"
+                  />
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-3 w-full flex justify-center px-2">
+                    <span
+                      title={decoracao.nome}
+                      className="inline-block rounded-[12px] border border-[#D4B076] shadow-[0_4px_12px_rgba(0,0,0,0.16)] backdrop-blur-sm font-montserrat font-normal whitespace-nowrap overflow-hidden text-ellipsis leading-tight px-5 py-2 text-[clamp(12px,1.1vw,16px)] max-w-[88%]"
+                      style={{
+                        background: 'rgba(255, 232, 196, 0.8)',
+                        color: '#8A541C',
+                      }}
+                    >
+                      {decoracao.nome}
+                    </span>
+                  </div>
+                </div>
               ))
             ) : (
               <div className="text-center py-8 text-gray-500">
-                Nenhum bolo disponível nesta categoria.
+                Nenhuma decoração disponível nesta categoria.
               </div>
             )}
           </div>
           <ArrowButton 
             direction="right" 
             onClick={() => onArrowClick('right')} 
-            disabled={endIdx >= bolos.length} 
+            disabled={endIdx >= decoracoes.length} 
           />
         </div>
       </section>

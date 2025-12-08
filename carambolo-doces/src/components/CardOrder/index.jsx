@@ -33,6 +33,8 @@ function CardOrder(props) {
         resposta = await orderFornadaDetails(idPedidoFornada);
       }
 
+      console.log("📋 Detalhes do pedido carregados:", resposta);
+      console.log("🎁 Adicionais encontrados:", resposta?.adicionais);
       setDetalhesPedido(resposta || {});
     } catch (error) {
       console.error("❌ Erro ao carregar detalhes:", error);

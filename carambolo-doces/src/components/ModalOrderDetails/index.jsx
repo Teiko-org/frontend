@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import OrderStatusChanger from "../OrderStatusChanger";
+import { getAdicionaisByDecoracao } from "../../service/decoracaoService";
 
 function formatPhone(phone) {
   if (!phone) return "Carregando...";
@@ -38,6 +39,30 @@ function formatCep(cep) {
 
 export default function ModalOrderDetails(props) {
   const [imgError, setImgError] = useState(false);
+  const [adicionaisDisponiveis, setAdicionaisDisponiveis] = useState([]);
+  const [loadingAdicionais, setLoadingAdicionais] = useState(false);
+
+  // Fetch adicionais based on decoracaoId when modal opens
+  useEffect(() => {
+    const fetchAdicionais = async () => {
+      if (props.fornada == null && props?.order?.decoracaoId) {
+        setLoadingAdicionais(true);
+        try {
+          console.log(`🔍 Buscando adicionais para decoração ID: ${props.order.decoracaoId}`);
+          const adicionaisData = await getAdicionaisByDecoracao(props.order.decoracaoId);
+          console.log("✅ Adicionais da decoração obtidos:", adicionaisData);
+          setAdicionaisDisponiveis(adicionaisData || []);
+        } catch (error) {
+          console.error("❌ Erro ao buscar adicionais da decoração:", error);
+          setAdicionaisDisponiveis([]);
+        } finally {
+          setLoadingAdicionais(false);
+        }
+      }
+    };
+
+    fetchAdicionais();
+  }, [props?.order?.decoracaoId, props.fornada]);
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black bg-opacity-60 flex justify-center pt-10 pb-5 modal-overlay modal-fixed">
@@ -177,48 +202,32 @@ export default function ModalOrderDetails(props) {
                   <h3 className="font-bold text-2xl text-blue pb-5">
                     Adicionais
                   </h3>
-                  <div className="flex flex-wrap gap-3">
-                    {(() => {
-                      const add = 
-                        props?.order?.adicionais ?? 
-                        props?.order?.adicionaisPedido ?? 
-                        props?.order?.extras ?? 
-                        props?.order?.options ?? 
-                        props?.order?.itemsAdicionais;
-                      
-                      let list = [];
-                      if (Array.isArray(add)) list = add;
-                      else if (typeof add === 'string' && add.trim().length > 0) list = add.split(',');
-                      
-                      if (list.length === 0) return <span className="text-blue">Nenhum adicional</span>;
-                      
-                      return list.map((item, index) => {
-                        const label = typeof item === 'object' 
-                          ? (item?.nome ?? item?.name ?? item?.descricao ?? item?.description ?? String(item))
-                          : String(item).trim();
-                        
-                        return (
-                          <label
-                            key={index}
-                            className="flex items-center gap-2 bg-gradient-to-r from-[#f5e6d3] to-[#fdd6c4] border-2 border-gold rounded-full px-4 py-2 cursor-default"
-                          >
-                            <div className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-gold bg-white">
-                              <svg
-                                className="w-4 h-4 text-gold"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="3"
-                                viewBox="0 0 24 24"
-                              >
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                              </svg>
+                  
+                  {/* Adicionais Selecionados da Decoração */}
+                  {props?.order?.decoracaoId && (
+                    <div>
+                      <h4 className="text-lg font-semibold text-blue mb-3">Selecionados:</h4>
+                      <div className="flex flex-wrap gap-3">
+                        {loadingAdicionais ? (
+                          <span className="text-gray-500">Carregando adicionais...</span>
+                        ) : adicionaisDisponiveis.length > 0 ? (
+                          adicionaisDisponiveis.map((adicional, index) => (
+                            <div
+                              key={`adicional-disponivel-${adicional.id ?? index}`}
+                              className="flex items-center gap-2 bg-gray-100 border-2 border-gray-300 rounded-full px-4 py-2"
+                            >
+                              <div className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-gray-300 bg-white">
+                                <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                              </div>
+                              <span className="text-gray-700 font-semibold">{adicional.descricao ?? adicional.nome}</span>
                             </div>
-                            <span className="text-blue font-semibold">{label}</span>
-                          </label>
-                        );
-                      });
-                    })()}
-                  </div>
+                          ))
+                        ) : (
+                          <span className="text-gray-500">Nenhum adicional disponível para esta decoração</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
