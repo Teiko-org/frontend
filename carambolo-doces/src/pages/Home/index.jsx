@@ -508,22 +508,6 @@ function Home() {
       {/* Espaço consistente entre seções */}
       <div className="h-24"></div>
 
-      {/* Carambolos Mais Pedidos */}
-      {bolosMaisPedidos.length > 0 && (
-        <section className="pt-8 pb-16 bg-bgHome border-t border-gold" style={{ overflow: 'visible' }}>
-          <h2 className="text-center text-4xl font-medium mb-6">
-            CARAMBOLOS MAIS PEDIDOS
-          </h2>
-          
-          <div className="px-6" style={{ overflow: 'visible' }}>
-            <BolosMaisPedidosCarousel bolos={bolosMaisPedidos} />
-          </div>
-        </section>
-      )}
-
-      {/* Espaço consistente entre seções */}
-      {bolosMaisPedidos.length > 0 && <div className="h-24"></div>}
-
       {/* Espaço consistente entre seções (mostra apenas se houver Fornada) */}
       {showFornada && <div className="h-24"></div>}
 
